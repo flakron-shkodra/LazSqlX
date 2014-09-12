@@ -1,0 +1,243 @@
+object ConnectinoBuilderForm: TConnectinoBuilderForm
+  Left = 454
+  Height = 350
+  Top = 196
+  Width = 274
+  BorderStyle = bsDialog
+  Caption = 'DbCleaner Connection'
+  ClientHeight = 350
+  ClientWidth = 274
+  Color = clBtnFace
+  Font.Color = clWindowText
+  Font.Height = -11
+  Font.Name = 'Tahoma'
+  OnShow = FormShow
+  Position = poScreenCenter
+  LCLVersion = '1.0.10.0'
+  object Label2: TLabel
+    Left = 10
+    Height = 14
+    Top = 401
+    Width = 86
+    Caption = 'Connection String'
+    ParentColor = False
+    Visible = False
+  end
+  object txtConnStr: TMemo
+    Left = 10
+    Height = 56
+    Top = 420
+    Width = 239
+    ReadOnly = True
+    TabOrder = 2
+    Visible = False
+    WordWrap = False
+  end
+  object pnlMain: TPanel
+    Left = 8
+    Height = 290
+    Top = 22
+    Width = 257
+    ClientHeight = 290
+    ClientWidth = 257
+    TabOrder = 0
+    object Bevel1: TBevel
+      Left = 8
+      Height = 137
+      Top = 9
+      Width = 241
+    end
+    object lblUseraname: TLabel
+      Left = 12
+      Height = 14
+      Top = 51
+      Width = 49
+      Caption = 'Username'
+      ParentColor = False
+    end
+    object lblPassword: TLabel
+      Left = 12
+      Height = 14
+      Top = 101
+      Width = 47
+      Caption = 'Password'
+      ParentColor = False
+    end
+    object lblSever: TLabel
+      Left = 8
+      Height = 14
+      Top = 154
+      Width = 33
+      Caption = 'Server'
+      ParentColor = False
+    end
+    object lblDatabase: TLabel
+      Left = 8
+      Height = 14
+      Top = 242
+      Width = 47
+      Caption = 'Database'
+      ParentColor = False
+    end
+    object chkIntegratedSecurity: TCheckBox
+      Left = 12
+      Height = 19
+      Top = 34
+      Width = 105
+      Caption = 'SSPI (Integrated)'
+      OnClick = chkIntegratedSecurityClick
+      TabOrder = 0
+      Visible = False
+    end
+    object txtUserName: TEdit
+      Left = 12
+      Height = 21
+      Top = 70
+      Width = 233
+      TabOrder = 2
+      Text = 'sa'
+    end
+    object txtPassword: TEdit
+      Left = 12
+      Height = 21
+      Top = 120
+      Width = 233
+      EchoMode = emPassword
+      PasswordChar = '*'
+      TabOrder = 3
+      Text = 'prosa'
+    end
+    object cmbServerName: TComboBox
+      Left = 8
+      Height = 21
+      Top = 173
+      Width = 241
+      AutoComplete = True
+      AutoCompleteText = [cbactEnabled, cbactEndOfLineComplete, cbactSearchAscending]
+      ItemHeight = 13
+      TabOrder = 4
+    end
+    object cmbDatabase: TComboBox
+      Left = 8
+      Height = 21
+      Top = 261
+      Width = 241
+      AutoComplete = True
+      AutoCompleteText = [cbactEnabled, cbactEndOfLineComplete, cbactSearchAscending]
+      ItemHeight = 13
+      OnChange = cmbDatabaseChange
+      OnEnter = cmbDatabaseEnter
+      TabOrder = 6
+    end
+    object cmbDatabaseType: TComboBox
+      Left = 16
+      Height = 21
+      Top = -14
+      Width = 233
+      ItemHeight = 13
+      ItemIndex = 0
+      Items.Strings = (
+        'MsSql'
+        'Oracle'
+        'MySql'
+        'SQLite'
+      )
+      OnChange = cmbDatabaseTypeChange
+      Style = csDropDownList
+      TabOrder = 1
+      Text = 'MsSql'
+      Visible = False
+    end
+    object lblPort: TLabel
+      Left = 8
+      Height = 14
+      Top = 199
+      Width = 21
+      Caption = 'Port'
+      ParentColor = False
+    end
+    object txtPort: TEdit
+      Left = 8
+      Height = 21
+      Top = 214
+      Width = 241
+      TabOrder = 5
+      Text = '0'
+    end
+    object btnOpenDatabase: TSpeedButton
+      Left = 226
+      Height = 22
+      Top = 261
+      Width = 23
+      Glyph.Data = {
+        36040000424D3604000000000000360000002800000010000000100000000100
+        2000000000000004000000000000000000000000000000000000FF00FF00FF00
+        FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+        FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+        FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+        FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF0075848F006680
+        8F0060798700576E7B004E626F0044566100394852002E3A4300252E35001B22
+        290014191E000E1216000E131800FF00FF00FF00FF00FF00FF007787920089A1
+        AB006AB2D400008FCD00008FCD00008FCD00048CC7000888BE000F82B400157C
+        A9001B779F001F729600224B5C0087A2AB00FF00FF00FF00FF007A8A95007EBE
+        D3008AA4AE007EDCFF005FCFFF0055CBFF004CC4FA0041BCF50037B3F0002EAA
+        EB0024A0E500138CD400236780005E696D00FF00FF00FF00FF007D8E980079D2
+        EC008BA4AD0089C2CE0071D8FF0065D3FF005CCEFF0051C9FE0049C1FA003FB9
+        F50034B0EE0029A8E9001085CD00224B5B0098B2BA00FF00FF0080919C0081D7
+        EF007DC5E0008CA6B00080DDFE0068D3FF0067D4FF0062D1FF0058CDFF004EC7
+        FC0046BEF7003BB6F20031ACEC00256981007A95A100FF00FF0083959F0089DC
+        F1008CE2FF008DA8B1008CBAC70074D8FF0067D4FF0067D4FF0067D4FF005FD0
+        FF0054CDFF004BC5FC0041BBF7002EA2DB005167740098B2BA00869AA30092E1
+        F20098E8FD0080C4DE008EA7B00081DEFD0084E0FF0084E0FF0084E0FF0084E0
+        FF0081DFFF007BDDFF0074D8FF006BD6FF0056A9D1008F9BA400889CA5009AE6
+        F3009FEBFB0098E8FE008BACB9008BACB9008AAAB70088A6B30086A3AF00839F
+        AA00819AA6007F95A1007C919D007A8E9900798B9500778893008BA0A800A0EA
+        F600A6EEF9009FEBFB0098E8FE007ADAFF0067D4FF0067D4FF0067D4FF0067D4
+        FF0067D4FF0067D4FF0077889300FF00FF00FF00FF00FF00FF008EA2AB00A7EE
+        F600ABF0F700A6EEF9009FEBFB0098E8FD0071D4FB00899EA7008699A3008294
+        9F007E909A007A8C970077889300FF00FF00FF00FF00FF00FF008FA4AC00A0D2
+        DA00ABF0F700ABF0F700A6EEF9009FEBFB008DA1AA00B5CBD000FF00FF00FF00
+        FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00BDCED4008FA4
+        AC008FA4AC008FA4AC008FA4AC008FA4AC00B5CBD000FF00FF00FF00FF00FF00
+        FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+        FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+        FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+        FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+        FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
+      }
+      NumGlyphs = 0
+      OnClick = btnOpenDatabaseClick
+    end
+  end
+  object txtSchema: TEdit
+    Left = 20
+    Height = 21
+    Top = 41
+    Width = 233
+    TabOrder = 1
+    Text = 'dbo'
+  end
+  object btnAccept: TBitBtn
+    Left = 104
+    Height = 22
+    Top = 320
+    Width = 75
+    Caption = '&OK'
+    Default = True
+    Kind = bkOK
+    ModalResult = 1
+    OnClick = btnAcceptClick
+    TabOrder = 3
+  end
+  object btnCancel: TBitBtn
+    Left = 190
+    Height = 22
+    Top = 320
+    Width = 75
+    Cancel = True
+    Caption = 'Cancel'
+    Kind = bkCancel
+    ModalResult = 2
+    TabOrder = 4
+  end
+end

@@ -1,0 +1,124 @@
+object QueryDesignerDialog: TQueryDesignerDialog
+  Left = 0
+  Top = 0
+  BorderStyle = bsToolWindow
+  Caption = 'Configure Relation'
+  ClientHeight = 187
+  ClientWidth = 342
+  Color = clBtnFace
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -11
+  Font.Name = 'Tahoma'
+  Font.Style = []
+  OldCreateOrder = False
+  Position = poScreenCenter
+  OnCreate = FormCreate
+  OnDestroy = FormDestroy
+  OnShow = FormShow
+  PixelsPerInch = 96
+  TextHeight = 13
+  object grbConfigure: TGroupBox
+    Left = 0
+    Top = 0
+    Width = 342
+    Height = 113
+    Align = alTop
+    Caption = 'Configure Relation'
+    TabOrder = 0
+    object lblForeignKey: TLabel
+      Left = 10
+      Top = 55
+      Width = 43
+      Height = 13
+      Caption = 'Key Field'
+    end
+    object lblForeignTable: TLabel
+      Left = 10
+      Top = 28
+      Width = 65
+      Height = 13
+      Caption = 'Foreign Table'
+    end
+    object btnDel: TSpeedButton
+      Left = 307
+      Top = 76
+      Width = 26
+      Height = 25
+      Caption = '-'
+      Visible = False
+      OnClick = btnDelClick
+    end
+    object cmbDisplayMember: TComboBox
+      Left = 88
+      Top = 107
+      Width = 209
+      Height = 21
+      Enabled = False
+      TabOrder = 3
+      Visible = False
+    end
+    object cmbValueMember: TComboBox
+      Left = 88
+      Top = 52
+      Width = 209
+      Height = 21
+      TabOrder = 1
+    end
+    object cmbForeignTable: TComboBox
+      Left = 88
+      Top = 25
+      Width = 209
+      Height = 21
+      TabOrder = 0
+      OnChange = cmbForeignTableChange
+    end
+    object btnAddField: TButton
+      Left = 88
+      Top = 76
+      Width = 209
+      Height = 25
+      Caption = 'Add Select Field'
+      TabOrder = 2
+      OnClick = btnAddFieldClick
+    end
+  end
+  object pnlBottom: TPanel
+    Left = 0
+    Top = 146
+    Width = 342
+    Height = 41
+    Align = alBottom
+    TabOrder = 2
+    object btnAccept: TButton
+      Left = 162
+      Top = 8
+      Width = 75
+      Height = 25
+      Caption = 'OK'
+      ImageIndex = 10
+      ModalResult = 1
+      TabOrder = 0
+    end
+    object btnCancel: TButton
+      Left = 243
+      Top = 8
+      Width = 75
+      Height = 25
+      Caption = 'Cancel'
+      ImageIndex = 11
+      ModalResult = 2
+      TabOrder = 1
+    end
+  end
+  object pnlSelectFields: TPanel
+    Left = 0
+    Top = 113
+    Width = 342
+    Height = 33
+    Align = alClient
+    Ctl3D = True
+    ParentCtl3D = False
+    TabOrder = 1
+  end
+end

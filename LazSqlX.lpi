@@ -1,0 +1,395 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CONFIG>
+  <ProjectOptions>
+    <Version Value="9"/>
+    <PathDelim Value="\"/>
+    <General>
+      <Flags>
+        <MainUnitHasUsesSectionForAllUnits Value="False"/>
+        <MainUnitHasCreateFormStatements Value="False"/>
+        <MainUnitHasTitleStatement Value="False"/>
+      </Flags>
+      <SessionStorage Value="InProjectDir"/>
+      <MainUnit Value="0"/>
+      <Title Value="LazSqlX"/>
+      <UseAppBundle Value="False"/>
+      <ResourceType Value="res"/>
+      <UseXPManifest Value="True"/>
+      <XPManifest>
+        <DpiAware Value="True"/>
+        <ExecutionLevel Value="2"/>
+      </XPManifest>
+      <Icon Value="0"/>
+    </General>
+    <i18n>
+      <EnableI18N LFM="False"/>
+    </i18n>
+    <VersionInfo>
+      <UseVersionInfo Value="True"/>
+      <AutoIncrementBuild Value="True"/>
+      <MajorVersionNr Value="4"/>
+      <MinorVersionNr Value="3"/>
+      <BuildNr Value="1352"/>
+      <StringTable ProductVersion=""/>
+    </VersionInfo>
+    <BuildModes Count="1">
+      <Item1 Name="Default" Default="True"/>
+    </BuildModes>
+    <PublishOptions>
+      <Version Value="2"/>
+      <IncludeFileFilter Value="*.(pas|pp|inc|lfm|lpr|lrs|lpi|lpk|sh|xml)"/>
+      <ExcludeFileFilter Value="*.(bak|ppu|o|so);*~;backup"/>
+    </PublishOptions>
+    <RunParams>
+      <local>
+        <FormatVersion Value="1"/>
+      </local>
+    </RunParams>
+    <RequiredPackages Count="9">
+      <Item1>
+        <PackageName Value="LazControls"/>
+      </Item1>
+      <Item2>
+        <PackageName Value="SDFLaz"/>
+      </Item2>
+      <Item3>
+        <PackageName Value="lazmouseandkeyinput"/>
+      </Item3>
+      <Item4>
+        <PackageName Value="lazdbexport"/>
+      </Item4>
+      <Item5>
+        <PackageName Value="SQLDBLaz"/>
+      </Item5>
+      <Item6>
+        <PackageName Value="FCL"/>
+      </Item6>
+      <Item7>
+        <PackageName Value="SynEdit"/>
+      </Item7>
+      <Item8>
+        <PackageName Value="zcomponent"/>
+      </Item8>
+      <Item9>
+        <PackageName Value="LCL"/>
+      </Item9>
+    </RequiredPackages>
+    <Units Count="47">
+      <Unit0>
+        <Filename Value="LazSqlX.lpr"/>
+        <IsPartOfProject Value="True"/>
+      </Unit0>
+      <Unit1>
+        <Filename Value="Forms\BlobFieldFormU.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="BlobFieldForm"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Form"/>
+        <UnitName Value="BlobFieldFormU"/>
+      </Unit1>
+      <Unit2>
+        <Filename Value="Forms\EditMemoFormU.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="EditMemoForm"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Form"/>
+        <UnitName Value="EditMemoFormU"/>
+      </Unit2>
+      <Unit3>
+        <Filename Value="Forms\MainFormU.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="MainForm"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Form"/>
+        <UnitName Value="MainFormU"/>
+      </Unit3>
+      <Unit4>
+        <Filename Value="Forms\SqlConnBuilderFormU.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="SqlConnBuilderForm"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Form"/>
+        <UnitName Value="SqlConnBuilderFormU"/>
+      </Unit4>
+      <Unit5>
+        <Filename Value="Forms\TableInfoFormU.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="TableInfoForm"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Form"/>
+        <UnitName Value="TableInfoFormU"/>
+      </Unit5>
+      <Unit6>
+        <Filename Value="DbInfo\DbType.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="DbType"/>
+      </Unit6>
+      <Unit7>
+        <Filename Value="DbInfo\ProcedureInfo.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="ProcedureInfo"/>
+      </Unit7>
+      <Unit8>
+        <Filename Value="DbInfo\TableInfo.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="TableInfo"/>
+      </Unit8>
+      <Unit9>
+        <Filename Value="FileTypeDetector\FileSig.txt"/>
+        <IsPartOfProject Value="True"/>
+      </Unit9>
+      <Unit10>
+        <Filename Value="FileTypeDetector\FtDetector.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="FtDetector"/>
+      </Unit10>
+      <Unit11>
+        <Filename Value="FileTypeDetector\FtDetector.rc"/>
+        <IsPartOfProject Value="True"/>
+      </Unit11>
+      <Unit12>
+        <Filename Value="Generators\ReservedKeywords.txt"/>
+        <IsPartOfProject Value="True"/>
+      </Unit12>
+      <Unit13>
+        <Filename Value="Generators\SqlGenerator.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="SqlGenerator"/>
+      </Unit13>
+      <Unit14>
+        <Filename Value="Generators\SqlGenerator.rc"/>
+        <IsPartOfProject Value="True"/>
+      </Unit14>
+      <Unit15>
+        <Filename Value="UtilClasses\sqlexecthread.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="SqlExecThread"/>
+      </Unit15>
+      <Unit16>
+        <Filename Value="UtilClasses\Utils.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="Utils"/>
+      </Unit16>
+      <Unit17>
+        <Filename Value="DbInfo\AsSqlParser.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="AsSqlParser"/>
+      </Unit17>
+      <Unit18>
+        <Filename Value="DbInfo\AsSqlKeywords\AsSqlKeywords.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="AsSqlKeywords"/>
+      </Unit18>
+      <Unit19>
+        <Filename Value="DbInfo\AsStringUtils.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="AsStringUtils"/>
+      </Unit19>
+      <Unit20>
+        <Filename Value="Forms\AboutFormU.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="AboutForm"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Form"/>
+        <UnitName Value="AboutFormU"/>
+      </Unit20>
+      <Unit21>
+        <Filename Value="Forms\EditColumnFormU.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="EditColumnForm"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Form"/>
+        <UnitName Value="EditColumnFormU"/>
+      </Unit21>
+      <Unit22>
+        <Filename Value="DbInfo\AsSqlKeywords\MSSqlDataTypes.txt"/>
+        <IsPartOfProject Value="True"/>
+      </Unit22>
+      <Unit23>
+        <Filename Value="DbInfo\AsSqlKeywords\MySqlDataTypes.txt"/>
+        <IsPartOfProject Value="True"/>
+      </Unit23>
+      <Unit24>
+        <Filename Value="DbInfo\AsSqlKeywords\OracleDataTypes.txt"/>
+        <IsPartOfProject Value="True"/>
+      </Unit24>
+      <Unit25>
+        <Filename Value="DbInfo\AsSqlKeywords\SqliteDataTypes.txt"/>
+        <IsPartOfProject Value="True"/>
+      </Unit25>
+      <Unit26>
+        <Filename Value="DbInfo\AsSqlKeywords\SqlReservedKeywords.txt"/>
+        <IsPartOfProject Value="True"/>
+      </Unit26>
+      <Unit27>
+        <Filename Value="UtilClasses\VersionSupport.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="VersionSupport"/>
+      </Unit27>
+      <Unit28>
+        <Filename Value="Forms\EditConstraintsFormU.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="EditConstraintForm"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Form"/>
+        <UnitName Value="EditConstraintsFormU"/>
+      </Unit28>
+      <Unit29>
+        <Filename Value="Forms\EditIndexFormU.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="EditIndexForm"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Form"/>
+        <UnitName Value="EditIndexFormU"/>
+      </Unit29>
+      <Unit30>
+        <Filename Value="Forms\QueryDesignerFormU.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="QueryDesignerForm"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Form"/>
+        <UnitName Value="QueryDesignerFormU"/>
+      </Unit30>
+      <Unit31>
+        <Filename Value="QueryDesigner\QueryDesignerDialogU.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="QueryDesignerDialog"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Form"/>
+        <UnitName Value="QueryDesignerDialogU"/>
+      </Unit31>
+      <Unit32>
+        <Filename Value="QueryDesigner\QueryDesignerU.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="QueryDesigner"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Frame"/>
+        <UnitName Value="QueryDesignerU"/>
+      </Unit32>
+      <Unit33>
+        <Filename Value="QueryDesigner\QueryDesignerTablesU.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="QueryDesignerTables"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Form"/>
+        <UnitName Value="QueryDesignerTablesU"/>
+      </Unit33>
+      <Unit34>
+        <Filename Value="DbInfo\AsDatabaseCloner.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="AsDatabaseCloner"/>
+      </Unit34>
+      <Unit35>
+        <Filename Value="Forms\DatabaseClonerFormU.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="DatabaseClonerForm"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Form"/>
+        <UnitName Value="DatabaseClonerFormU"/>
+      </Unit35>
+      <Unit36>
+        <Filename Value="Forms\ProgressFormU.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="ProgressForm"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Form"/>
+        <UnitName Value="ProgressFormU"/>
+      </Unit36>
+      <Unit37>
+        <Filename Value="DbInfo\AsSqlKeywords\FirebirdDataTypes.txt"/>
+        <IsPartOfProject Value="True"/>
+      </Unit37>
+      <Unit38>
+        <Filename Value="Forms\DataImporterFormU.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="DataImporterForm"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Form"/>
+        <UnitName Value="DataImporterFormU"/>
+      </Unit38>
+      <Unit39>
+        <Filename Value="Forms\DataImporterDialogU.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="DataImporterDialog"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Form"/>
+        <UnitName Value="DataImporterDialogU"/>
+      </Unit39>
+      <Unit40>
+        <Filename Value="LoadingIndicator\animatedgif.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="AnimatedGif"/>
+      </Unit40>
+      <Unit41>
+        <Filename Value="LoadingIndicator\loading.gif"/>
+        <IsPartOfProject Value="True"/>
+      </Unit41>
+      <Unit42>
+        <Filename Value="LoadingIndicator\LoadingIndicator.rc"/>
+        <IsPartOfProject Value="True"/>
+      </Unit42>
+      <Unit43>
+        <Filename Value="LoadingIndicator\membitmap.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="MemBitmap"/>
+      </Unit43>
+      <Unit44>
+        <Filename Value="LoadingIndicator\LoadingIndicator.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="LoadingIndicator"/>
+      </Unit44>
+      <Unit45>
+        <Filename Value="UtilClasses\csvdocument.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="CsvDocument"/>
+      </Unit45>
+      <Unit46>
+        <Filename Value="LazSqlXCtrls\LazSqlXCtrls.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="LazSqlXCtrls"/>
+      </Unit46>
+    </Units>
+  </ProjectOptions>
+  <CompilerOptions>
+    <Version Value="11"/>
+    <PathDelim Value="\"/>
+    <SearchPaths>
+      <IncludeFiles Value="$(ProjOutDir)"/>
+      <OtherUnitFiles Value="Forms;DbInfo;FileTypeDetector;Generators;UtilClasses;DbInfo\AsSqlKeywords;QueryDesigner;LoadingIndicator;LazSqlXCtrls"/>
+    </SearchPaths>
+    <CodeGeneration>
+      <Checks>
+        <StackChecks Value="True"/>
+      </Checks>
+    </CodeGeneration>
+    <Linking>
+      <Debugging>
+        <UseExternalDbgSyms Value="True"/>
+      </Debugging>
+      <Options>
+        <Win32>
+          <GraphicApplication Value="True"/>
+        </Win32>
+      </Options>
+    </Linking>
+    <Other>
+      <CompilerMessages>
+        <MsgFileName Value=""/>
+      </CompilerMessages>
+      <CompilerPath Value="$(CompPath)"/>
+    </Other>
+  </CompilerOptions>
+  <Debugging>
+    <Exceptions Count="3">
+      <Item1>
+        <Name Value="EAbort"/>
+      </Item1>
+      <Item2>
+        <Name Value="ECodetoolError"/>
+      </Item2>
+      <Item3>
+        <Name Value="EFOpenError"/>
+      </Item3>
+    </Exceptions>
+  </Debugging>
+</CONFIG>

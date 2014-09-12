@@ -1,0 +1,57 @@
+object EditMemoForm: TEditMemoForm
+  Left = 401
+  Height = 289
+  Top = 331
+  Width = 426
+  BorderIcons = [biSystemMenu, biMaximize]
+  BorderStyle = bsSingle
+  Caption = 'Edit Text'
+  ClientHeight = 289
+  ClientWidth = 426
+  Color = clBtnFace
+  Font.Color = clWindowText
+  Font.Height = -11
+  Font.Name = 'Tahoma'
+  Position = poMainFormCenter
+  LCLVersion = '1.0.8.0'
+  object memEdit: TMemo
+    Left = 6
+    Height = 245
+    Top = 5
+    Width = 412
+    Anchors = [akTop, akLeft, akRight, akBottom]
+    Font.Color = clWindowText
+    Font.Height = -13
+    Font.Name = 'Tahoma'
+    Lines.Strings = (
+      'memEdit'
+    )
+    ParentFont = False
+    ScrollBars = ssBoth
+    TabOrder = 0
+  end
+  object btnOk: TBitBtn
+    Left = 266
+    Height = 25
+    Top = 256
+    Width = 75
+    Anchors = [akRight, akBottom]
+    Caption = '&OK'
+    Default = True
+    Kind = bkOK
+    ModalResult = 1
+    TabOrder = 1
+  end
+  object btnCancel: TBitBtn
+    Left = 347
+    Height = 25
+    Top = 256
+    Width = 75
+    Anchors = [akRight, akBottom]
+    Cancel = True
+    Caption = 'Cancel'
+    Kind = bkCancel
+    ModalResult = 2
+    TabOrder = 2
+  end
+end

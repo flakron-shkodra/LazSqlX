@@ -1,0 +1,8 @@
+object DatabaseClonerLogForm: TDatabaseClonerLogForm
+  Left = 427
+  Height = 294
+  Top = 188
+  Width = 417
+  Caption = 'DatabaseClonerLogForm'
+  LCLVersion = '1.1.99'
+end

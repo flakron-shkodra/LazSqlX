@@ -1,0 +1,242 @@
+object DataImporterForm: TDataImporterForm
+  Left = 612
+  Height = 491
+  Top = 315
+  Width = 424
+  BorderStyle = bsDialog
+  Caption = 'Delimited Text File Importer'
+  ClientHeight = 491
+  ClientWidth = 424
+  OnClose = FormClose
+  OnCreate = FormCreate
+  OnDestroy = FormDestroy
+  OnHide = FormHide
+  OnShow = FormShow
+  Position = poScreenCenter
+  LCLVersion = '1.2.4.0'
+  object btnAccept: TBitBtn
+    Left = 248
+    Height = 22
+    Top = 456
+    Width = 75
+    Anchors = [akRight, akBottom]
+    Caption = '&Import'
+    Default = True
+    Enabled = False
+    Kind = bkOK
+    OnClick = btnAcceptClick
+    TabOrder = 1
+  end
+  object btnCancel: TBitBtn
+    Left = 334
+    Height = 22
+    Top = 456
+    Width = 75
+    Anchors = [akRight, akBottom]
+    Cancel = True
+    Caption = '&Cancel'
+    Kind = bkCancel
+    ModalResult = 2
+    TabOrder = 2
+  end
+  object grpOptions: TGroupBox
+    Left = 14
+    Height = 384
+    Top = 9
+    Width = 395
+    Anchors = [akTop, akLeft, akRight, akBottom]
+    Caption = 'Import Settings'
+    ClientHeight = 366
+    ClientWidth = 391
+    TabOrder = 0
+    OnClick = grpOptionsClick
+    object Bevel1: TBevel
+      Left = 7
+      Height = 132
+      Top = 12
+      Width = 380
+    end
+    object lblDelimiter: TLabel
+      Left = 14
+      Height = 15
+      Top = 67
+      Width = 48
+      Caption = 'Delimiter'
+      ParentColor = False
+    end
+    object txtDelimiter: TEdit
+      Left = 173
+      Height = 23
+      Top = 63
+      Width = 208
+      MaxLength = 10
+      ParentBidiMode = False
+      OnChange = txtDelimiterChange
+      OnKeyDown = txtDelimiterKeyDown
+      TabOrder = 1
+      Text = ';'
+    end
+    object txtFilename: TFileNameEdit
+      Left = 173
+      Height = 23
+      Top = 23
+      Width = 185
+      OnAcceptFileName = txtFilenameAcceptFileName
+      FilterIndex = 0
+      HideDirectories = False
+      ButtonWidth = 23
+      NumGlyphs = 1
+      MaxLength = 0
+      TabOrder = 0
+      OnChange = txtFilenameChange
+    end
+    object lblFilename: TLabel
+      Left = 14
+      Height = 15
+      Top = 31
+      Width = 48
+      Caption = 'Filename'
+      ParentColor = False
+    end
+    object speStartPosition: TSpinEdit
+      Left = 173
+      Height = 23
+      Top = 102
+      Width = 65
+      MaxValue = 999999999
+      TabOrder = 2
+      Value = 1
+    end
+    object lblStartPosition: TLabel
+      Left = 14
+      Height = 15
+      Top = 110
+      Width = 50
+      Caption = 'Start Row'
+      ParentColor = False
+    end
+    object lblEndRow: TLabel
+      Left = 256
+      Height = 15
+      Top = 110
+      Width = 46
+      Caption = 'End Row'
+      ParentColor = False
+    end
+    object speEndPosition: TSpinEdit
+      Left = 315
+      Height = 23
+      Top = 103
+      Width = 66
+      MaxValue = 999999999
+      TabOrder = 3
+      Value = 1
+    end
+    object divColumnMapping: TDividerBevel
+      Left = 8
+      Height = 15
+      Top = 152
+      Width = 381
+      Caption = 'Column Mapping'
+      Anchors = [akTop, akLeft, akRight]
+      Font.Style = [fsBold]
+      ParentFont = False
+    end
+    object lstColumnsMapping: TListBox
+      Left = 7
+      Height = 153
+      Top = 207
+      Width = 380
+      Anchors = [akTop, akLeft, akRight, akBottom]
+      ItemHeight = 0
+      PopupMenu = PopupMenu1
+      TabOrder = 4
+    end
+    object cmbSourceColumns: TComboBox
+      Left = 6
+      Height = 23
+      Top = 176
+      Width = 160
+      ItemHeight = 15
+      Style = csDropDownList
+      TabOrder = 5
+    end
+    object cmbDestColumns: TComboBox
+      Left = 192
+      Height = 23
+      Top = 176
+      Width = 160
+      ItemHeight = 15
+      Style = csDropDownList
+      TabOrder = 6
+    end
+    object Label1: TLabel
+      Left = 175
+      Height = 14
+      Top = 179
+      Width = 10
+      Caption = '='
+      Font.CharSet = ANSI_CHARSET
+      Font.Height = -12
+      Font.Name = 'Tahoma'
+      Font.Pitch = fpVariable
+      Font.Quality = fqDraft
+      Font.Style = [fsBold]
+      ParentColor = False
+      ParentFont = False
+    end
+    object btnAddMapping: TButton
+      Left = 354
+      Height = 23
+      Top = 176
+      Width = 33
+      Caption = 'Add'
+      OnClick = btnAddMappingClick
+      TabOrder = 7
+    end
+    object chkUseTabDelimiter: TCheckBox
+      Left = 78
+      Height = 19
+      Top = 66
+      Width = 90
+      Caption = 'Tab delimiter'
+      OnChange = chkUseTabDelimiterChange
+      TabOrder = 8
+    end
+  end
+  object lblProgress: TLabel
+    Left = 15
+    Height = 15
+    Top = 402
+    Width = 395
+    Anchors = [akLeft, akRight, akBottom]
+    AutoSize = False
+    Caption = 'Progress'
+    ParentColor = False
+  end
+  object pbProgress: TProgressBar
+    Left = 15
+    Height = 17
+    Top = 424
+    Width = 395
+    Anchors = [akLeft, akRight, akBottom]
+    Step = 1
+    TabOrder = 3
+  end
+  object CsvDataSource: TDataSource
+    left = 336
+    top = 296
+  end
+  object PopupMenu1: TPopupMenu
+    left = 72
+    top = 248
+    object mitClearItem: TMenuItem
+      Caption = 'Clear'
+      OnClick = mitClearItemClick
+    end
+    object mitClearAll: TMenuItem
+      Caption = 'Clear All'
+      OnClick = mitClearAllClick
+    end
+  end
+end
