@@ -1,0 +1,59 @@
+object QueryDesignerTables: TQueryDesignerTables
+  Left = 539
+  Height = 306
+  Top = 334
+  Width = 385
+  BorderStyle = bsToolWindow
+  Caption = 'QueryDesignerTables'
+  ClientHeight = 306
+  ClientWidth = 385
+  LCLVersion = '1.0.10.0'
+  object btnAccept: TButton
+    Left = 221
+    Height = 25
+    Top = 274
+    Width = 75
+    Anchors = [akRight, akBottom]
+    Caption = 'OK'
+    ModalResult = 1
+    TabOrder = 0
+  end
+  object btnCancel: TButton
+    Left = 302
+    Height = 25
+    Top = 274
+    Width = 75
+    Anchors = [akRight, akBottom]
+    Caption = 'Cancel'
+    ModalResult = 2
+    TabOrder = 1
+  end
+  object chkTables: TCheckListBox
+    Left = 0
+    Height = 238
+    Top = 24
+    Width = 385
+    Anchors = [akTop, akLeft, akRight, akBottom]
+    ItemHeight = 0
+    TabOrder = 2
+  end
+  object txtSearchTable: TEdit
+    Left = 0
+    Height = 24
+    Top = 0
+    Width = 385
+    Align = alTop
+    Font.CharSet = ANSI_CHARSET
+    Font.Color = clSilver
+    Font.Height = -13
+    Font.Name = 'Tahoma'
+    Font.Pitch = fpVariable
+    Font.Quality = fqDraft
+    OnChange = txtSearchTableChange
+    OnEnter = txtSearchTableEnter
+    OnExit = txtSearchTableExit
+    ParentFont = False
+    TabOrder = 3
+    Text = 'SearchTable'
+  end
+end

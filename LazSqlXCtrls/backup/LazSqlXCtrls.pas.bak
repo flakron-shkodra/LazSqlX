@@ -657,14 +657,14 @@ begin
 
     try
 
-      case (FParent as TLazSqlXPageControl).DBInfo.DbEngine of
-        deSqlDB:
+      case (FParent as TLazSqlXPageControl).DBInfo.DatabaseType of
+        dtMsSql, dtOracle, dtSQLite, dtFirebirdd:
         begin
           CommandExecutor :=
             TSqlExecThread.Create(Schema, FQuery, @InternalOnExecutionFinished);
           FDataSource.DataSet := FQuery;
         end;
-        deZeos:
+        dtMySql:
         begin
           CommandExecutor := TSqlExecThread.Create(Schema,
             FZQuery, @InternalOnExecutionFinished);

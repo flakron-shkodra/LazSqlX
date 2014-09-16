@@ -540,7 +540,6 @@ begin
   lblSever.Visible := True;
   cmbServerName.Visible := True;
   cmbDbEngine.Enabled:=True;
-  cmbDbEngine.ItemIndex:=0;
 
   case cmbDatabaseType.ItemIndex of
     0:

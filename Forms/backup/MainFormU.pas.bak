@@ -1104,20 +1104,18 @@ end;
 
 procedure TMainForm.DoSelectiveConnect;
 begin
-
-    case DbInfo.DbEngine of
-      deSqlDB:
-      begin
-        SqlConn.Open;
-        FConnected := True;
-      end;
-      deZeos:
-      begin
-        ZCon.Connect;
-        FConnected := True;
-      end;
+  case DbInfo.DatabaseType of
+    dtMsSql, dtOracle, dtSQLite, dtFirebirdd:
+    begin
+      SqlConn.Open;
+      FConnected := True;
     end;
-
+    dtMySql:
+    begin
+      ZCon.Connect;
+      FConnected := True;
+    end;
+  end;
 end;
 
 procedure TMainForm.DoDisconnect;
