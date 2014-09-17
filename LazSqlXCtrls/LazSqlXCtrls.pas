@@ -1433,7 +1433,7 @@ var
  I: Integer;
  tab:TLazSqlXTabSheet;
 begin
-
+ if PageCount<1 then exit;
  ActivePage.PageIndex:=PageCount-1;
 
  for I:=0 to PageCount-1 do

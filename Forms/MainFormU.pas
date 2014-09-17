@@ -1437,6 +1437,9 @@ begin
 
   try
 
+    if not grd.ReadOnly then
+    grd.DataSource.DataSet.Edit;
+
     BlobFieldForm.btnLoadFromfile.Visible := not grd.ReadOnly;
     EditMemoForm.btnOk.Visible := not grd.ReadOnly;
 

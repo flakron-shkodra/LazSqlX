@@ -1437,6 +1437,8 @@ begin
 
   try
 
+    grd.DataSource.DataSet.Edit;
+
     BlobFieldForm.btnLoadFromfile.Visible := not grd.ReadOnly;
     EditMemoForm.btnOk.Visible := not grd.ReadOnly;
 
@@ -2251,15 +2253,10 @@ begin
       c.Hint := '';
     end;
 
-    try
       if c.Name = 'lstTables' then
         Draw(ARect.Left, ARect.Top, FtableIcon)
       else
         Draw(ARect.Left, ARect.Top, FfunctionIcon);
-
-    except
-    end;
-
 
 
     Brush.Style := bsClear;
