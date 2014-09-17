@@ -1739,7 +1739,7 @@ begin
       DoDisconnect;
       try
         TDbUtils.ExecuteQuery('DROP TABLE ' +
-          lstTables.Items[lstTables.ItemIndex], DbInfo);
+          lstTables.Items[lstTables.ItemIndex], DbInfo,DbInfo.DbEngine);
       finally
         DoSelectiveConnect;
         FillTables;

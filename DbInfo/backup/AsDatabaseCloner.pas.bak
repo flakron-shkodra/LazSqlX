@@ -227,7 +227,7 @@ var
   sql:String;
 begin
  sql := GetCreateScript(info,CreateConstraints,OverrideDefaultTypes);
- TDbUtils.ExecuteQuery(sql,FDbInfo,FDbInfo.DbEngine);
+ TDbUtils.ExecuteQuery(sql,FDbInfo);
 end;
 
 procedure TAsDatabaseCloner.CreateConstraints(info: TTableInfo);

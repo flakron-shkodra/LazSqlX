@@ -27,6 +27,7 @@ type
 
  TDatabaseEngine =
    (
+    deNone=-1,
     deSqlDB=0,
     deZeos=1
    );
@@ -53,12 +54,14 @@ type
   TDbConnectionInfo = class
   private
    FDatabase: string;
+   FDbEngine: TDatabaseEngine;
    FDbType: TDatabaseType;
    FPassword: string;
    FPort: Integer;
    FServer: string;
    FUsername: string;
    procedure SetDatabase(AValue: string);
+   procedure SetDbEngine(AValue: TDatabaseEngine);
    procedure SetDbType(AValue: TDatabaseType);
    procedure SetPassword(AValue: string);
    procedure SetPort(AValue: Integer);
@@ -71,6 +74,7 @@ type
     property Username:string read FUsername write SetUsername;
     property Password:string read FPassword write SetPassword;
     property Port:Integer read FPort write SetPort;
+    property DbEngine:TDatabaseEngine read FDbEngine write SetDbEngine;
     function ToFullString:string;
     function ToZeosConnection:TZConnection;
     function ToSqlConnector:TSQLConnector;
@@ -359,7 +363,7 @@ begin
 end;
 
 class procedure TDbUtils.ExecuteQuery(SqlQuery: string;
- DbInfo: TDbConnectionInfo; DbEngine: TDatabaseEngine);
+ DbInfo: TDbConnectionInfo; DbEngine:TDatabaseEngine);
 var
  zcon:TZConnection;
  zquery:TZQuery;
@@ -485,6 +489,12 @@ procedure TDbConnectionInfo.SetDatabase(AValue: string);
 begin
  if FDatabase=AValue then Exit;
  FDatabase:=AValue;
+end;
+
+procedure TDbConnectionInfo.SetDbEngine(AValue: TDatabaseEngine);
+begin
+ if FDbEngine=AValue then Exit;
+ FDbEngine:=AValue;
 end;
 
 procedure TDbConnectionInfo.SetDbType(AValue: TDatabaseType);

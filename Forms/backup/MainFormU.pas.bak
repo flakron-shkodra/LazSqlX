@@ -490,12 +490,12 @@ end;
 
 procedure TMainForm.SaveSession(aFile: string);
 begin
- WriteComponentResFile(aFile,FPageControl);
+
 end;
 
 procedure TMainForm.LoadSession(aFile: string);
 begin
- ReadComponentResFile(aFile,FPageControl);
+
 end;
 
 procedure TMainForm.GetFieldNames(table: string; fieldMask: string;
