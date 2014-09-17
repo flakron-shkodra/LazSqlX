@@ -48,7 +48,7 @@
         <EditorIndex Value="0"/>
         <WindowIndex Value="0"/>
         <TopLine Value="470"/>
-        <CursorPos X="1" Y="493"/>
+        <CursorPos X="2" Y="493"/>
         <UsageCount Value="206"/>
         <Loaded Value="True"/>
         <LoadedDesigner Value="True"/>
@@ -886,7 +886,7 @@
     </JumpHistory>
   </ProjectSession>
   <Debugging>
-    <BreakPoints Count="3">
+    <BreakPoints Count="2">
       <Item1>
         <Kind Value="bpkSource"/>
         <WatchScope Value="wpsLocal"/>
@@ -901,13 +901,6 @@
         <Source Value="Forms\DataImporterFormU.pas"/>
         <Line Value="229"/>
       </Item2>
-      <Item3>
-        <Kind Value="bpkSource"/>
-        <WatchScope Value="wpsLocal"/>
-        <WatchKind Value="wpkWrite"/>
-        <Source Value="Forms\MainFormU.pas"/>
-        <Line Value="493"/>
-      </Item3>
     </BreakPoints>
     <Watches Count="4">
       <Item1>
