@@ -2251,10 +2251,11 @@ begin
       c.Hint := '';
     end;
 
-    if c.Name = 'lstTables' then
-      Draw(ARect.Left, ARect.Top, FtableIcon)
-    else
-      Draw(ARect.Left, ARect.Top, FfunctionIcon);
+      if c.Name = 'lstTables' then
+        Draw(ARect.Left, ARect.Top, FtableIcon)
+      else
+        Draw(ARect.Left, ARect.Top, FfunctionIcon);
+
 
     Brush.Style := bsClear;
     TextOut(ARect.Left + 17, ARect.Top, c.Items[Index]);

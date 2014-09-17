@@ -124,7 +124,7 @@ type
     procedure SetProcedureIcon(AValue: TBitmap);
     procedure SetProcedures(AValue: TStringList);
     procedure SetQueryEditorPopUpMenu(AValue: TPopupMenu);
-    procedure OnPageChange(Sender:TObject);
+    //procedure OnPageChange(Sender:TObject);
     procedure GetVariables(QueryText: string; var VarWords: TStringList);
     procedure GetBracketWords(QueryText: string; var BracketWords: TStringList);
     procedure GetFieldNames(table: string; fieldMask: string; var fieldList: TStringList);
@@ -657,14 +657,14 @@ begin
 
     try
 
-      case (FParent as TLazSqlXPageControl).DBInfo.DatabaseType of
-        dtMsSql, dtOracle, dtSQLite, dtFirebirdd:
+      case (FParent as TLazSqlXPageControl).DBInfo.DbEngine of
+        deSqlDB:
         begin
           CommandExecutor :=
             TSqlExecThread.Create(Schema, FQuery, @InternalOnExecutionFinished);
           FDataSource.DataSet := FQuery;
         end;
-        dtMySql:
+        deZeos:
         begin
           CommandExecutor := TSqlExecThread.Create(Schema,
             FZQuery, @InternalOnExecutionFinished);
@@ -1101,11 +1101,11 @@ begin
  FQueryEditorPopUpMenu:=AValue;
 end;
 
-procedure TLazSqlXPageControl.OnPageChange(Sender: TObject);
-begin
-  if PageCount>0 then
-    FSynComplete.Editor := ActiveTab.QueryEditor;
-end;
+//procedure TLazSqlXPageControl.OnPageChange(Sender: TObject);
+//begin
+//  if PageCount>0 then
+//    FSynComplete.Editor := ActiveTab.QueryEditor;
+//end;
 
 procedure TLazSqlXPageControl.GetVariables(QueryText: string;
  var VarWords: TStringList);
@@ -1406,7 +1406,10 @@ begin
  tab.OnExecutionFinished:=FOnExecutionFinished;
  tab.DataGrid.OnDblClick:=FOnDataGridDblClick;
  tab.OnTextScanNeeded:=@OnTextScanNeeded; {for autocomplete,fieldnames invoke}
- OnPageChange(Self);
+ if Tab.QueryEditor<>nil then
+ begin
+  FSynComplete.AddEditor(Tab.QueryEditor);
+ end;
  Result := Tab;
 end;
 
@@ -1418,6 +1421,7 @@ begin
   begin
     if Pages[I] = Tab then
     begin
+      FSynComplete.RemoveEditor(Tab.QueryEditor);
       Pages[I].Free;
       Break;
     end;
@@ -1427,6 +1431,7 @@ end;
 procedure TLazSqlXPageControl.RemoveAllTabsButActive;
 var
  I: Integer;
+ tab:TLazSqlXTabSheet;
 begin
 
  ActivePage.PageIndex:=PageCount-1;
@@ -1435,7 +1440,12 @@ begin
  begin
    if Pages[0]<>ActivePage then
    begin
-    Pages[0].Free;
+     if (Pages[0] is TLazSqlXTabSheet) then
+     begin
+      tab := Pages[0] as TLazSqlXTabSheet;
+      FSynComplete.RemoveEditor(Tab.QueryEditor);
+      tab.Free;
+     end;
    end;
  end;
 end;
@@ -1443,10 +1453,16 @@ end;
 procedure TLazSqlXPageControl.RemoveAllTabs;
 var
  I: Integer;
+ tab:TLazSqlXTabSheet;
 begin
  for I:=0 to PageCount-1 do
  begin
-   Pages[0].Free;
+   if (Pages[0] is TLazSqlXTabSheet) then
+   begin
+    tab := Pages[0] as TLazSqlXTabSheet;
+    FSynComplete.RemoveEditor(tab.QueryEditor);
+    tab.Free;
+   end;
  end;
 end;
 
