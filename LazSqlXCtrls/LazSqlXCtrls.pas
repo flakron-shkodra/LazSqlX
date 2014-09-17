@@ -8,7 +8,7 @@ uses
  Classes, SysUtils, Controls, StdCtrls, ComCtrls, ExtCtrls, Graphics,Dialogs, sqldb, db,
  ZDataset, ZConnection, DbCtrls, DBGrids, SynEdit, SynCompletion, SynEditTypes,
  Grids, Menus, AsStringUtils, DbType, Utils, SynHighlighterSQL, Types, strutils,
- LCLType,MouseAndKeyInput,SqlExecThread;
+ LCLType,MouseAndKeyInput,SqlExecThread, SqlGenerator;
 
 
 type
@@ -39,6 +39,7 @@ type
     FCurrentExecutor:TSqlExecThread;
     FExecutionInProgress:Boolean;
     FEditMode:Boolean;
+    function GetDbInfo:TDbConnectionInfo;
     function GetHasActiveData: Boolean;
     function GetSqlQuery: string;
     procedure OnDBGridDrawColumnCell(Sender: TObject; const Rect: TRect; DataCol: integer; Column: TColumn; State: TGridDrawState);
@@ -87,6 +88,7 @@ type
 
   TLazSqlXPageControl = class (TPageControl)
   private
+    FTrans:TSQLTransaction;
     FCon:TSQLConnector;
     FDataGridPopUpMenu: TPopupMenu;
     FDBInfo: TDbConnectionInfo;
@@ -227,6 +229,11 @@ begin
   end;
 end;
 
+function TLazSqlXTabSheet.GetDbInfo: TDbConnectionInfo;
+begin
+ Result := (FParent as TLazSqlXPageControl).DBInfo;
+end;
+
 function TLazSqlXTabSheet.GetHasActiveData: Boolean;
 begin
  Result:=FQuery.Active or FZQuery.Active;
@@ -309,6 +316,7 @@ begin
   begin
     ds := (DataSet as TSQLQuery);
     I := ds.RecNo;
+    ds.UpdateMode:=upWhereKeyOnly;
     ds.ApplyUpdates;
     (ds.DataBase as TSQLConnector).Transaction.Commit;
 

@@ -271,6 +271,7 @@ type
     procedure EditSpecialField(Sender: TObject);   {*****Edit Special Fields*****}
     procedure EditUndo1Execute(Sender: TObject);
     procedure FindDialog1Find(Sender: TObject);
+    procedure FormCloseQuery(Sender: TObject; var CanClose: boolean);
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure FormKeyDown(Sender: TObject; var Key: word; Shift: TShiftState);
@@ -324,12 +325,12 @@ type
 
     FQuickSearchLastWord: string;
     FExecutionInProgress: boolean;
-    FConnected: boolean;
     FCurrentExecutor: TSqlExecThread;
 
     procedure DoDisconnect;
     procedure DoSelectiveConnect;
-    procedure UpdateGUI(IsConnected: boolean);
+    function GetIsConnected: Boolean;
+    procedure UpdateGUI(aIsConnected: boolean);
     procedure Connect;
     procedure CreateIntelliSense;
     procedure DoExport(exporter: TCustomDatasetExporter; FileExt: string);
@@ -369,11 +370,15 @@ type
     procedure OnDBGridDrawColumnCell(Sender: TObject; const Rect: TRect;
       DataCol: integer; Column: TColumn; State: TGridDrawState);
     procedure OnQueryAfterPost(DataSet: TDataSet);
+
+    procedure SaveSession(aFile:string);
+    procedure LoadSession(aFile:string);
   public
     DbInfo: TDbConnectionInfo;
     ArrowImageLeft: TBitmap;
     ArrowImageRight: TBitmap;
     RectImage: TBitmap;
+    property IsConnected:Boolean read GetIsConnected;
 
   end;
 
@@ -481,6 +486,16 @@ begin
       ResizeGridColumns(100);
     end;
   end;
+end;
+
+procedure TMainForm.SaveSession(aFile: string);
+begin
+ WriteComponentResFile(aFile,FPageControl);
+end;
+
+procedure TMainForm.LoadSession(aFile: string);
+begin
+ ReadComponentResFile(aFile,FPageControl);
 end;
 
 procedure TMainForm.GetFieldNames(table: string; fieldMask: string;
@@ -1058,8 +1073,6 @@ begin
         actNewTabExecute(nil);
       end;
 
-      UpdateGUI(True);
-
       FillSchemas;
       FillTables;
       FillpProcedures;
@@ -1072,10 +1085,15 @@ begin
   end;
 end;
 
-procedure TMainForm.UpdateGUI(IsConnected: boolean);
+procedure TMainForm.UpdateGUI(aIsConnected: boolean);
 begin
 
-  if IsConnected then
+
+  actConnect.Enabled:= not aIsConnected;
+  actDisconnect.Enabled := aIsConnected;
+  actNewTab.Enabled:=aIsConnected;
+
+  if aIsConnected then
   begin
     pnlTables.Visible := True;
     FPageControl.Visible := True;
@@ -1109,22 +1127,24 @@ begin
       deSqlDB:
       begin
         SqlConn.Open;
-        FConnected := True;
       end;
       deZeos:
       begin
         ZCon.Connect;
-        FConnected := True;
       end;
     end;
 
+end;
+
+function TMainForm.GetIsConnected: Boolean;
+begin
+ Result := SqlConn.Connected or ZCon.Connected;
 end;
 
 procedure TMainForm.DoDisconnect;
 begin
   ZCon.Disconnect;
   SqlConn.Close(True);
-  FConnected := ZCon.Connected and SqlConn.Connected;
 end;
 
 
@@ -1437,6 +1457,7 @@ begin
 
   try
 
+    if not grd.ReadOnly then
     grd.DataSource.DataSet.Edit;
 
     BlobFieldForm.btnLoadFromfile.Visible := not grd.ReadOnly;
@@ -1565,6 +1586,11 @@ begin
   FindDialog1.CloseDialog;
 end;
 
+procedure TMainForm.FormCloseQuery(Sender: TObject; var CanClose: boolean);
+begin
+ SaveSession(ChangeFileExt(ParamStr(0),'.lsxs'));
+end;
+
 procedure TMainForm.FormCreate(Sender: TObject);
 var
   I: integer;
@@ -1612,6 +1638,8 @@ begin
   FPageControl.Visible:= False;
   FPageControl.Align:=alClient;
 
+  LoadSession(ChangeFileExt(ParamStr(0),'.lsxs'));
+
 end;
 
 procedure TMainForm.FormDestroy(Sender: TObject);
@@ -1645,7 +1673,7 @@ end;
 
 procedure TMainForm.actQueryDesignerExecute(Sender: TObject);
 begin
-  if FConnected then
+  if GetIsConnected then
   begin
     QueryDesignerForm.Schema := cmbSchema.Text;
     if QueryDesignerForm.ShowModal(DbInfo) = mrOk then
@@ -1675,14 +1703,14 @@ end;
 procedure TMainForm.actConnectExecute(Sender: TObject);
 begin
   Connect;
+  UpdateGUI(GetIsConnected);
 end;
 
 procedure TMainForm.actDisconnectExecute(Sender: TObject);
 begin
   DoDisconnect;
-  FPageControl.RemoveAllTabsButActive;
-  FPageControl.ActiveTab.QueryEditor.Text:=EmptyStr;
-  UpdateGUI(False);
+  FPageControl.RemoveAllTabs;
+  UpdateGUI(GetIsConnected);
 end;
 
 procedure TMainForm.actDropDatabaseExecute(Sender: TObject);
@@ -2058,7 +2086,7 @@ end;
 
 procedure TMainForm.actNewTabExecute(Sender: TObject);
 begin
-  if FConnected then
+  if GetIsConnected then
   begin
     FPageControl.AddTab;
     UpdateGUI(True);
@@ -2136,33 +2164,44 @@ end;
 
 procedure TMainForm.ApplicationPropertiesException(Sender: TObject; E: Exception);
 begin
-  ShowMessage('Unhandled exception' + LineEnding + e.Message);
+
 end;
 
 procedure TMainForm.ApplicationPropertiesIdle(Sender: TObject; var Done: boolean);
 begin
 
-  if (not FConnected) or (FPageControl.PageCount=0) then exit;
+ if Assigned(DbInfo) then
+ begin
+   mitGenerateSP.Visible := DbInfo.DatabaseType <> dtFirebirdd;
+   actDropDatabase.Enabled := DbInfo.DatabaseType in [dtMsSql, dtMySql, dtOracle];
+ end;
 
-
+ if FPageControl.PageCount>0 then
+ begin
+  actExecute.Enabled:=Trim(FPageControl.ActiveTab.QueryEditor.Text)<>EmptyStr;
+  actCheckSyntax.Enabled:=actExecute.Enabled;
   actGridCopy.Enabled := (FPageControl.ActiveTab.HasActiveData);
+
   actGridCopyRow.Enabled := actGridCopy.Enabled;
   actGridCopyAll.Enabled := actGridCopyAll.Enabled;
-  actExecute.Enabled := (Trim(FPageControl.ActiveTab.QueryEditor.Text) <> EmptyStr );
+
   actCheckSyntax.Enabled := actExecute.Enabled;
-  actQueryDesigner.Enabled := FConnected;
-  actDatabaseCloner.Enabled := FConnected;
-  actDataImporter.Enabled := FConnected;
-  actDisconnect.Enabled := FConnected;
-  actNewTab.Enabled:=FConnected;
+  actQueryDesigner.Enabled := GetIsConnected;
+  actDatabaseCloner.Enabled := GetIsConnected;
+  actDataImporter.Enabled := GetIsConnected;
 
-
-  if Assigned(DbInfo) then
-  begin
-    mitGenerateSP.Visible := DbInfo.DatabaseType <> dtFirebirdd;
-    actDropDatabase.Enabled := DbInfo.DatabaseType in [dtMsSql, dtMySql, dtOracle];
-  end;
-
+ end else
+ begin
+  actExecute.Enabled:=False;
+  actCheckSyntax.Enabled:=False;
+  actGridCopy.Enabled := False;
+  actGridCopyRow.Enabled := False;
+  actGridCopyAll.Enabled := False;
+  actCheckSyntax.Enabled := False;
+  actQueryDesigner.Enabled := False;
+  actDatabaseCloner.Enabled := False;
+  actDataImporter.Enabled := False;
+ end;
 end;
 
 procedure TMainForm.cmbSchemaChange(Sender: TObject);

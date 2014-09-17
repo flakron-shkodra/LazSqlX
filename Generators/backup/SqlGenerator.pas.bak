@@ -584,7 +584,7 @@ begin
           for I := 1 to TableInfo.PrimaryKeys.Count - 1 do
             r.Add(strIdent + ' AND ' + SqlOpenBr + SqlTable +
               SqlCloseBr + SqlDot + SqlOpenBr + TableInfo.PrimaryKeys[I].FieldName +
-              SqlCloseBr + '=' + SqlParamChar + 'p'+IntToStr(I+1));
+              SqlCloseBr + '=' + SqlParamChar + TableInfo.PrimaryKeys[I].CSharpName);
         end;
       end;
     end;

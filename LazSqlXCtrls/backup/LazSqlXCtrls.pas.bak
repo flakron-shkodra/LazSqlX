@@ -87,6 +87,7 @@ type
 
   TLazSqlXPageControl = class (TPageControl)
   private
+    FTrans:TSQLTransaction;
     FCon:TSQLConnector;
     FDataGridPopUpMenu: TPopupMenu;
     FDBInfo: TDbConnectionInfo;
@@ -309,6 +310,7 @@ begin
   begin
     ds := (DataSet as TSQLQuery);
     I := ds.RecNo;
+    ds.UpdateMode:=upWhereKeyOnly;
     ds.ApplyUpdates;
     (ds.DataBase as TSQLConnector).Transaction.Commit;
 
@@ -1433,7 +1435,7 @@ var
  I: Integer;
  tab:TLazSqlXTabSheet;
 begin
-
+ if PageCount<1 then exit;
  ActivePage.PageIndex:=PageCount-1;
 
  for I:=0 to PageCount-1 do
