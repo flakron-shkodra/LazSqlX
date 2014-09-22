@@ -1,6 +1,6 @@
 ﻿unit QueryDesignerU;
 
-{$MODE Delphi}
+{$MODE objfpc}
 
 interface
 
@@ -8,9 +8,9 @@ uses
   SysUtils, Variants,
   Classes,
   Graphics, Controls, Forms, Dialogs, Contnrs,
-  ExtCtrls, TableInfo, StdCtrls, ToolWin,
+  ExtCtrls, TableInfo, DbType, StdCtrls, ToolWin,
   ComCtrls, ImgList, SqlGenerator, GraphUtil,ZConnection,
-  MouseAndKeyInput,MouseInputIntf,KeyInputIntf,LCL,LCLType,LCLIntf;
+  MouseAndKeyInput,MouseInputIntf,KeyInputIntf,LCL,LCLType,LCLIntf, Menus;
 
 type
 
@@ -19,6 +19,8 @@ type
   TQueryDesigner = class(TFrame)
    ArrowRightImage: TImage;
    ArrowLeftImage: TImage;
+   mitEditVirtualRelations: TMenuItem;
+   PopupMenu1: TPopupMenu;
    RectangleImage: TImage;
     // GUI CONTROLS DECLARE
     scbDesigner: TScrollBox;
@@ -36,6 +38,8 @@ type
     // CONTROLS END
 
     procedure btnAddTableClick(Sender: TObject);
+    procedure FrameClick(Sender: TObject);
+    procedure mitEditVirtualRelationsClick(Sender: TObject);
     procedure Splitter1Paint(Sender: TObject);
     procedure btnDeleteTableClick(Sender: TObject);
     procedure btnClearClick(Sender: TObject);
@@ -46,20 +50,21 @@ type
     procedure scbDesignerMouseWheelUp(Sender: TObject; Shift: TShiftState; MousePos: TPoint; var Handled: Boolean);
     procedure scbDesignerResize(Sender: TObject);
   private
+   FDbInfo: TDbConnectionInfo;
    FSchema: String;
     { Private declarations }
 
     inReposition: boolean;
     FNodePositioning: boolean;
     oldPos: TPoint;
-
     SelectedControl: TObject;
     ControlPressed: boolean;
     FNodes: TObjectList;
-    FDatabaseInfo: TZConnection;
+    FCon: TZConnection;
     FTableInfoList: TTableInfos;
     IsFieldDragging: boolean;
     FFCurrentNodeControl: TWinControl;
+    procedure SetDbInfo(AValue: TDbConnectionInfo);
     procedure SetFCurrentNodeControl(const Value: TWinControl);
     procedure SetSchema(AValue: String);
     property FCurrentNodeControl: TWinControl read FFCurrentNodeControl
@@ -67,7 +72,7 @@ type
 
     procedure CreateNodes;
     procedure PositionNodes(AroundControl: TWinControl);
-    procedure SetNodesVisible(Visible: boolean);
+    procedure SetNodesVisible(aVisible: boolean);
     procedure ControlMouseDown(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: integer);
     procedure ControlMouseMove(Sender: TObject; Shift: TShiftState;
@@ -96,8 +101,10 @@ type
       X, Y: integer);
     // *****************FIELD LIST DRAG RELATED END*****************************************************
 
-    procedure GenerateTableControl(CursorPos: TPoint; parent: TWinControl;
-      Schema, Tablename: string);
+    procedure AddVirtualRelation(sourceTable, sourceField, foreignTable,
+     foreignKey: string);
+    function GenerateTableControl(CursorPos: TPoint; aParent: TWinControl;
+      Schema, Tablename: string):Boolean;
     procedure SetDatabaseInfo(const Value: TZConnection);
     procedure SetTableInfoList(const Value: TTableInfos);
 
@@ -109,22 +116,22 @@ type
 
   public
     { Public declarations }
-    DbSchema: string;
-    constructor Create(Owner: TComponent); override;
+    FDbSchema: string;
+    constructor Create(aOwner: TComponent); override;
     destructor Destroy; override;
-    procedure AddTable(Schema, Tablename: string; Position: TPoint);
+    function AddTable(Schema, Tablename: string; Position: TPoint):Boolean;
     procedure Clear;
     procedure RemoveTable(Tablename: string);
 
     procedure GenerateQuery;
 
-    property DatabaseInfo: TZConnection read FDatabaseInfo
-      write SetDatabaseInfo;
+    property Connection: TZConnection read FCon write SetDatabaseInfo;
     property TableInfoList: TTableInfos read FTableInfoList
       write SetTableInfoList;
     property Schema:String read FSchema write SetSchema;
 
     property SqlQuery: string read GetSqlQuery;
+    property DbInfo:TDbConnectionInfo read FDbInfo write SetDbInfo;
 
 
   end;
@@ -157,24 +164,26 @@ const
 
 implementation
 
-uses QueryDesignerDialogU, QueryDesignerTablesU, DbType, AsSqlParser;
+uses QueryDesignerDialogU, QueryDesignerTablesU, QueryDesignerPropertyGridU,
+ AsSqlParser;
 
 {$R *.lfm}
 { TQueryDesignerFrame }
 
-procedure TQueryDesigner.AddTable(Schema, Tablename: string; Position: TPoint);
+function TQueryDesigner.AddTable(Schema, Tablename: string; Position: TPoint
+ ): Boolean;
 begin
-  DbSchema := Schema;
-  GenerateTableControl(Position, scbDesigner, Schema, Tablename);
+  FDbSchema := Schema;
+  Result := GenerateTableControl(Position, scbDesigner, Schema, Tablename);
 end;
 
 procedure TQueryDesigner.AssignEvents(ctrl: TObject);
 begin
   if (ctrl is TPanel) then
   begin
-    (ctrl as TPanel).OnMouseDown := ControlMouseDown;
-    (ctrl as TPanel).OnMouseUp := ControlMouseUp;
-    (ctrl as TPanel).OnMouseMove := ControlMouseMove;
+    (ctrl as TPanel).OnMouseDown := @ControlMouseDown;
+    (ctrl as TPanel).OnMouseUp := @ControlMouseUp;
+    (ctrl as TPanel).OnMouseMove := @ControlMouseMove;
   end;
 
 end;
@@ -206,14 +215,15 @@ var
   I: integer;
   c: TControl;
   ti: TTableInfo;
+  a: TPanel;
 begin
+
   txtSqlQuery.Clear;
-  if Assigned(TableInfoList) then
-  for ti in TableInfoList do
+
+  //the first one is paintbox
+  for I:=1 to scbDesigner.ControlCount-1 do
   begin
-    c := scbDesigner.FindChildControl(ti.TableCSharpName);
-    if c <> nil then
-      c.Free;
+    scbDesigner.Controls[1].Free;
   end;
 
   SetNodesVisible(False);
@@ -266,7 +276,7 @@ end;
 procedure TQueryDesigner.ControlMouseUp(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: integer);
 var
-  CtrlCaption: string;
+  CtrlCaption: AnsiString;
 begin
   CtrlCaption := '';
   if inReposition then
@@ -289,7 +299,7 @@ begin
   end;
 end;
 
-constructor TQueryDesigner.Create(Owner: TComponent);
+constructor TQueryDesigner.Create(aOwner: TComponent);
 begin
   inherited Create(Owner);
   FNodes := TObjectList.Create(True);
@@ -335,9 +345,9 @@ begin
           3, 7:
             Cursor := crSizeWE;
         end;
-        OnMouseDown := NodeMouseDown;
-        OnMouseMove := NodeMouseMove;
-        OnMouseUp := NodeMouseUp;
+        OnMouseDown := @NodeMouseDown;
+        OnMouseMove := @NodeMouseMove;
+        OnMouseUp := @NodeMouseUp;
       end;
     end;
   end;
@@ -347,8 +357,8 @@ destructor TQueryDesigner.Destroy;
 begin
   if FNodes <> nil then
     FNodes.Free;
-  // TableInfoList.Clear;
-  // TableInfoList.Free;
+   if Assigned(TableInfoList) then
+   TableInfoList.Free;
   inherited Destroy;
 end;
 
@@ -393,7 +403,7 @@ begin
       ti := TableInfoList.TableByName(FCurrentNodeControl.Hint);
       if ti <> nil then
       begin
-        s := TSqlGenerator.Create(FDatabaseInfo.HostName,FDatabaseInfo.Database,FDatabaseInfo.User,FDatabaseInfo.Password, p,TDbUtils.DatabaseTypeFromString(FDatabaseInfo.Protocol),FDatabaseInfo.Port);
+        s := TSqlGenerator.Create(FCon.HostName,FCon.Database,FCon.User,FCon.Password, p,TDbUtils.DatabaseTypeFromString(FCon.Protocol),FCon.Port);
         outPut := s.GenerateQuery(0, ti, qtSelect);
         txtSqlQuery.Lines := outPut;
       end;
@@ -409,8 +419,8 @@ begin
 
 end;
 
-procedure TQueryDesigner.GenerateTableControl(CursorPos: TPoint;
-  parent: TWinControl; Schema, Tablename: string);
+function TQueryDesigner.GenerateTableControl(CursorPos: TPoint;
+ aParent: TWinControl; Schema, Tablename: string): Boolean;
 
 var
   ti: TTableInfo;
@@ -427,10 +437,15 @@ var
 
 begin
 
+  Result := False;
+  if TableInfoList.TableByName(Tablename)<>nil then
+  exit;
+
   try
 
     if FindTableControl(Tablename) = nil then
     begin
+
       ti := TableInfoList.GetTableInfo(Schema, Tablename);
       if ti <> nil then
       begin
@@ -438,8 +453,9 @@ begin
         TableInfoList.Add(ti);
         tableWidth := 10;
 
-        pnlTable := TPanel.Create(parent);
-        parent.InsertControl(pnlTable);
+
+        pnlTable := TPanel.Create(aParent);
+        aParent.InsertControl(pnlTable);
         pnlTable.Height := 70;
         pnlTable.Width := 50;
         pnlTable.Hint := Tablename;
@@ -464,12 +480,12 @@ begin
           lblFieldCaption.Layout := tlCenter;
           fieldPanel.Hint := field.fieldName;
 //          fieldPanel.DragMode := dmAutomatic;
-          fieldPanel.OnStartDrag := OnFieldStartDrag;
-          fieldPanel.OnDragOver := OnFieldDragOver;
-          fieldPanel.OnDragDrop := OnFieldDragDrop;
-          fieldPanel.OnMouseDown := OnFieldMouseDown;
-          fieldPanel.OnMouseUp := OnFieldMouseUp;
-          fieldPanel.OnMouseMove := OnFieldMouseMove;
+          fieldPanel.OnStartDrag := @OnFieldStartDrag;
+          fieldPanel.OnDragOver := @OnFieldDragOver;
+          fieldPanel.OnDragDrop := @OnFieldDragDrop;
+          fieldPanel.OnMouseDown := @OnFieldMouseDown;
+          fieldPanel.OnMouseUp := @OnFieldMouseUp;
+          fieldPanel.OnMouseMove := @OnFieldMouseMove;
           fieldPanel.ControlStyle := fieldPanel.ControlStyle + [csDisplayDragImage];
           fieldPanel.Tag := 1;
           lblFieldCaption.Enabled := False;
@@ -516,7 +532,7 @@ begin
             begin
               if ti.ImportedKeys[I].ForeignTableName <> Tablename then
                 GenerateTableControl(Point(CursorPos.X + pnlTable.Width + 50,
-                  CursorPos.Y), parent, DbSchema,
+                  CursorPos.Y), aParent, FDbSchema,
                   ti.ImportedKeys[I].ForeignTableName);
             end;
 
@@ -525,6 +541,8 @@ begin
       end;
       FCurrentNodeControl := pnlTable;
       PositionNodes(FCurrentNodeControl);
+      pnlTable.PopupMenu:=PopupMenu1;
+      Result := True;
     end;
 
   except
@@ -657,76 +675,17 @@ procedure TQueryDesigner.OnFieldDragDrop(Sender, Source: TObject;
 var
   foreignTable: string;
   foreignKey: string;
-  foreignSchema: string;
-
   sourceField: string;
   sourceTable: string;
-  selectFields:TStringList;
-  ti: TTableInfo;
-  foreignTi: TTableInfo;
-  ik: TImportedKey;
-  fi: TFieldInfo;
-  I:Integer;
 begin
-  foreignTable := ((Sender as TPanel).parent as TPanel).Hint;
-  foreignKey := (Sender as TPanel).Hint;
-
   if not (Source is TDragFieldObject) then Exit;
 
-
+  foreignTable := ((Sender as TPanel).parent as TPanel).Hint;
+  foreignKey := (Sender as TPanel).Hint;
   sourceField := ((Source as TDragFieldObject).Control as TPanel).Hint;
   sourceTable := (((Source as TDragFieldObject).Control as TPanel).parent as TPanel).Hint;
 
-  ti := TableInfoList.TableByName(sourceTable);
-  foreignTi := TableInfoList.TableByName(foreignTable);
-
-  ik := ti.ImportedKeys.GetByName(foreignKey);
-
-  QueryDesignerDialog.cmbForeignTable.Text := foreignTable;
-  QueryDesignerDialog.cmbValueMember.Text := foreignKey;
-
-  if ik <> nil then
-  begin
-    foreignSchema := ik.ForeignSchema;
-    selectFields := ik.SelectFields;
-  end else
-  selectFields := TStringList.Create;
-
-  if foreignSchema = '' then
-    foreignSchema := DbSchema;
-  QueryDesignerDialog.grbConfigure.Caption := 'Source: [' + sourceTable + '.' +
-    sourceField + ']';
-
-
-
-  if QueryDesignerDialog.ShowModal(DatabaseInfo, foreignSchema, sourceTable,sourceField, foreignTable,
-    foreignKey, selectFields) = mrOk then
-  begin
-    if ik = nil then
-    begin
-      ik := TImportedKey.Create;
-      ti.ImportedKeys.Add(ik);
-    end;
-
-    for fi in ti.AllFields do
-    begin
-      if fi.fieldName = sourceField then
-      begin
-        fi.IsReference := True;
-        Break;
-      end;
-    end;
-
-    ik.ForeignSchema := DbSchema;
-    ik.Tablename := (((Source as TDragFieldObject).Control as TPanel).parent as TPanel).Hint;
-    ik.ColumnName := QueryDesignerDialog.cmbSourceField.Text;
-
-    ik.ForeignTableName := QueryDesignerDialog.cmbForeignTable.Text;
-    ik.ForeignColumnName := QueryDesignerDialog.cmbValueMember.Text;
-    ik.SelectFields.Clear;
-    ik.SelectFields.AddStrings(QueryDesignerDialog.SelectFields);
-
-  end;
+  AddVirtualRelation(sourceTable,sourceField,foreignTable,foreignKey);
 
   (Sender as TPanel).Color := clWhite;
   pbArea.Invalidate;
@@ -820,6 +779,70 @@ begin
 
 end;
 
+procedure TQueryDesigner.AddVirtualRelation(sourceTable,sourceField,foreignTable,foreignKey: string);
+var
+  foreignSchema: string;
+  selectFields:TStringList;
+  ti: TTableInfo;
+  foreignTi: TTableInfo;
+  ik: TImportedKey;
+  fi: TFieldInfo;
+  I:Integer;
+begin
+
+
+  ti := TableInfoList.TableByName(sourceTable);
+  foreignTi := TableInfoList.TableByName(foreignTable);
+
+  ik := ti.ImportedKeys.GetByName(foreignKey);
+
+  QueryDesignerDialog.cmbForeignTable.Text := foreignTable;
+  QueryDesignerDialog.cmbValueMember.Text := foreignKey;
+
+  if ik <> nil then
+  begin
+    foreignSchema := ik.ForeignSchema;
+    selectFields := ik.SelectFields;
+  end else
+  selectFields := TStringList.Create;
+
+  if foreignSchema = '' then
+    foreignSchema := FDbSchema;
+  QueryDesignerDialog.grbConfigure.Caption := 'Source: [' + sourceTable + '.' +
+    sourceField + ']';
+
+
+
+  if QueryDesignerDialog.ShowModal(FDbInfo, foreignSchema, sourceTable,sourceField, foreignTable,
+    foreignKey, selectFields) = mrOk then
+  begin
+    if ik = nil then
+    begin
+      ik := TImportedKey.Create;
+      ti.ImportedKeys.Add(ik);
+    end;
+
+    for fi in ti.AllFields do
+    begin
+      if fi.fieldName = sourceField then
+      begin
+        fi.IsReference := True;
+        Break;
+      end;
+    end;
+
+    ik.ForeignSchema := FDbSchema;
+    ik.Tablename := sourceTable;
+    ik.ColumnName := QueryDesignerDialog.cmbSourceField.Text;
+
+    ik.ForeignTableName := QueryDesignerDialog.cmbForeignTable.Text;
+    ik.ForeignColumnName := QueryDesignerDialog.cmbValueMember.Text;
+    ik.SelectFields.Clear;
+    ik.SelectFields.AddStrings(QueryDesignerDialog.SelectFields);
+
+  end;
+end;
+
 procedure TQueryDesigner.OnFieldMouseUp(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: integer);
 begin
@@ -863,8 +886,6 @@ var
 begin
 
   try
-
-
     for I := 0 to TableInfoList.Count - 1 do
     begin
       ti := TableInfoList[I];
@@ -1058,15 +1079,18 @@ begin
   if I > -1 then
   begin
     c := scbDesigner.FindChildControl(TableInfoList[I].TableCSharpName);
-    if c <> nil then
-      c.Free;
 
-    if TableInfoList[I] <> nil then
-    begin
-      FCurrentNodeControl := nil;
-      SetNodesVisible(False);
-      TableInfoList[I].Tablename := '';
-    end;
+    if c <> nil then
+    c.Free;
+
+    TableInfoList.TableByName(Tablename).Free;
+
+    //if TableInfoList[I] <> nil then
+    //begin
+    //  FCurrentNodeControl := nil;
+    //  SetNodesVisible(False);
+    //  TableInfoList[I].Tablename := '';
+    //end;
   end;
 
 end;
@@ -1107,9 +1131,7 @@ end;
 
 procedure TQueryDesigner.SetDatabaseInfo(const Value: TZConnection);
 begin
-  FDatabaseInfo := Value;
-  if TableInfoList = nil then
-    TableInfoList := TTableInfos.Create(FDatabaseInfo.HostName,FDatabaseInfo.Database,FDatabaseInfo.User,FDatabaseInfo.Password,DatabaseTypeFromString(FDatabaseInfo.Protocol),FDatabaseInfo.Port);
+  FCon := Value;
 end;
 
 procedure TQueryDesigner.SetFCurrentNodeControl(const Value: TWinControl);
@@ -1119,12 +1141,22 @@ begin
   SetNodesVisible(FFCurrentNodeControl <> nil);
 end;
 
-procedure TQueryDesigner.SetNodesVisible(Visible: boolean);
+procedure TQueryDesigner.SetDbInfo(AValue: TDbConnectionInfo);
+begin
+ if FDbInfo=AValue then Exit;
+ FDbInfo:=AValue;
+
+ if TableInfoList = nil then
+    TableInfoList := TTableInfos.Create(FDBInfo);
+
+end;
+
+procedure TQueryDesigner.SetNodesVisible(aVisible: boolean);
 var
   Node: integer;
 begin
   for Node := 0 to 7 do
-    TWinControl(FNodes.Items[Node]).Visible := Visible;
+    TWinControl(FNodes.Items[Node]).Visible := aVisible;
 end;
 
 
@@ -1152,7 +1184,7 @@ begin
 
   try
     lst := TStringList.Create;
-    FDatabaseInfo.GetTableNames(FSchema,'',lst);
+    FCon.GetTableNames(FSchema,'',lst);
 
     if QueryDesignerTables = nil then
     QueryDesignerTables := TQueryDesignerTables.Create(Self);
@@ -1183,9 +1215,11 @@ begin
         begin
           if chkTables.Checked[I] then
           begin
-            AddTable(FSchema,chkTables.Items[I],Point(x,y));
-            lastControl := scbDesigner.Controls[scbDesigner.ControlCount-1];
-            Inc(x,lastControl.Left+lastControl.Width+10);
+            if (AddTable(FSchema,chkTables.Items[I],Point(x,y))) then
+            begin
+              lastControl := scbDesigner.Controls[scbDesigner.ControlCount-1];
+              Inc(x,lastControl.Left+lastControl.Width+10);
+            end;
           end;
         end;
       end;
@@ -1193,6 +1227,26 @@ begin
   finally
     lst.Free;
   end;
+end;
+
+procedure TQueryDesigner.FrameClick(Sender: TObject);
+begin
+
+end;
+
+procedure TQueryDesigner.mitEditVirtualRelationsClick(Sender: TObject);
+var
+  ti:TTableInfo;
+begin
+  ti := TableInfoList.TableByName(FCurrentNodeControl.Hint);
+  if ti <>nil then
+  begin
+    QueryDesignerPropertyGrid.pnlTop.Caption:=ti.Tablename;
+    QueryDesignerPropertyGrid.TIPropertyGrid1.TIObject:=ti;
+    QueryDesignerPropertyGrid.ShowModal;
+    QueryDesignerPropertyGrid.TIPropertyGrid1.TIObject:=nil;
+  end;
+
 end;
 
 procedure TQueryDesigner.UpdateToolbar;

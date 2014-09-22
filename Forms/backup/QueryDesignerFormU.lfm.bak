@@ -6,7 +6,6 @@ object QueryDesignerForm: TQueryDesignerForm
   ClientHeight = 615
   ClientWidth = 927
   OnCreate = FormCreate
-  OnDestroy = FormDestroy
   OnShow = FormShow
   LCLVersion = '1.2.4.0'
   object Splitter1: TSplitter

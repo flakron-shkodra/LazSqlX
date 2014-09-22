@@ -481,10 +481,7 @@ var
   s:string;
 begin
   if Trim(Tablename)=EmptyStr then
-  begin
-    Result:='';
-    Exit;
-  end;
+  Result:='';
 
  s := LowerCase(TAsStringUtils.ExtractUppercaseLetters(Tablename));
  if Length(s) = Length(Tablename) then

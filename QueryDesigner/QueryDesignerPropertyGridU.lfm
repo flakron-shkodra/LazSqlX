@@ -1,0 +1,52 @@
+object QueryDesignerPropertyGrid: TQueryDesignerPropertyGrid
+  Left = 537
+  Height = 280
+  Top = 195
+  Width = 362
+  Caption = 'Properties'
+  ClientHeight = 280
+  ClientWidth = 362
+  Position = poScreenCenter
+  LCLVersion = '1.2.4.0'
+  object TIPropertyGrid1: TTIPropertyGrid
+    Left = 0
+    Height = 217
+    Top = 26
+    Width = 362
+    Align = alClient
+    DefaultValueFont.Color = clWindowText
+    Filter = [tkInteger, tkChar, tkEnumeration, tkFloat, tkSet, tkMethod, tkSString, tkLString, tkAString, tkWString, tkVariant, tkArray, tkRecord, tkInterface, tkClass, tkObject, tkWChar, tkBool, tkInt64, tkQWord, tkDynArray, tkInterfaceRaw, tkProcVar, tkUString, tkUChar, tkHelper]
+    Indent = 16
+    NameFont.Color = clWindowText
+    ValueFont.Color = clMaroon
+  end
+  object pnlBottom: TPanel
+    Left = 0
+    Height = 37
+    Top = 243
+    Width = 362
+    Align = alBottom
+    ClientHeight = 37
+    ClientWidth = 362
+    TabOrder = 1
+    object btnClose: TBitBtn
+      Left = 137
+      Height = 25
+      Top = 6
+      Width = 75
+      DefaultCaption = True
+      Kind = bkClose
+      ModalResult = 11
+      TabOrder = 0
+    end
+  end
+  object pnlTop: TPanel
+    Left = 0
+    Height = 26
+    Top = 0
+    Width = 362
+    Align = alTop
+    Caption = 'Tablename'
+    TabOrder = 2
+  end
+end

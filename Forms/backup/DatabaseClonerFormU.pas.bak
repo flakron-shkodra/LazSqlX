@@ -331,7 +331,7 @@ begin
         try
          lblProgress.Caption := 'Processing [' + FTableInfos[I].Tablename + ']';
 
-          if AnsiContainsText(FTableInfos[I].Tablename,'_SEQ') then
+          if not AnsiContainsText(FTableInfos[I].Tablename,'_SEQ') then
           begin
             pbProgressBar.StepIt;
             WriteLog('Skipped ['+FTableInfos[I].Tablename+']',ltInfo);

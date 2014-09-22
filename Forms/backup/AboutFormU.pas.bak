@@ -29,7 +29,6 @@ type
     pnlMain: TPanel;
     procedure btnOKClick(Sender: TObject);
     procedure FormShow(Sender: TObject);
-    procedure lblProductClick(Sender: TObject);
   private
     { private declarations }
   public
@@ -50,11 +49,6 @@ uses MainFormU;
 procedure TAboutForm.FormShow(Sender: TObject);
 begin
   lblVersion.Caption:= AppVersion;
-end;
-
-procedure TAboutForm.lblProductClick(Sender: TObject);
-begin
-
 end;
 
 procedure TAboutForm.btnOKClick(Sender: TObject);

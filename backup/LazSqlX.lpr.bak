@@ -11,8 +11,7 @@ uses
   TableInfoFormU, AboutFormU, EditColumnFormU, EditConstraintsFormU,
   EditIndexFormU, QueryDesignerFormU, ProgressFormU, DatabaseClonerFormU,
   DataImporterFormU, Utils, SqlGenerator, FtDetector, lazdbexport, zcomponent,
-  TableInfo, DbType, SqlExecThread, QueryDesignerDialogU, QueryDesignerTablesU,
-  QueryDesignerPropertyGridU, DataImporterDialogU;
+  TableInfo, DbType, SqlExecThread, QueryDesignerDialogU,QueryDesignerTablesU,DataImporterDialogU;
 
 
 {$R *.res}
@@ -32,7 +31,6 @@ begin
   Application.CreateForm(TQueryDesignerForm,QueryDesignerForm);
   Application.CreateForm(TQueryDesignerDialog,QueryDesignerDialog);
   Application.CreateForm(TQueryDesignerTables,QueryDesignerTables);
-  Application.CreateForm(TQueryDesignerPropertyGrid,QueryDesignerPropertyGrid);
   Application.CreateForm(TProgressForm,ProgressForm);
   Application.CreateForm(TDatabaseClonerForm, DatabaseClonerForm);
   Application.CreateForm(TDataImporterForm,DataImporterForm);

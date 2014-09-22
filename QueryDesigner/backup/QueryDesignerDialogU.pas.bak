@@ -8,7 +8,7 @@ uses
   Messages, SysUtils, Variants,
   Classes, Graphics,
   Controls, Forms, Dialogs, StdCtrls,
-  TableInfo, QueryDesignerU, Buttons,
+  TableInfo, DbType, QueryDesignerU, Buttons,
   ExtCtrls,ZConnection;
 
 type
@@ -31,6 +31,7 @@ type
     lblDisplayField: TLabel;
     lblSourceField: TLabel;
     cmbSourceField: TComboBox;
+    procedure FormClose(Sender: TObject; var CloseAction: TCloseAction);
     procedure FormDestroy(Sender: TObject);
     procedure cmbForeignTableChange(Sender: TObject);
     procedure FormShow(Sender: TObject);
@@ -41,7 +42,7 @@ type
     procedure btnDelClick(Sender: TObject);
   private
     { Private declarations }
-    FDbConnection: TZConnection;
+    FDBInfo:TDbConnectionInfo;
     FDBSchema: string;
     FKeyField: string;
     FSourceTable:String;
@@ -53,7 +54,7 @@ type
   public
     { Public declarations }
     SelectFields: TStringList;
-    function ShowModal(Con:TZConnection;
+    function ShowModal(Con:TDbConnectionInfo;
       Schema, SourceTable,SourceField,ForiegnTable, ForeignKeyField: string; aSelectFields: TStringList)
       : TModalResult;
   end;
@@ -170,13 +171,21 @@ begin
 end;
 
 procedure TQueryDesignerDialog.cmbForeignTableChange(Sender: TObject);
+var
+  lst:TStringList;
 begin
 
   cmbValueMember.Items.Clear;
   cmbDisplayMember.Items.Clear;
 
-  FDbConnection.GetColumnNames(cmbForeignTable.Items[cmbForeignTable.ItemIndex],'',cmbValueMember.Items);
-  cmbDisplayMember.Items.AddStrings(cmbValueMember.Items);
+  try
+    lst := TStringList.Create;
+    TDbUtils.GetColumnNames(FDBInfo,cmbForeignTable.Items[cmbForeignTable.ItemIndex],lst);
+    cmbValueMember.Items.AddStrings(lst);
+    cmbDisplayMember.Items.AddStrings(lst);
+  finally
+    lst.Free;
+  end;
 end;
 
 procedure TQueryDesignerDialog.cmbSelectFieldChanged(Sender: TObject);
@@ -198,44 +207,55 @@ end;
 
 procedure TQueryDesignerDialog.FormDestroy(Sender: TObject);
 begin
-  if FDbConnection <> nil then
-    FDbConnection.Free;
-
   SelectFields.Free;
+end;
+
+procedure TQueryDesignerDialog.FormClose(Sender: TObject;
+ var CloseAction: TCloseAction);
+begin
 end;
 
 procedure TQueryDesignerDialog.FormShow(Sender: TObject);
 var
   I: Integer;
+  lst:TStringList;
 begin
   cmbDisplayMember.Color := clWindow;
   Height := 211;
 
-  FDbConnection.GetTableNames(FDBSchema,'',cmbForeignTable.Items);
+  try
+    lst := TStringList.Create;
+    TDbUtils.GetTableNames(FDBInfo, FDBSchema,lst);
+    cmbForeignTable.Items.AddStrings(lst);
 
-  FDbConnection.GetColumnNames(FTableName,'',cmbSourceField.Items);
+    TDbUtils.GetColumnNames(FDBInfo, FSourceTable,lst);
+    cmbSourceField.Items.AddStrings(lst);
 
-  cmbForeignTable.ItemIndex := cmbForeignTable.Items.IndexOf(FTableName);
-  cmbForeignTableChange(nil);
-
-
-  cmbValueMember.Text := FKeyField;
-
-  if FSourceField<>'' then
-  cmbSourceField.Text := FSourceField
-  else
-  begin
-    if cmbSourceField.Items.Count>0 then
-    cmbSourceField.ItemIndex := 0;
-  end;
+    cmbForeignTable.ItemIndex := cmbForeignTable.Items.IndexOf(FTableName);
+    cmbForeignTableChange(nil);
 
 
+    cmbValueMember.Text := FKeyField;
 
-  // cmbDisplayMember.Text := FDisplayField[0];
+    if FSourceField<>'' then
+    cmbSourceField.Text := FSourceField
+    else
+    begin
+      if cmbSourceField.Items.Count>0 then
+      cmbSourceField.ItemIndex := 0;
+    end;
 
-  for I := 0 to SelectFields.Count - 1 do
-  begin
-    AddSelectFieldControl(SelectFields[I]);
+
+
+    // cmbDisplayMember.Text := FDisplayField[0];
+
+    for I := 0 to SelectFields.Count - 1 do
+    begin
+      AddSelectFieldControl(SelectFields[I]);
+    end;
+
+  finally
+    lst.Free;
   end;
 
 end;
@@ -267,10 +287,11 @@ begin
     end;
 end;
 
-function TQueryDesignerDialog.ShowModal(Con: TZConnection; Schema, SourceTable,
- SourceField, ForiegnTable, ForeignKeyField: string; aSelectFields: TStringList
- ): TModalResult;
+function TQueryDesignerDialog.ShowModal(Con: TDbConnectionInfo; Schema,
+ SourceTable, SourceField, ForiegnTable, ForeignKeyField: string;
+ aSelectFields: TStringList): TModalResult;
 begin
+  FDBInfo := Con;
   FDBSchema := Schema;
   FTableName := ForiegnTable;
   FKeyField := ForeignKeyField;
@@ -281,16 +302,6 @@ begin
   ClearSelectFields;
   if SelectFields <> nil then
     SelectFields.AddStrings(aSelectFields);
-
-  if FDbConnection = nil then
-  begin
-    FDbConnection := Con;
-  end;
-
-  if FDbConnection.Connected then
-  FDbConnection.Disconnect;
-
-  FDbConnection.Connect;
 
   Result := inherited ShowModal;
 

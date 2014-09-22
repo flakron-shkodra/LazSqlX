@@ -39,6 +39,7 @@ type
     FCurrentExecutor:TSqlExecThread;
     FExecutionInProgress:Boolean;
     FEditMode:Boolean;
+    FTransaction:TSQLTransaction;
     function GetDbInfo:TDbConnectionInfo;
     function GetHasActiveData: Boolean;
     function GetSqlQuery: string;
@@ -317,8 +318,12 @@ begin
     ds := (DataSet as TSQLQuery);
     I := ds.RecNo;
     ds.UpdateMode:=upWhereKeyOnly;
+    if (GetDbInfo.DatabaseType = dtOracle) and (GetDbInfo.DbEngine=deSqlDB) then
+    begin
+      //generate update or delete statement
+    end;
     ds.ApplyUpdates;
-    (ds.DataBase as TSQLConnector).Transaction.Commit;
+    ((ds as TSQLQuery).Transaction AS TSQLTransaction).Commit;
 
     if not ds.Active then
     begin
@@ -460,7 +465,7 @@ begin
 
  inherited Create(Parent);
 
- FParent:=ParentPage as TLazSqlXPageControl;
+  FParent:=ParentPage as TLazSqlXPageControl;
 
   FNumbering := IntToStr(ParentPage.PageCount);
 
@@ -470,6 +475,8 @@ begin
   FQuery := TSQLQuery.Create(nil);
   FQuery.Name := 'qr' + FNumbering;
   FQuery.AfterPost := @OnQyeryAfterPost;
+  FTransaction := TSQLTransaction.Create(nil);
+  FQuery.Transaction := FTransaction;
 
 
   FZQuery := TZQuery.Create(nil);
@@ -560,7 +567,7 @@ begin
    some keyboards keys don't work on SynEdit like back,arrows,home,end,pgup,pdwn,insert; delete works on selection only,}
 
    //FQueryEditor.Free;
-
+   FTransaction.Free;
    FSplitter.Free;
    FErrorMemo.Free;
    FZQuery.Free;

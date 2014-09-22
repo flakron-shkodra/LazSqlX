@@ -569,8 +569,7 @@ begin
     try
       s := TSqlGenerator.Create(ZCon.HostName, ZCon.Database, ZCon.User,
         ZCon.Password, p, SqlConnBuilderForm.ConDatabaseType, ZCon.Port);
-      tis := TTableInfos.Create(ZCon.HostName, ZCon.Database, ZCon.User,
-        ZCon.Password, SqlConnBuilderForm.ConDatabaseType, ZCon.Port);
+      tis := TTableInfos.Create(DbInfo);
       ti := tis.GetTableInfo(cmbSchema.Text, table);
 
       if not IsStoredProcedure then
@@ -1638,7 +1637,6 @@ begin
   FPageControl.Visible:= False;
   FPageControl.Align:=alClient;
 
-  LoadSession(ChangeFileExt(ParamStr(0),'.lsxs'));
 
 end;
 
@@ -1648,7 +1646,9 @@ begin
   FtableIcon.Free;
   FfunctionIcon.Free;
   FfieldIcon.Free;
+  FprocedureIcon.Free;
 
+  FPageControl.Free;
   ArrowImageRight.Free;
   ArrowImageLeft.Free;
   RectImage.Free;
@@ -1780,8 +1780,7 @@ begin
       ProgressForm.Show;
       Application.ProcessMessages;
 
-      infos := TTableInfos.Create(ZCon.HostName, ZCon.Database,
-        ZCon.User, ZCon.Password, DbInfo.DatabaseType, ZCon.Port);
+      infos := TTableInfos.Create(DbInfo);
 
 
       ProgressForm.MaxProgress := lstTables.Count;
@@ -1907,8 +1906,7 @@ var
 begin
 
   dbc := TAsDatabaseCloner.Create(DbInfo, ZCon.Database);
-  ti := TTableInfos.Create(ZCon.HostName, ZCon.Database, ZCon.User,
-    ZCon.Password, DbInfo.DatabaseType, ZCon.Port);
+  ti := TTableInfos.Create(DbInfo);
   t := ti.GetTableInfo(cmbSchema.Text, lstTables.Items[lstTables.ItemIndex]);
   try
     if actNewTab.Execute then

@@ -5,6 +5,7 @@ object QueryDesigner: TQueryDesigner
   Width = 858
   ClientHeight = 600
   ClientWidth = 858
+  OnClick = FrameClick
   TabOrder = 0
   DesignLeft = 618
   DesignTop = 262
@@ -97,8 +98,8 @@ object QueryDesigner: TQueryDesigner
       Height = 462
       Top = 1
       Width = 856
-      HorzScrollBar.Page = 852
-      VertScrollBar.Page = 458
+      HorzScrollBar.Page = 105
+      VertScrollBar.Page = 105
       Align = alClient
       ClientHeight = 458
       ClientWidth = 852
@@ -417,5 +418,14 @@ object QueryDesigner: TQueryDesigner
       0000000000000000000000000000000000000000000000000000000000000000
       0000000000000000000000000000
     }
+  end
+  object PopupMenu1: TPopupMenu
+    left = 171
+    top = 214
+    object mitEditVirtualRelations: TMenuItem
+      Caption = 'Edit virtual relations'
+      Visible = False
+      OnClick = mitEditVirtualRelationsClick
+    end
   end
 end

@@ -256,7 +256,7 @@ begin
       if (LowerCase(cmbDatabaseType.Text) = 'oracle') or
         (LowerCase(cmbDatabaseType.Text) = 'oracle-9i') then
       begin
-        OracleDatabaseDescriptor := TDbUtils.GetOracleDescriptor(cmbServerName.Text,cmbDatabase.Text,i);
+        OracleDatabaseDescriptor := TDbUtils.GetOracleDescriptor(DbInfo);
         DbConnection.Database := OracleDatabaseDescriptor;
       end
       else

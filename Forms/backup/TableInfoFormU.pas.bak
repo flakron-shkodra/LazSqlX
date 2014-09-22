@@ -802,7 +802,7 @@ begin
 
     with MainForm do
     begin
-      _tableInfos := TTableInfos.Create(FDbInfo);
+      _tableInfos := TTableInfos.Create(DbInfo);
     end;
 
     if not FCreateNew then

@@ -226,8 +226,8 @@ procedure TAsDatabaseCloner.MakeTable(info: TTableInfo;
 var
   sql:String;
 begin
- sql := GetCreateScript(info,CreateConstraints,OverrideDefaultTypes);
- TDbUtils.ExecuteQuery(sql,FDbInfo,FDbInfo.DbEngine);
+  sql := GetCreateScript(info,CreateConstraints,OverrideDefaultTypes);
+  TDbUtils.ExecuteQuery(sql,FDbInfo);
 end;
 
 procedure TAsDatabaseCloner.CreateConstraints(info: TTableInfo);

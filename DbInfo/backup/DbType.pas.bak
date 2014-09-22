@@ -106,19 +106,21 @@ type
     {Checks syntax using TSQLParser}
     class function CheckSqlSyntax(SqlCommand:string; out Error:TSqlSyntaxError):Boolean;
 
-    {Executes SQL Command using given DBConnectionInfo }
+    {Executes SQL Command using given DBConnectionInfo, executes according to  DbInfo.DbEngine (with zeos or sqldb) }
     class procedure ExecuteQuery(SqlQuery:string; DbInfo:TDbConnectionInfo);overload;
 
     {Executes SQL Command using SQLDB or ZEOS Engine and given DBConnectionInfo}
     class procedure ExecuteQuery(SqlQuery:string; DbInfo:TDbConnectionInfo; DbEngine:TDatabaseEngine);overload;
 
-    {Gets db schemas}
+    {Gets db schemas using Zeos}
     class procedure GetSchemas(DBInfo:TDbConnectionInfo; var list:TStringList);
 
-    {Gets db Tables for given schame}
+    {Gets db Tables for given scheme using Zeos}
     class procedure GetTablenames(DbInfo:TDbConnectionInfo; schema:string; var list:TStringList);
 
-    class procedure GetColumnNames(DbInfo:TDbConnectionInfo; tablename:string; var list:TStringList);
+    {Gets column names from db using Zeos}
+    class procedure GetColumnNames(DbInfo:TDbConnectionInfo; tablename:string; var list:TStringList);overload;
+
   end;
 
 
@@ -174,29 +176,36 @@ var
   b: TBlobField;
   f:TFieldType;
 begin
+
   if aField<>nil then
   begin
-    if aField.DataType = ftUnknown then
-    exit;
+    try
 
+      if aField.DataType = ftUnknown then
+      exit;
+       if aField.DataType in [ftBlob,ftOraBlob,ftOraClob] then
+       b := aField as TBlobField;
 
-     if aField.IsBlob then
-     b := aField as TBlobField;
+       try
 
-     try
+         if Assigned(b) then
+         begin
+          m := TMemoryStream.Create;
+          try
 
-       if Assigned(b) then
-       begin
-        m := TMemoryStream.Create;
-        b.SaveToStream(m);
-        Result := m.Size = 16;
+            b.SaveToStream(m);
+            Result := m.Size = 16;
+          except
+          end;
+         end;
+
+       finally
+         m.Free;
        end;
 
-     finally
-       m.Free;
-     end;
-
-
+    except
+      Result := False;
+    end;
 
   end;
 end;
@@ -215,11 +224,7 @@ end;
 
 class function TDbUtils.GetOracleDescriptor(dbInfo: TDbConnectionInfo): string;
 begin
-   Result := '(DESCRIPTION = (ADDRESS_LIST = (ADDRESS = (PROTOCOL = TCP)(HOST = ' +
-      dbInfo.Server + ')(PORT = ' + IntToStr(dbInfo.Port) +
-      '))) (CONNECT_DATA = (SERVER = DEDICATED)(SERVICE_NAME = ' +
-     dbInfo.Database + ')))';
-
+ Result := GetOracleDescriptor(dbInfo.Server,dbInfo.Database,dbInfo.Port);
 end;
 
 class function TDbUtils.DatabaseTypeAsConnectorType(DbType: TDatabaseType
@@ -342,28 +347,12 @@ end;
 
 class procedure TDbUtils.ExecuteQuery(SqlQuery: string;
  DbInfo: TDbConnectionInfo);
-var
- zcon:TZConnection;
- zquery:TZQuery;
- con:TSQLConnector;
- query:TSQLQuery;
 begin
-  case DbInfo.DatabaseType of
-    dtMySql:
-    begin
-      ExecuteQuery(SqlQuery,DbInfo,deZeos);
-    end;
-    dtMsSql,dtOracle,dtSQLite,dtFirebirdd:
-    begin
-      ExecuteQuery(SqlQuery,DbInfo,deSqlDB);
-    end;
-
-  end;
-
+  ExecuteQuery(SqlQuery,DbInfo,DbInfo.DbEngine);
 end;
 
 class procedure TDbUtils.ExecuteQuery(SqlQuery: string;
- DbInfo: TDbConnectionInfo; DbEngine:TDatabaseEngine);
+ DbInfo: TDbConnectionInfo; DbEngine: TDatabaseEngine);
 var
  zcon:TZConnection;
  zquery:TZQuery;
@@ -483,6 +472,7 @@ begin
   end;
 
 end;
+
 { TDbConnectionInfo }
 
 procedure TDbConnectionInfo.SetDatabase(AValue: string);

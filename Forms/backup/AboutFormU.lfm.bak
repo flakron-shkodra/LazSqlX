@@ -350,7 +350,6 @@ object AboutForm: TAboutForm
       Font.Style = [fsBold]
       ParentColor = False
       ParentFont = False
-      OnClick = lblProductClick
     end
     object lblOwner: TLabel
       Left = 107

@@ -78,8 +78,7 @@ end;
 
 procedure TQueryDesignerForm.FormDestroy(Sender: TObject);
 begin
- if Assigned(FQueryDesigner) then
- FQueryDesigner.Free;
+
 end;
 
 procedure TQueryDesignerForm.FormCreate(Sender: TObject);

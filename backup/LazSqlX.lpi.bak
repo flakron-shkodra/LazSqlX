@@ -29,8 +29,8 @@
       <AutoIncrementBuild Value="True"/>
       <MajorVersionNr Value="4"/>
       <MinorVersionNr Value="3"/>
-      <RevisionNr Value="1"/>
-      <BuildNr Value="1381"/>
+      <RevisionNr Value="2"/>
+      <BuildNr Value="1400"/>
       <StringTable ProductVersion=""/>
     </VersionInfo>
     <BuildModes Count="2">
@@ -83,33 +83,36 @@
         <FormatVersion Value="1"/>
       </local>
     </RunParams>
-    <RequiredPackages Count="8">
+    <RequiredPackages Count="9">
       <Item1>
-        <PackageName Value="LazControls"/>
+        <PackageName Value="RunTimeTypeInfoControls"/>
       </Item1>
       <Item2>
-        <PackageName Value="lazmouseandkeyinput"/>
+        <PackageName Value="LazControls"/>
       </Item2>
       <Item3>
-        <PackageName Value="lazdbexport"/>
+        <PackageName Value="lazmouseandkeyinput"/>
       </Item3>
       <Item4>
-        <PackageName Value="SQLDBLaz"/>
+        <PackageName Value="lazdbexport"/>
       </Item4>
       <Item5>
-        <PackageName Value="FCL"/>
+        <PackageName Value="SQLDBLaz"/>
       </Item5>
       <Item6>
-        <PackageName Value="SynEdit"/>
+        <PackageName Value="FCL"/>
       </Item6>
       <Item7>
-        <PackageName Value="zcomponent"/>
+        <PackageName Value="SynEdit"/>
       </Item7>
       <Item8>
-        <PackageName Value="LCL"/>
+        <PackageName Value="zcomponent"/>
       </Item8>
+      <Item9>
+        <PackageName Value="LCL"/>
+      </Item9>
     </RequiredPackages>
-    <Units Count="47">
+    <Units Count="48">
       <Unit0>
         <Filename Value="LazSqlX.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -383,6 +386,13 @@
         <IsPartOfProject Value="True"/>
         <UnitName Value="LazSqlXCtrls"/>
       </Unit46>
+      <Unit47>
+        <Filename Value="QueryDesigner\QueryDesignerPropertyGridU.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="QueryDesignerPropertyGrid"/>
+        <ResourceBaseClass Value="Form"/>
+        <UnitName Value="QueryDesignerPropertyGridU"/>
+      </Unit47>
     </Units>
   </ProjectOptions>
   <CompilerOptions>
@@ -421,7 +431,7 @@
     </Other>
   </CompilerOptions>
   <Debugging>
-    <Exceptions Count="3">
+    <Exceptions Count="5">
       <Item1>
         <Name Value="EAbort"/>
       </Item1>
@@ -431,6 +441,12 @@
       <Item3>
         <Name Value="EFOpenError"/>
       </Item3>
+      <Item4>
+        <Name Value="EZSQLException"/>
+      </Item4>
+      <Item5>
+        <Name Value="EMSSQLDatabaseError"/>
+      </Item5>
     </Exceptions>
   </Debugging>
 </CONFIG>

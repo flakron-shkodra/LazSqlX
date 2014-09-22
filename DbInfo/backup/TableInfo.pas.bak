@@ -223,7 +223,7 @@ type
   procedure SetGenerateWebForm(const AValue: Boolean);
   procedure SetGenerateWinForm(const AValue: Boolean);
   procedure SetTableName(AValue: string);
- public
+ published
 
   constructor Create;
   destructor Destroy;override;

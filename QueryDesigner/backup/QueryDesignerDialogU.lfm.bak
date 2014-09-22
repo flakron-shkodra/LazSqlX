@@ -5,10 +5,11 @@ object QueryDesignerDialog: TQueryDesignerDialog
   Width = 336
   ClientHeight = 240
   ClientWidth = 336
+  OnClose = FormClose
   OnCreate = FormCreate
   OnDestroy = FormDestroy
   OnShow = FormShow
-  LCLVersion = '1.0.10.0'
+  LCLVersion = '1.2.4.0'
   object grbConfigure: TGroupBox
     Left = 0
     Height = 132
@@ -21,17 +22,17 @@ object QueryDesignerDialog: TQueryDesignerDialog
     TabOrder = 0
     object lblForeignKey: TLabel
       Left = 8
-      Height = 16
+      Height = 15
       Top = 62
-      Width = 48
+      Width = 47
       Caption = 'Key Field'
       ParentColor = False
     end
     object lblForeignTable: TLabel
       Left = 8
-      Height = 16
+      Height = 15
       Top = 35
-      Width = 73
+      Width = 72
       Caption = 'Foreign Table'
       ParentColor = False
     end
@@ -41,23 +42,22 @@ object QueryDesignerDialog: TQueryDesignerDialog
       Top = 55
       Width = 26
       Caption = '-'
-      NumGlyphs = 0
       Visible = False
       OnClick = btnDelClick
     end
     object lblDisplayField: TLabel
       Left = 8
-      Height = 16
+      Height = 15
       Top = 88
-      Width = 85
+      Width = 84
       Caption = 'Add Select Field'
       ParentColor = False
     end
     object lblSourceField: TLabel
       Left = 8
-      Height = 16
+      Height = 15
       Top = 7
-      Width = 65
+      Width = 64
       Caption = 'Source Field'
       ParentColor = False
     end
