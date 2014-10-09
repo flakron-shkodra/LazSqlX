@@ -30,7 +30,7 @@
       <MajorVersionNr Value="4"/>
       <MinorVersionNr Value="3"/>
       <RevisionNr Value="2"/>
-      <BuildNr Value="1400"/>
+      <BuildNr Value="1401"/>
       <StringTable ProductVersion=""/>
     </VersionInfo>
     <BuildModes Count="2">
@@ -390,6 +390,7 @@
         <Filename Value="QueryDesigner\QueryDesignerPropertyGridU.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="QueryDesignerPropertyGrid"/>
+        <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
         <UnitName Value="QueryDesignerPropertyGridU"/>
       </Unit47>
