@@ -55,20 +55,16 @@ type
     cmbDatabase: TComboBox;
     procedure btnOpenDatabaseClick(Sender: TObject);
     procedure chkAlternateLibLocationChange(Sender: TObject);
-    procedure chkEncryptedSqliteChange(Sender: TObject);
-    procedure cmbDatabaseExit(Sender: TObject);
     procedure cmbDatabaseTypeChange(Sender: TObject);
     procedure cmbDatabaseTypeDrawItem(Control: TWinControl; Index: integer;
       ARect: TRect; State: TOwnerDrawState);
     procedure cmbDbEngineDrawItem(Control: TWinControl; Index: Integer;
      ARect: TRect; State: TOwnerDrawState);
-    procedure FormCloseQuery(Sender: TObject; var CanClose: boolean);
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure btnCancelClick(Sender: TObject);
     procedure btnAcceptClick(Sender: TObject);
-    procedure cmbDatabaseChange(Sender: TObject);
     procedure chkIntegratedSecurityClick(Sender: TObject);
     procedure cmbDatabaseEnter(Sender: TObject);
     procedure lblExpanderClick(Sender: TObject);
@@ -317,11 +313,6 @@ begin
 
 end;
 
-procedure TSqlConnBuilderForm.cmbDatabaseChange(Sender: TObject);
-begin
-
-end;
-
 procedure TSqlConnBuilderForm.cmbDatabaseEnter(Sender: TObject);
 var
    DbConnection:TZConnection;
@@ -543,19 +534,19 @@ begin
   cmbDbEngine.ItemIndex:=0;
 
   case cmbDatabaseType.ItemIndex of
-    0:
+    0: //MS SQL Server
     begin
       txtPort.Text := '0';
       txtUserName.Text := 'sa';
       txtPassword.Text := '';
     end;
-    1:
+    1: //Oracle
     begin
       txtPort.Text := '1521';
       txtUserName.Text := 'sa';
       txtPassword.Text := '';
     end;
-    2:
+    2: // MySQL
     begin
       txtPort.Text := '3306';
       txtUserName.Text := 'root';
@@ -563,7 +554,7 @@ begin
       cmbDbEngine.ItemIndex:=1;
       cmbDbEngine.Enabled:=False;
     end;
-    3:
+    3: // SQLite
     begin
       cmbDatabase.Width := 217;
       lblUseraname.Visible := False;
@@ -575,7 +566,7 @@ begin
       lblSever.Visible := False;
       cmbServerName.Visible := False;
     end;
-     4:
+    4: // Firebird
     begin
       cmbDatabase.Width := 217;
       lblUseraname.Visible := True;
@@ -584,9 +575,9 @@ begin
       txtPassword.Visible := true;
       lblPort.Visible := True;
       txtPort.Visible := True;
-      lblSever.Visible := false;
-      cmbServerName.Visible := false;
-      txtPort.Value:=0;
+      lblSever.Visible := True;
+      cmbServerName.Visible := True;
+      txtPort.Text:='3050';
       txtUserName.Text := 'SYSDBA';
       txtPassword.Text := '';
     end;
@@ -652,12 +643,6 @@ begin
   cmb.Canvas.TextOut(ARect.Left + 30, ARect.Top + 3, cmb.Items[Index]);
 end;
 
-procedure TSqlConnBuilderForm.FormCloseQuery(Sender: TObject;
- var CanClose: boolean);
-begin
-
-end;
-
 procedure TSqlConnBuilderForm.FormCreate(Sender: TObject);
 begin
   bmpSqlType := TBitmap.Create;
@@ -715,18 +700,6 @@ end;
 procedure TSqlConnBuilderForm.chkAlternateLibLocationChange(Sender: TObject);
 begin
  txtLibraryFilename.Enabled:=chkAlternateLibLocation.Checked;
-end;
-
-procedure TSqlConnBuilderForm.chkEncryptedSqliteChange(Sender: TObject);
-begin
-
-
-
-end;
-
-procedure TSqlConnBuilderForm.cmbDatabaseExit(Sender: TObject);
-begin
-
 end;
 
 function TSqlConnBuilderForm.GetFriendlyConnStr: string;

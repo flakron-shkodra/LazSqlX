@@ -11,12 +11,11 @@ object SqlConnBuilderForm: TSqlConnBuilderForm
   Font.Color = clWindowText
   Font.Height = -11
   Font.Name = 'Tahoma'
-  OnCloseQuery = FormCloseQuery
   OnCreate = FormCreate
   OnDestroy = FormDestroy
   OnShow = FormShow
   Position = poScreenCenter
-  LCLVersion = '1.2.4.0'
+  LCLVersion = '1.3'
   object pnlMain: TPanel
     Left = 208
     Height = 302
@@ -65,9 +64,9 @@ object SqlConnBuilderForm: TSqlConnBuilderForm
     end
     object chkIntegratedSecurity: TCheckBox
       Left = 12
-      Height = 19
+      Height = 17
       Top = 34
-      Width = 107
+      Width = 105
       Caption = 'SSPI (Integrated)'
       OnClick = chkIntegratedSecurityClick
       TabOrder = 0
@@ -110,7 +109,6 @@ object SqlConnBuilderForm: TSqlConnBuilderForm
       AutoComplete = True
       AutoCompleteText = [cbactEnabled, cbactEndOfLineComplete, cbactSearchAscending]
       ItemHeight = 13
-      OnChange = cmbDatabaseChange
       OnEnter = cmbDatabaseEnter
       TabOrder = 6
     end
@@ -268,9 +266,9 @@ object SqlConnBuilderForm: TSqlConnBuilderForm
     TabOrder = 4
     object chkAlternateLibLocation: TCheckBox
       Left = 15
-      Height = 19
+      Height = 17
       Top = 8
-      Width = 146
+      Width = 144
       Caption = 'Alternate Library Location'
       OnChange = chkAlternateLibLocationChange
       TabOrder = 0
