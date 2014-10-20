@@ -14,7 +14,7 @@ unit FtDetector;
 {$mode objfpc}{$H+}
 interface
 
-uses SysUtils,Classes,fgl,FileUtil;
+uses SysUtils,Classes,fgl,FileUtil,LazSqlXResources;
 
 type
 
@@ -71,7 +71,6 @@ TFileTypes = class(specialize TFPGObjectList<TFileType>)
 
 implementation
 
-{$R FtDetector.rc}
 
 {$REGION 'TFileTypes Impl'}
 

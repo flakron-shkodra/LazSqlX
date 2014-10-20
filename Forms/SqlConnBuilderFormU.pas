@@ -114,6 +114,7 @@ type
 
 var
   SqlConnBuilderForm: TSqlConnBuilderForm;
+  Is64Bit:Boolean;
 
 implementation
 
@@ -545,6 +546,11 @@ begin
       txtPort.Text := '1521';
       txtUserName.Text := 'sa';
       txtPassword.Text := '';
+      if Is64Bit then
+      begin
+        cmbDbEngine.ItemIndex:=1;
+        cmbDbEngine.Enabled:=False;
+      end;
     end;
     2: // MySQL
     begin
@@ -645,6 +651,13 @@ end;
 
 procedure TSqlConnBuilderForm.FormCreate(Sender: TObject);
 begin
+
+  {$ifdef win64}
+    Is64Bit:=True;
+  {$else}
+    Is64Bit:=False;
+  {$endif}
+
   bmpSqlType := TBitmap.Create;
   bmpOracleType := TBitmap.Create;
   bmpMySqlType := TBitmap.Create;

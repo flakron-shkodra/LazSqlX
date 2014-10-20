@@ -14,7 +14,7 @@ unit TableInfo;
 interface
 
 uses SysUtils,Classes,DbType,ZConnection,ZDataset,ZDbcIntfs,ZSqlMetadata,
-DB,typinfo, fgl,Forms,StdCtrls,AsStringUtils;
+DB,typinfo, fgl,Forms,StdCtrls,AsStringUtils,LazSqlXResources;
 
 
 type
@@ -269,7 +269,7 @@ type
     dsMetaData:TZSQLMetadata;
     FLogStrings:TStrings;
     FApplication:TApplication;
-    ReservedKeywords:TStringList;
+
     FLogListBox:TListBox;
     FDBinfo:TDbConnectionInfo;
     procedure GetConstraintInfos(Schema:string;Tablename:string;var ConstraintInfos:TImportedKeys);
@@ -300,6 +300,8 @@ type
 
 
 implementation
+
+
 
 { TExportedKeyInfo }
 
@@ -840,15 +842,6 @@ begin
   inherited Create;
 
   FDBinfo := DbInfo;
-
-  ReservedKeywords := TStringList.Create;
-  try
-  	r := TResourceStream.Create(HInstance,'KEYWORDS','RESERVED');
-  	ReservedKeywords.LoadFromStream(r);
-  finally
-    r.Free;
-  end;
-
   adoCon := DbInfo.ToZeosConnection;
   dsMetaData := TZSQLMetadata.Create(nil);
   dsMetaData.Connection := adoCon;
@@ -859,7 +852,6 @@ end;
 
 destructor TTableInfos.Destroy;
 begin
-	ReservedKeywords.Free;
   adoCon.Free;
   dsMetaData.Free;
   inherited Destroy;
@@ -962,7 +954,7 @@ begin
     CType := CType +'Field';
 
     //if SQL Field has as stupid name like a C# reserved Keyword [abstract,base,int etc]
-	 	if ReservedKeywords.IndexOf(CType)>-1 then
+	 	if TLazSqlXResources.TableInfoReservedKeywords.IndexOf(CType)>-1 then
    	CType := CType+'_sf';
 
     Result := CType;
@@ -981,7 +973,7 @@ begin
     end;
 
     //if SQL Field has as stupid name like a C# reserved Keyword [abstract,base,int etc]
-	 	if ReservedKeywords.IndexOf(CType)>-1 then
+	 	if TLazSqlXResources.TableInfoReservedKeywords.IndexOf(CType)>-1 then
    	CType := CType+'_sf';
 
     Result := CType;

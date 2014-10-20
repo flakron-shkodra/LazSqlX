@@ -5,7 +5,7 @@ unit LoadingIndicator;
 interface
 
 uses
- Classes, SysUtils,AnimatedGif,StdCtrls,ExtCtrls;
+ Classes, SysUtils,AnimatedGif,StdCtrls,ExtCtrls,LazSqlXResources;
 
 type
 
@@ -15,6 +15,7 @@ type
   private
     FTimer:TTimer;
     FGif:TAnimatedGif;
+    FLoaded:Boolean;
     procedure OnTimer(Sender:TObject);
   public
     constructor Create(AOwner:TComponent);
@@ -27,7 +28,7 @@ type
 implementation
 
 { TLoadingIndicator }
-{$R LoadingIndicator.rc}
+
 
 procedure TLoadingIndicator.OnTimer(Sender: TObject);
 begin
@@ -46,6 +47,7 @@ var
  r:TResourceStream;
 begin
    inherited Create(AOwner);
+   FLoaded:=False;
    FTimer := TTimer.Create(Self);
    FTimer.Enabled:=False;
    FTimer.OnTimer:=@OnTimer;
@@ -56,32 +58,38 @@ begin
    Width:=16;
    Height:=16;
    Visible:=False;
-
    try
-    r := TResourceStream.Create(HINSTANCE,'LOADING','GIF');
-    FGif.LoadFromStream(r);
-   finally
-     r.Free;
-   end;
+    FGif.LoadFromStream(TLazSqlXResources.LoadingGif);
+    FLoaded := True;
+   except
 
+   end;
 end;
 
 procedure TLoadingIndicator.StartAnimation;
 begin
-    Visible:=True;
-    FTimer.Enabled:=True;
+    if FLoaded then
+    begin
+      Visible:=True;
+      FTimer.Enabled:=True;
+    end;
 end;
 
 procedure TLoadingIndicator.StopAnimation;
 begin
-  FTimer.Enabled:=False;
-  Visible:=False;
-  Repaint;
+  if FLoaded then
+  begin
+    FTimer.Enabled:=False;
+    Visible:=False;
+    Repaint;
+  end;
 end;
 
 destructor TLoadingIndicator.Destroy;
 begin
-    FGif.Free;
+  If FLoaded then
+  FGif.Free;
+
    inherited Destroy;
 end;
 

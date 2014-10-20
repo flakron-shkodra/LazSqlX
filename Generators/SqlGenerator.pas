@@ -14,7 +14,7 @@ unit SqlGenerator;
 interface
 
 uses SysUtils, Classes, Dialogs, StdCtrls, ComCtrls, ExtCtrls, DB,
-  Forms, StrUtils, TableInfo, DbType, AsSqlKeywords, ZConnection, ZDataset,
+  Forms, StrUtils, TableInfo, DbType, LazSqlXResources, ZConnection, ZDataset,
   ZSqlMetadata, ZDbcIntfs;
 
 type
@@ -84,8 +84,6 @@ type
 implementation
 
 uses AsStringUtils;
-
-{$R SqlGenerator.rc}
 
 { TSqlGenerator }
 

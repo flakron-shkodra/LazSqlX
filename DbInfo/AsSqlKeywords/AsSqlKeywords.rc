@@ -1,7 +1,0 @@
-Reserved AsSqlKeywords "SqlReservedKeywords.txt"
-MsSqlDataTypes AsSqlKeywords "MsSqlDataTypes.txt"
-OracleDataTypes AsSqlKeywords "OracleDataTypes.txt"
-MySqlDataTypes AsSqlKeywords "MySqlDataTypes.txt"
-SqliteDataTypes AsSqlKeywords "SqliteDataTypes.txt"
-FirebirdDataTypes AsSqlKeywords "FirebirdDataTypes.txt"
- 

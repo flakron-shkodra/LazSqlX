@@ -11,7 +11,7 @@ unit AsSqlParser;
 interface
 
 uses
-  Classes, SysUtils, db, ZConnection, ZSqlMetadata, DbType,fgl,strutils,AsSqlKeywords,AsStringUtils;
+  Classes, SysUtils, db, ZConnection, ZSqlMetadata, DbType,fgl,strutils,LazSqlXResources,AsStringUtils;
 
 type
 
@@ -518,7 +518,7 @@ begin
             if I < DelimitedList.Count - 1 then
             begin
               Table.TableAlias := DelimitedList[I + 1];
-              if TSqlKeywords.IsReserved(Table.TableAlias)  then
+              if TLazSqlXResources.IsReserved(Table.TableAlias)  then
               Table.TableAlias:='';
             end;
 
@@ -569,7 +569,7 @@ begin
             if I < DelimitedList.Count - 1 then
             begin
               Table.TableAlias := DelimitedList[I + 1];
-              if TSqlKeywords.IsReserved(Table.TableAlias) then
+              if TLazSqlXResources.IsReserved(Table.TableAlias) then
               Table.TableAlias:='';
 
               Table.JoinKeyword:= LastJoinKeyword;
@@ -587,7 +587,7 @@ begin
                     if Table.JoinTableAlias = Table.TableAlias then
                       Table.JoinTableAlias := SplitString( SplitString( Table.JoinCondition,'=')[1],'.')[0];
 
-                    if TSqlKeywords.IsReserved(Table.JoinTableAlias) then
+                    if TLazSqlXResources.IsReserved(Table.JoinTableAlias) then
                     begin
                       if Table.JoinTableAlias=FSchema then
                       Table.JoinTableAlias:='';
@@ -694,7 +694,7 @@ begin
               end
               else
               begin
-                if (not TSqlKeywords.IsReserved(DelimitedList[I])) and (TAsStringUtils.IsNumber(DelimitedList[I])) then
+                if (not TLazSqlXResources.IsReserved(DelimitedList[I])) and (TAsStringUtils.IsNumber(DelimitedList[I])) then
                 begin
                   FErrorList.Add('Column [' + DelimitedList[I] + '] doesn''t exist');
                   Result := False;

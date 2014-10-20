@@ -12,7 +12,7 @@ interface
 
 uses
   Classes, SysUtils, FileUtil, Forms, Controls, Graphics, Dialogs, Buttons,
-  ExtCtrls, StdCtrls, Spin, DbType;
+  ExtCtrls, StdCtrls, Spin, DbType,LazSqlXResources;
 
 type
 
@@ -77,7 +77,6 @@ var
 
 implementation
 
-uses AsSqlKeywords;
 
 {$R *.lfm}
 
@@ -225,11 +224,11 @@ procedure TEditColumnForm.FillDataTypes;
 begin
   cmbDataTypes.Clear;
   case FDbType of
-   dtMsSql:cmbDataTypes.Items.AddStrings(TSqlKeywords.MsSqlDataTypes);
-   dtOracle:cmbDataTypes.Items.AddStrings(TSqlKeywords.OracleDataTypes);
-   dtMySql:cmbDataTypes.Items.AddStrings(TSqlKeywords.MySqlDataTypes);
-   dtSQLite:cmbDataTypes.Items.AddStrings(TSqlKeywords.SqliteDataTypes);
-   dtFirebirdd:cmbDataTypes.Items.AddStrings(TSqlKeywords.FirebirdDataTypes);
+   dtMsSql:cmbDataTypes.Items.AddStrings(TLazSqlXResources.MsSqlDataTypes);
+   dtOracle:cmbDataTypes.Items.AddStrings(TLazSqlXResources.OracleDataTypes);
+   dtMySql:cmbDataTypes.Items.AddStrings(TLazSqlXResources.MySqlDataTypes);
+   dtSQLite:cmbDataTypes.Items.AddStrings(TLazSqlXResources.SqliteDataTypes);
+   dtFirebirdd:cmbDataTypes.Items.AddStrings(TLazSqlXResources.FirebirdDataTypes);
   end;
 end;
 

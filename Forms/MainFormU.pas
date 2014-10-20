@@ -10,11 +10,11 @@ uses
   ZSqlMetadata, SynHighlighterSQL, SynMemo, SynEdit, SynCompletion, RTTIGrids,
   LCL, LCLType, LCLIntf, Grids, EditBtn, Spin, StdActns, fpDBExport,
   fpdbfexport, fpSQLExport, sqldb, sqldblib, IBConnection, FBAdmin,
-  oracleconnection, SdfData, sqlite3conn, mysql55conn, mysql51conn, mysql50conn,
+  {$ifndef win64}oracleconnection,{$endif} SdfData, sqlite3conn, mysql55conn, mysql51conn, mysql50conn,
   mysql40conn, mysql41conn, mssqlconn, strutils, SqlConnBuilderFormU,
   BlobFieldFormU, Clipbrd, types, EditMemoFormU, TableInfoFormU, TableInfo,
   DbType, ProcedureInfo, SqlGenerator, FtDetector, SqlExecThread, AsSqlParser,
-  AsSqlKeywords, RegExpr, Regex, versionresource, MouseAndKeyInput,
+  LazSqlXResources, RegExpr, Regex, versionresource, MouseAndKeyInput,
   UnitGetSetText, QueryDesignerFormU, LoadingIndicator,
   SynEditMarkupSpecialLine, SynEditTypes, SynEditKeyCmds, fpsqlparser,LazSqlXCtrls,
   fpsqltree;
@@ -1602,11 +1602,6 @@ begin
   FvarIcon := TBitmap.Create;
   FfieldIcon := TBitmap.Create;
 
-  sbMain.Panels[1].Style := psOwnerDraw;
-  FLoadingIndicator := TLoadingIndicator.Create(pnlIndicator);
-  FLoadingIndicator.Parent := pnlIndicator;
-  FLoadingIndicator.Align := alClient;
-
   ApplicationImages.GetBitmap(18, FtableIcon);
   ApplicationImages.GetBitmap(45, FfunctionIcon);
   ApplicationImages.GetBitmap(4, FfieldIcon);
@@ -1619,7 +1614,7 @@ begin
 
   FPageControl := TLazSqlXPageControl.Create(Self,SqlConn,ZCon);
   FPageControl.Highlighter := SqlSyntax;
-  FPageControl.Keywords.AddStrings(TSqlKeywords.ReservedKeywords);
+  FPageControl.Keywords.AddStrings(TLazSqlXResources.SqlReservedKeywords);
   FPageControl.OnExecutionFinished := @OnExecutionFinished;
   FPageControl.OnDataGridDblClick:=@EditSpecialField;
   FPageControl.QueryEditorPopUpMenu:=QueryEditorPopupMenu;
@@ -1636,6 +1631,11 @@ begin
   FPageControl.Parent := pnlMain;
   FPageControl.Visible:= False;
   FPageControl.Align:=alClient;
+
+  sbMain.Panels[1].Style := psOwnerDraw;
+  FLoadingIndicator := TLoadingIndicator.Create(pnlIndicator);
+  FLoadingIndicator.Parent := pnlIndicator;
+  FLoadingIndicator.Align := alClient;
 
 
 end;
