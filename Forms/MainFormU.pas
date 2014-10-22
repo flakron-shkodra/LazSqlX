@@ -1294,8 +1294,8 @@ begin
     if lstProcedures.Count > 0 then
       lstProcedures.ItemIndex := 0;
   finally
-    procInfo.Free;
     lst.Free;
+    procInfo.Free;
   end;
 
 end;
@@ -1652,6 +1652,7 @@ begin
   ArrowImageRight.Free;
   ArrowImageLeft.Free;
   RectImage.Free;
+  FLoadingIndicator.Free;
 
 end;
 

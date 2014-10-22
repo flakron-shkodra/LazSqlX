@@ -6,6 +6,9 @@ uses
   {$IFDEF UNIX}{$IFDEF UseCThreads}
   cthreads,
   {$ENDIF}{$ENDIF}
+  {$IFDEF DEBUG}
+  SysUtils, // needed for heaptrace
+  {$ENDIF}
   Interfaces, // this includes the LCL widgetset
   Forms, MainFormU, SqlConnBuilderFormU, EditMemoFormU, BlobFieldFormU,
   TableInfoFormU, AboutFormU, EditColumnFormU, EditConstraintsFormU,
@@ -18,6 +21,12 @@ uses
 {$R *.res}
 
 begin
+  // Enable -dDEBUG/the DEBUG conditional define to: write all memory leaks to disk
+  // If it is not enabled, then leaks are reported immediately in the IDE (if -gh is on)
+  {$IFDEF DEBUG}
+  SetHeapTraceOutput(ChangeFileExt(Application.Exename, '.trc'));
+  {$ENDIF}
+
   RequireDerivedFormResource := True;
   Application.Initialize;
   Application.CreateForm(TMainForm, MainForm);

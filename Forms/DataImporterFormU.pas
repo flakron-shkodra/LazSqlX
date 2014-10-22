@@ -11,9 +11,9 @@ unit DataImporterFormU;
 interface
 
 uses
-  Classes, SysUtils, SdfData, DB, FileUtil, DividerBevel, Forms, Controls,
+  Classes, SysUtils, DB, FileUtil, DividerBevel, Forms, Controls,
   Graphics, Dialogs, Buttons, StdCtrls, EditBtn, Spin, ComCtrls, DBGrids, Menus,
-  ExtCtrls, TableInfo, DbType, ZDataset, ZConnection, CsvDocument;
+  ExtCtrls, TableInfo, DbType, ZDataset, ZConnection, fileimport;
 
 type
 
@@ -22,12 +22,12 @@ type
   TDataImporterForm = class(TForm)
     Bevel1: TBevel;
     btnAccept: TBitBtn;
+    btnDeleteMapping: TButton;
     btnCancel: TBitBtn;
     btnAddMapping: TButton;
     chkUseTabDelimiter: TCheckBox;
     cmbSourceColumns: TComboBox;
     cmbDestColumns: TComboBox;
-    CsvDataSource: TDatasource;
     divColumnMapping: TDividerBevel;
     Label1: TLabel;
     lblDesstColumn: TLabel;
@@ -49,41 +49,43 @@ type
     lblDelimiter: TLabel;
     procedure btnAcceptClick(Sender: TObject);
     procedure btnAddMappingClick(Sender: TObject);
-    procedure btnPrepareClick(Sender: TObject);
-    procedure btnValidateClick(Sender: TObject);
     procedure chkFirstRowAsSchemaChange(Sender: TObject);
     procedure chkUseTabDelimiterChange(Sender: TObject);
-    procedure FormClose(Sender: TObject; var CloseAction: TCloseAction);
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure FormHide(Sender: TObject);
     procedure FormShow(Sender: TObject);
-    procedure grpOptionsClick(Sender: TObject);
     procedure mitClearAllClick(Sender: TObject);
     procedure mitClearItemClick(Sender: TObject);
     procedure txtDelimiterChange(Sender: TObject);
-    procedure txtDelimiterKeyDown(Sender: TObject; var Key: word;
-      Shift: TShiftState);
-    procedure txtDelimiterKeyPress(Sender: TObject; var Key: char);
     procedure txtFilenameAcceptFileName(Sender: TObject; var Value: string);
-    procedure txtFilenameChange(Sender: TObject);
   private
     { private declarations }
-    FCsvLoaded: boolean;
     FDestQuery: TZQuery;
+    FImporter: TFileImport;
+    // Number of lines in input file (0 or more or -1 for invalid).
+    // Only valid after FCSVParser has loaded file
+    FInputLineCount: integer;
     FSchema: string;
+    //todo: implement using sqldb sqlconnection instead of zeos depending on general connection settings
     FConn: TZConnection;
-    FCSVDocument: TCSVDocument; //Source data
     FDestTable: string;
     FDBInfo: TDbConnectionInfo;
     FErrors: TStringList;
-    function DetectDelimiter(Line: string): string;
+    // Updates listbox with mappings
+    procedure UpdateMappingListBox;
     procedure OpenDestinationTable(FirstRowOnly: boolean);
-    procedure PrepareFile(filename: string);
-    procedure AutoMap;
-    procedure FillColumnMappings;
+    // Loads input file; updates min/max lines spinedits etc
+    procedure PrepareFile(Filename: string);
+    // Fills comboboxes with database and source file fields
+    // Also sets up auto mapping
+    procedure FillCombosAutoMap;
+    // Run the import
     function ImportData: boolean;
-    procedure Reload(Value: string);
+    // (Re)load file filename
+    // Update mapping/GUI
+    // Calls PrepareFile internally.
+    procedure LoadInputFile(FileName: string);
     procedure UpdateGUI(EnableControls: boolean);
     procedure CleanUp;
   public
@@ -109,7 +111,6 @@ begin
     UpdateGUI(False);
     if ImportData then
     begin
-      FCsvLoaded := False;
       ShowMessage('Data imported succsefully');
       CleanUp;
     end else
@@ -124,26 +125,12 @@ end;
 procedure TDataImporterForm.btnAddMappingClick(Sender: TObject);
 var
   strItem: string;
+  i: integer;
 begin
   if (cmbSourceColumns.ItemIndex > -1) and (cmbDestColumns.ItemIndex > -1) then
-  begin
-    strItem := cmbSourceColumns.Items[cmbSourceColumns.ItemIndex] + '=' +
-      cmbDestColumns.Items[cmbDestColumns.ItemIndex];
-    if lstColumnsMapping.Items.IndexOf(strItem) < 0 then
-      lstColumnsMapping.Items.Add(strItem)
-    else
-      ShowMessage('Selected mapping is already in the list.');
-  end;
-end;
-
-procedure TDataImporterForm.btnPrepareClick(Sender: TObject);
-begin
-
-end;
-
-procedure TDataImporterForm.btnValidateClick(Sender: TObject);
-begin
-
+    FImporter.AddMapping(cmbSourceColumns.Items[cmbSourceColumns.ItemIndex],
+      cmbDestColumns.Items[cmbDestColumns.ItemIndex]);
+  UpdateMappingListBox;
 end;
 
 procedure TDataImporterForm.chkFirstRowAsSchemaChange(Sender: TObject);
@@ -166,139 +153,113 @@ begin
 
 end;
 
-procedure TDataImporterForm.FormClose(Sender: TObject; var CloseAction: TCloseAction);
-begin
-
-end;
-
 procedure TDataImporterForm.FormCreate(Sender: TObject);
 begin
-  FCSVDocument := TCSVDocument.Create;
-  FDestQuery := TZQuery.Create(Self);
+  FConn := nil; //will be created in showmodal
+  FDestQuery := nil; //will be created in showmodal
   FErrors := TStringList.Create;
+  FInputLineCount := -1;
 end;
 
 procedure TDataImporterForm.FormDestroy(Sender: TObject);
 begin
-  FCSVDocument.Free;
-  FDestQuery.Free;
+  if assigned(FImporter) then
+    FImporter.Free;
+  if assigned(FDestQuery) then
+    FreeAndNil(FDestQuery);
+  if assigned(FConn) then
+    FreeAndNil(FConn);
   FErrors.Free;
 end;
 
 procedure TDataImporterForm.FormHide(Sender: TObject);
 begin
+  if Assigned(FImporter) then
+    FreeAndNil(FImporter);
   if Assigned(FConn) then
-    FConn.Free;
+    FreeAndNil(FConn);
 end;
 
 procedure TDataImporterForm.FormShow(Sender: TObject);
 begin
-  FCsvLoaded := False;
   OpenDestinationTable(True);
   UpdateGUI(True);
   CleanUp;
 end;
 
-procedure TDataImporterForm.grpOptionsClick(Sender: TObject);
-begin
-
-end;
-
 procedure TDataImporterForm.mitClearAllClick(Sender: TObject);
 begin
-  lstColumnsMapping.Clear;
+  FImporter.DeleteMapping(-1);
 end;
 
 procedure TDataImporterForm.mitClearItemClick(Sender: TObject);
+var
+  ItemNo: integer;
 begin
-  if lstColumnsMapping.ItemIndex > -1 then
-    lstColumnsMapping.Items.Delete(lstColumnsMapping.ItemIndex);
+  ItemNo := lstColumnsMapping.ItemIndex;
+  if ItemNo > -1 then
+  begin
+    FImporter.DeleteMapping(ItemNo);
+    lstColumnsMapping.Items.Delete(ItemNo);
+  end;
 end;
 
 procedure TDataImporterForm.txtDelimiterChange(Sender: TObject);
 begin
-  Reload(txtFilename.Text);
-end;
-
-procedure TDataImporterForm.txtDelimiterKeyDown(Sender: TObject;
-  var Key: word; Shift: TShiftState);
-begin
-
-end;
-
-procedure TDataImporterForm.txtDelimiterKeyPress(Sender: TObject; var Key: char);
-begin
-
+  LoadInputFile(txtFilename.Text);
 end;
 
 procedure TDataImporterForm.txtFilenameAcceptFileName(Sender: TObject;
   var Value: string);
-var
-  lst: TStringList;
 begin
+  // Close any current open input file
+  FImporter.FileName := '';
+  if not fileexists(Value) then
+    exit;
   try
-    lst := TStringList.Create;
-    lst.LoadFromFile(Value);
-    if lst.Count > 0 then
+    FImporter.FileName := Value;
+    txtDelimiter.Text := FImporter.Delimiter;
+    if FImporter.Delimiter = #9 then
     begin
-      txtDelimiter.Text := DetectDelimiter(lst[0]);
-      if txtDelimiter.Text[1] = #9 then
-      begin
-        chkUseTabDelimiter.Checked := False;
-        txtDelimiter.Enabled := False;
-      end;
+      chkUseTabDelimiter.Checked := True;
+      txtDelimiter.Enabled := False;
     end;
 
-    Reload(Value);
-
-  finally
-    lst.Free;
+    LoadInputFile(Value);
+  except
+    // File access error etc
+    chkUseTabDelimiter.Checked := False;
+    txtDelimiter.Text := ',';
+    txtDelimiter.Enabled := true;
   end;
 end;
 
-procedure TDataImporterForm.txtFilenameChange(Sender: TObject);
-begin
-
-end;
-
-function TDataImporterForm.DetectDelimiter(Line: string): string;
+procedure TDataImporterForm.PrepareFile(Filename: string);
 var
-  d: char;
-  I: integer;
+  Row: integer;
 begin
-
-  for I := 1 to Length(Line) do
-  begin
-    if (Line[I] in [#9, ';', '|', ',']) then
-    begin
-      Result := Line[I];
-      Break;
-    end;
-  end;
-
-end;
-
-procedure TDataImporterForm.PrepareFile(filename: string);
-var
-  I: integer;
-begin
-  if FileExists(filename) then
+  FInputLineCount := -1;
+  if FileExists(Filename) then
   begin
     try
-      FCSVDocument.Clear;
       if txtDelimiter.Text <> EmptyStr then
-        FCSVDocument.Delimiter := txtDelimiter.Text[1]
-      else
-        FCSVDocument.Delimiter := ',';
+        FImporter.Delimiter := txtDelimiter.Text[1];
 
-      FCsvDocument.LoadFromFile(filename);
-      FCsvLoaded := True;
-      pbProgress.Max := FCSVDocument.RowCount - 1;
-      speStartPosition.MaxValue := FCSVDocument.RowCount;
-      speEndPosition.MaxValue := FCSVDocument.RowCount;
+      // Go through entire file once to get number of lines
+      // OS caching should help with following read
+      Screen.Cursor := crHourglass;
+      try
+        FInputLineCount := FImporter.GetRowCount;
+      finally
+        Screen.Cursor := crDefault;
+      end;
+      speStartPosition.MaxValue := FInputLineCount;
+      speEndPosition.MaxValue := FInputLineCount;
       speStartPosition.MinValue := 0;
       speEndPosition.MinValue := 0;
-      speEndPosition.Value := FCSVDocument.RowCount;
+      // Keep user preference if he wants to import only a subset of lines:
+      if speEndPosition.Value = 0 then
+        speEndPosition.Value := FInputLineCount;
     except
       on E: Exception do
       begin
@@ -308,39 +269,20 @@ begin
   end;
 end;
 
-procedure TDataImporterForm.AutoMap;
+procedure TDataImporterForm.FillCombosAutoMap;
 var
   I: integer;
 begin
 
-  lstColumnsMapping.Clear;
-
-  for I := 0 to FCSVDocument.ColCount[0] - 1 do
+  cmbSourceColumns.Clear;
+  for I := 0 to FImporter.SourceFields.Count - 1 do
   begin
-    try
-      lstColumnsMapping.Items.Add(FCSVDocument.Cells[I, 0] + '=' +
-        FDestQuery.Fields[I].FieldName);
-    except
-    end;
+    cmbSourceColumns.Items.Add(FImporter.SourceFields[i]);
   end;
+  if cmbSourceColumns.Items.Count > -1 then
+    cmbSourceColumns.ItemIndex := 0;
 
-end;
-
-procedure TDataImporterForm.FillColumnMappings;
-var
-  I: integer;
-begin
-  if FCsvLoaded then
-  begin
-    cmbSourceColumns.Clear;
-    for I := 0 to FCSVDocument.ColCount[0] - 1 do
-    begin
-      cmbSourceColumns.Items.Add(FCSVDocument.Cells[I, 0]);
-    end;
-    if cmbSourceColumns.Items.Count > -1 then
-      cmbSourceColumns.ItemIndex := 0;
-  end;
-
+  assert(assigned(FDestQuery));
   if FDestQuery.Active then
   begin
     cmbDestColumns.Clear;
@@ -352,6 +294,8 @@ begin
       cmbDestColumns.ItemIndex := 0;
   end;
 
+  // Add automapped data
+  UpdateMappingListBox;
 end;
 
 procedure TDataImporterForm.OpenDestinationTable(FirstRowOnly: boolean);
@@ -359,12 +303,16 @@ var
   aDbType: TDatabaseType;
   sqlParser: TAsSqlParser;
 begin
-
+  assert(assigned(FConn));
+  assert(assigned(FDestQuery));
   aDbType := TDbUtils.DatabaseTypeFromString(FConn.Protocol);
   FDestQuery.Close;
   FDestQuery.SQL.Text := 'select * from ' + FDestTable;
 
   if FirstRowOnly then
+  // Apparently select the first 5 rows?!?! Is this correct?
+  begin
+    // There is an SQL standard for specifying row x..y but not all dbs use it...
     case aDbType of
       dtMsSql:
       begin
@@ -382,21 +330,30 @@ begin
         end;
 
       end;
-      dtOracle: FDestQuery.SQL.Text :=
-          'SELECT * FROM "' + FSchema + '"."' + FDestTable + '" WHERE ROWNUM < 6';
-
-      dtMySql: FDestQuery.SQL.Text := 'SELECT * FROM ' + FDestTable + ' LIMIT 5';
-      dtSQLite: FDestQuery.SQL.Text := 'SELECT * FROM ' + FDestTable + ' LIMIT 5';
-      dtFirebirdd: FDestQuery.SQL.Text := 'SELECT FIRST 1 * FROM ' + FDestTable;
+      dtOracle:
+        FDestQuery.SQL.Text :=
+        'SELECT * FROM "' + FSchema + '"."' + FDestTable + '" WHERE ROWNUM < 6';
+      dtMySql:
+        FDestQuery.SQL.Text := 'SELECT * FROM ' + FDestTable + ' LIMIT 5';
+      dtSQLite:
+        FDestQuery.SQL.Text := 'SELECT * FROM ' + FDestTable + ' LIMIT 5';
+      dtFirebirdd:
+        // Firebird 2+ also accepts standard SQL (see below)
+        FDestQuery.SQL.Text := 'SELECT FIRST 1 * FROM ' + FDestTable;
+      else
+        // Use SQL standard and hope db supports it:
+        FDestQuery.SQL.Text := 'SELECT * FROM ' + FDestTable + ' ROWS 1 TO 5';
     end;
+  end;
   FDestQuery.Connection := FConn;
   FDestQuery.Open;
+
 end;
 
 function TDataImporterForm.ImportData: boolean;
 var
+  CurrentRow: integer; // helps keep track of row changes
   I: integer;
-  J: integer;
   SrcValue: string;
   SrcColumn: string;
   DestColumn: string;
@@ -406,68 +363,75 @@ begin
   Result := True;
   FErrors.Clear;
 
+  pbProgress.Max := speEndPosition.MaxValue;
   OpenDestinationTable(False);
-
-  if speEndPosition.Value = 0 then
-    LastRow := FCSVDocument.RowCount
+  // to do: check to make sure file is loaded
+  if speEndPosition.Value <= 0 then
+    LastRow := FImporter.GetRowCount
   else
     LastRow := speEndPosition.Value;
 
   try
-    for I := speStartPosition.Value to LastRow - 1 do
+    // Skip past header line(s)
+    if speStartPosition.Value>0 then
     begin
-
-      lblProgress.Caption :=
-        'Processing ' + IntToStr(I) + '\' + IntToStr(LastRow - 1);
-      Application.ProcessMessages;
-      FDestQuery.Insert;
-      for J := 0 to lstColumnsMapping.Count - 1 do
+      for i:=1 to speStartPosition.Value do
       begin
-        SrcColumn := TAsStringUtils.SplitString(lstColumnsMapping.Items[J], '=')[0];
-        SrcValue := FCSVDocument.Cells[cmbSourceColumns.Items.IndexOf(SrcColumn), I];
-        DestColumn := TAsStringUtils.SplitString(lstColumnsMapping.Items[J], '=')[1];
-        if FDestQuery.FieldByName(DestColumn).DataType <> ftAutoInc then
-        begin
-          if not FDestQuery.FieldByName(DestColumn).ReadOnly then
-            FDestQuery.FieldByName(DestColumn).Value := SrcValue;
-        end;
+        if not(FImporter.ReadRow) then
+          break; //error: end of file?
       end;
-
-      try
-        FDestQuery.Post;
-      except on E:exception do
-        begin
-          Result:=False;
-          FErrors.Add('Error on row [' + IntToStr(I) + '] with message: ' + E.Message);
-          Break;
-        end;
-      end;
-      pbProgress.StepIt;
     end;
 
+    while (FImporter.ReadRow) and (FImporter.Row+1<=LastRow) do
+    begin
+      if FDestQuery.State in [dsEdit,dsInsert] then
+      begin
+        try
+          FDestQuery.Post;
+        except on E:exception do
+          begin
+            Result:=False;
+            FErrors.Add('Error on row [' + inttostr(CurrentRow) + '] with message: ' + E.Message);
+            Break;
+          end;
+        end;
+      end;
+      FDestQuery.Insert;
+      if FImporter.Row mod 100=0 then
+        lblProgress.Caption :=
+          'Processing ' + IntToStr(FImporter.Row) + '/' + IntToStr(LastRow - 1);
+      pbProgress.Position := CurrentRow;
+      Application.ProcessMessages;
+
+      for I := 0 to FImporter.MappingCount-1 do
+      begin
+        DestColumn := FImporter.Mapping[I].DestinationField;
+        if (FDestQuery.FieldByName(DestColumn).DataType <> ftAutoInc) and
+          (FDestQuery.FieldByName(DestColumn).ReadOnly=false) then
+          FDestQuery.FieldByName(DestColumn).Value := FImporter.GetData(i);
+      end;
+    end;
+    pbProgress.StepIt;
   except
     on E: Exception do
     begin
       Result:=False;
       FErrors.Add('Error on row [' + IntToStr(I) + '] with message: ' + E.Message);
-
     end;
   end;
 
 end;
 
-procedure TDataImporterForm.Reload(Value: string);
+procedure TDataImporterForm.LoadInputFile(FileName: string);
 begin
-  if not FileExists(Value) then
+  if not FileExists(FileName) then
     exit;
 
   FErrors.Clear;
-  PrepareFile(Value);
+  PrepareFile(FileName);
   OpenDestinationTable(True);
-  FillColumnMappings;
-  AutoMap;
+  FillCombosAutoMap;
   UpdateGUI(True);
-
 end;
 
 procedure TDataImporterForm.UpdateGUI(EnableControls: boolean);
@@ -482,6 +446,32 @@ begin
 
 end;
 
+procedure TDataImporterForm.UpdateMappingListBox;
+var
+  i: integer;
+  MappingCount: integer;
+begin
+  lstColumnsMapping.Clear;
+  // MappingCount will map fields if necessary so we need destination fields
+  if FImporter.DestinationFields.Count=0 then
+  begin
+    if not(assigned(FDestQuery)) then
+      raise Exception.Create('Cannot update mapping info without valid destination query.');
+    MappingCount := FDestQuery.Fields.Count;
+    for i := 0 to MappingCount - 1 do
+    begin
+      FImporter.DestinationFields.Add(FDestQuery.Fields[i].FieldName);
+    end;
+  end;
+
+  MappingCount := FImporter.MappingCount;
+  for i := 0 to MappingCount-1 do
+  begin
+    lstColumnsMapping.Items.Add(FImporter.Mapping[i].SourceField + '=>' +
+      FImporter.Mapping[i].DestinationField);
+  end;
+end;
+
 procedure TDataImporterForm.CleanUp;
 begin
   txtFilename.Text := EmptyStr;
@@ -489,16 +479,21 @@ begin
   cmbSourceColumns.Clear;
   cmbDestColumns.Clear;
   lstColumnsMapping.Clear;
-  FCsvLoaded := False;
   FErrors.Clear;
+
 end;
 
 function TDataImporterForm.ShowModal(DbInfo: TDbConnectionInfo;
   Schema, DestinationTable: string): TModalResult;
 begin
   FSchema := Schema;
+  Assert(assigned(DbInfo));
+  FImporter := TFileImport.Create;
   FConn := DbInfo.ToZeosConnection;
   FDestTable := DestinationTable;
+  if not(assigned(FDestQuery)) then
+    FDestQuery := TZQuery.Create(nil);
+  assert(assigned(FDestQuery));
   FDestQuery.Connection := FConn;
   FDBInfo := DbInfo;
   Result := inherited ShowModal;

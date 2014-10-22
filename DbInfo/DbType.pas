@@ -524,14 +524,11 @@ var
   con:TZConnection;
 begin
    con := TZConnection.Create(nil);
-   if FDbType = dtOracle then
-     con.Database := TDbUtils.GetOracleDescriptor(Self)
-   else if FDbType = dtMsSql then
-   begin
-     con.Database :=TAsStringUtils.WrapString(Database,TStringWrapType.swtBrackets);
-   end else
-   begin
-     con.Database :=FDatabase;
+   case FDBType of
+     dtOracle: con.Database := TDbUtils.GetOracleDescriptor(Self);
+     dtMsSql: con.Database := TAsStringUtils.WrapString(Database,TStringWrapType.swtBrackets);
+   else
+     con.Database := FDatabase;
    end;
    con.HostName := FServer;
    con.User := FUsername;

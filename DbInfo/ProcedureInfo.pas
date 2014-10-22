@@ -29,7 +29,6 @@ type
     FPort: integer;
     FDatabaseType: TDatabaseType;
     FSchema: string;
-    qr: TZQuery;
     adoCon: TZConnection;
     dsMetaData: TZSQLMetadata;
     FOwner:TComponent;
@@ -37,7 +36,7 @@ type
   public
     constructor Create; overload;
     constructor Create(Owner: TComponent; ASchema, Server, DatabaseName, Username,
-     Password: string; ADatabaseType: TDatabaseType; Port: integer); overload;
+      Password: string; ADatabaseType: TDatabaseType; Port: integer); overload;
     function GetProcedureNames: TStringList;
 
     function RunProcedure(procName: string): TDataSet;
@@ -130,75 +129,74 @@ begin
   dsMetaData.DisableControls;
 
   adoCon.Connect;
-
-  qr := TZQuery.Create(nil);
-  qr.Connection := adoCon;
-
-  qr.DisableControls;
-
 end;
 
 function TProcedureInfo.GetProcedureNames: TStringList;
 var
   storedProcedures: TStringList;
   I: integer;
+  qr: TZQuery;
 begin
   storedProcedures := TStringList.Create;
-
-  case FDatabaseType of
-    dtMsSql,dtFirebirdd:
-    begin
-      adoCon.GetStoredProcNames('', storedProcedures);
-      storedProcedures.Text:= StringReplace(storedProcedures.Text,';1','',[rfReplaceAll]);
-      storedProcedures.Text:= StringReplace(storedProcedures.Text,';0','',[rfReplaceAll]);
-    end;
-    dtOracle:
-    begin
-      if qr.Active then
-        qr.Close;
-      qr.SQL.Text := 'select OBJECT_NAME from SYS.ALL_OBJECTS' +
-        ' where upper(OBJECT_TYPE) = upper(''PROCEDURE'') and' +
-        ' Owner=''' + UpperCase(adoCon.User) + '''' + ' order by OBJECT_NAME';
-      try
-        qr.Open;
-        while not qr.EOF do
-        begin
-          storedProcedures.Add(qr.Fields[0].AsString);
-          qr.Next;
-        end;
-      finally
-        qr.Close;
-      end;
-    end;
-    dtMySql:
-    begin
-      if qr.Active then
-        qr.Close;
-      qr.SQL.Text := 'SELECT SPECIFIC_NAME FROM INFORMATION_SCHEMA.ROUTINES ' +
-        ' WHERE ROUTINE_SCHEMA=''' + adoCon.Database + '''';
-      try
-
-        qr.Open;
-        while not qr.EOF do
-        begin
-          storedProcedures.Add(qr.Fields[0].AsString);
-          qr.Next;
-        end;
-      finally
-        qr.Close;
-      end;
-
-      for I := 0 to storedProcedures.Count - 1 do
+  qr := TZQuery.Create(nil);
+  try
+    qr.Connection := adoCon;
+    qr.DisableControls;
+    case FDatabaseType of
+      dtMsSql,dtFirebirdd:
       begin
-        storedProcedures[I] :=
-          StringReplace(storedProcedures[I], ';1', '', [rfReplaceAll]);
+        adoCon.GetStoredProcNames('', storedProcedures);
+        storedProcedures.Text:= StringReplace(storedProcedures.Text,';1','',[rfReplaceAll]);
+        storedProcedures.Text:= StringReplace(storedProcedures.Text,';0','',[rfReplaceAll]);
       end;
+      dtOracle:
+      begin
+        if qr.Active then
+          qr.Close;
+        qr.SQL.Text := 'select OBJECT_NAME from SYS.ALL_OBJECTS' +
+          ' where upper(OBJECT_TYPE) = upper(''PROCEDURE'') and' +
+          ' Owner=''' + UpperCase(adoCon.User) + '''' + ' order by OBJECT_NAME';
+        try
+          qr.Open;
+          while not qr.EOF do
+          begin
+            storedProcedures.Add(qr.Fields[0].AsString);
+            qr.Next;
+          end;
+        finally
+          qr.Close;
+        end;
+      end;
+      dtMySql:
+      begin
+        if qr.Active then
+          qr.Close;
+        qr.SQL.Text := 'SELECT SPECIFIC_NAME FROM INFORMATION_SCHEMA.ROUTINES ' +
+          ' WHERE ROUTINE_SCHEMA=''' + adoCon.Database + '''';
+        try
 
+          qr.Open;
+          while not qr.EOF do
+          begin
+            storedProcedures.Add(qr.Fields[0].AsString);
+            qr.Next;
+          end;
+        finally
+          qr.Close;
+        end;
+
+        for I := 0 to storedProcedures.Count - 1 do
+        begin
+          storedProcedures[I] :=
+            StringReplace(storedProcedures[I], ';1', '', [rfReplaceAll]);
+        end;
+      end;
     end;
+  finally
+    qr.free;
   end;
 
   Result := storedProcedures;
-
 end;
 
 function TProcedureInfo.RunProcedure(procName: string): TDataSet;
@@ -216,6 +214,7 @@ var
   md: TDataSet;
   metaDat:TZSQLMetadata;
   proc: TZStoredProc;
+  qr: TZQuery;
   tab: integer;
   paramName: string;
   sqlExecSp: string;
@@ -243,7 +242,10 @@ begin
   metaDat := TZSQLMetadata.Create(nil);
   proc := TZStoredProc.Create(nil);
 
+  qr := TZQuery.Create(nil);
+  qr.Connection := adoCon;
 
+  qr.DisableControls;
 
   frm := TForm.Create(nil);
   frm.Width := 335;
@@ -251,11 +253,9 @@ begin
   frm.Position := poScreenCenter;
   frm.BorderStyle := bsToolWindow;
 
-
   pnl := TPanel.Create(frm);
   pnl.Align := alBottom;
   pnl.Height := 30;
-
 
   frm.InsertControl(pnl);
 
@@ -565,32 +565,34 @@ begin
             sqlExecSp;
             qr.Open;
             Result := qr;
+            proc.Free;
           end;
           dtOracle:
           begin
             qr.SQL.Text:='CALL '+procName+'('+ValuesOnly+')';
             qr.Open;
             Result := qr;
+            proc.Free;
           end;
           dtMySql:
           begin
-              qr.Close;
+            qr.Close;
 
-              if proc.Params.Count>0 then
-              ValuesOnly:=ValuesOnly+',@outtxt';
+            if proc.Params.Count>0 then
+            ValuesOnly:=ValuesOnly+',@outtxt';
 
-              qr.sql.Text:= 'CALL '+procName+'('+ValuesOnly+')';
-              qr.Open;
-              Result:=qr;
+            qr.sql.Text:= 'CALL '+procName+'('+ValuesOnly+')';
+            qr.Open;
+            Result:=qr;
+            proc.free;
           end;
           dtFirebirdd:
           begin
             proc.Open;
             Result := proc;
+            qr.Free;
           end;
         end;
-
-
 
       except
         on e: Exception do

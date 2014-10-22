@@ -59,8 +59,8 @@ begin
    Height:=16;
    Visible:=False;
    try
-    FGif.LoadFromStream(TLazSqlXResources.LoadingGif);
-    FLoaded := True;
+     FGif.LoadFromStream(TLazSqlXResources.LoadingGif);
+     FLoaded := True;
    except
 
    end;
@@ -68,11 +68,11 @@ end;
 
 procedure TLoadingIndicator.StartAnimation;
 begin
-    if FLoaded then
-    begin
-      Visible:=True;
-      FTimer.Enabled:=True;
-    end;
+  if FLoaded then
+  begin
+    Visible:=True;
+    FTimer.Enabled:=True;
+  end;
 end;
 
 procedure TLoadingIndicator.StopAnimation;
@@ -87,10 +87,11 @@ end;
 
 destructor TLoadingIndicator.Destroy;
 begin
-  If FLoaded then
+  //If FLoaded then
   FGif.Free;
+  FTimer.Free;
 
-   inherited Destroy;
+  inherited Destroy;
 end;
 
 end.
