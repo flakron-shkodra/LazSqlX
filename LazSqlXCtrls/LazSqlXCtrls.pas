@@ -265,13 +265,31 @@ end;
 
 procedure TLazSqlXTabSheet.OnQueryEditorKeyDown(Sender: TObject;
   var Key: word; Shift: TShiftState);
+  procedure InvokeSynCompleteKey;
+  var
+    s: string;
+  begin
+    s:='';
+    // Swallow key
+    key:=VK_UNKNOWN;
+
+    // Tell synedit to call autocompletion popup
+    (FParent as TLazSqlXPageControl).PopupAutoComplete;
+
+    if Assigned(FOnLastWordChanged) then
+      FOnLastWordChanged(s);
+  end;
+
 begin
   case key of
-  VK_DELETE:
+    VK_SPACE: //Ctrl-Space
+      if ssCtrl in Shift then InvokeSynCompleteKey;
+    VK_OEM_COMMA:
+      key:=VK_SPACE;
+     VK_DELETE:
     (FParent as TLazSqlXPageControl).FullScanTableAliases;
   end;
 end;
-
 procedure TLazSqlXTabSheet.OnQueryEditorKeyPress(Sender: TObject; var Key: char
  );
 begin
@@ -296,12 +314,8 @@ procedure TLazSqlXTabSheet.OnQueryEditorKeyUp(Sender: TObject; var Key: word;
 
 begin
   case key of
-    VK_SPACE: //Ctrl-Space
-      if ssCtrl in Shift then InvokeSynCompleteKey;
     VK_OEM_PERIOD: //.
       InvokeSynCompleteKey;
-    VK_OEM_COMMA:
-      key:=VK_SPACE;
   end;
 end;
 
@@ -1483,7 +1497,7 @@ end;
 procedure TLazSqlXPageControl.PopupAutoComplete;
 begin
   if (Self.ActivePage is TLazSQLxTabSheet) then
-    TLazSQLxTabSheet(Self.ActivePage).QueryEditor.CommandProcessor(FSynComplete.ExecCommandID, '', nil);
+    TLazSQLxTabSheet(Self.ActivePage).QueryEditor.CommandProcessor(FSynComplete.ExecCommandID,'', nil);
 end;
 
 procedure TLazSqlXPageControl.ScanNeeded;
