@@ -74,18 +74,20 @@ type
     FErrors: TStringList;
     // Updates listbox with mappings
     procedure UpdateMappingListBox;
+    // Opens target/destination table in databse where data is to be written
     procedure OpenDestinationTable(FirstRowOnly: boolean);
     // Loads input file; updates min/max lines spinedits etc
     procedure PrepareFile(Filename: string);
     // Fills comboboxes with database and source file fields
     // Also sets up auto mapping
     procedure FillCombosAutoMap;
-    // Run the import
+    // Run the import; returns result
     function ImportData: boolean;
     // (Re)load file filename
     // Update mapping/GUI
     // Calls PrepareFile internally.
     procedure LoadInputFile(FileName: string);
+    // Enables/disables controls as needed
     procedure UpdateGUI(EnableControls: boolean);
     procedure CleanUp;
   public
@@ -359,67 +361,82 @@ var
   DestColumn: string;
   LastRow: integer;
 begin
-
-  Result := True;
-  FErrors.Clear;
-
-  pbProgress.Max := speEndPosition.MaxValue;
-  OpenDestinationTable(False);
-  // to do: check to make sure file is loaded
-  if speEndPosition.Value <= 0 then
-    LastRow := FImporter.GetRowCount
-  else
-    LastRow := speEndPosition.Value;
-
+  Result := False; //fail by default
+  Screen.Cursor:=crHourglass;;
   try
-    // Skip past header line(s)
-    if speStartPosition.Value>0 then
-    begin
-      for i:=1 to speStartPosition.Value do
-      begin
-        if not(FImporter.ReadRow) then
-          break; //error: end of file?
-      end;
-    end;
+    FErrors.Clear;
 
-    while (FImporter.ReadRow) and (FImporter.Row+1<=LastRow) do
-    begin
-      if FDestQuery.State in [dsEdit,dsInsert] then
+    pbProgress.Max := speEndPosition.MaxValue;
+    OpenDestinationTable(False);
+    // todo: check to make sure file is loaded?
+    if speEndPosition.Value <= 0 then
+      LastRow := FImporter.GetRowCount
+    else
+      LastRow := speEndPosition.Value;
+
+    // Initialize GUI
+    lblProgress.Caption :=
+      'Processing 0/' + IntToStr(LastRow - 1);
+    pbProgress.Position := 0;
+    Application.ProcessMessages;
+
+    try
+      // Skip past header line(s)
+      if speStartPosition.Value>0 then
       begin
-        try
-          FDestQuery.Post;
-        except on E:exception do
-          begin
-            Result:=False;
-            FErrors.Add('Error on row [' + inttostr(CurrentRow) + '] with message: ' + E.Message);
-            Break;
-          end;
+        for i:=1 to speStartPosition.Value do
+        begin
+          if not(FImporter.ReadRow) then
+            break; //error: end of file?
         end;
       end;
-      FDestQuery.Insert;
-      if FImporter.Row mod 100=0 then
-        lblProgress.Caption :=
-          'Processing ' + IntToStr(FImporter.Row) + '/' + IntToStr(LastRow - 1);
-      pbProgress.Position := CurrentRow;
-      Application.ProcessMessages;
 
-      for I := 0 to FImporter.MappingCount-1 do
+      while (FImporter.ReadRow) and (FImporter.Row+1<=LastRow) do
       begin
-        DestColumn := FImporter.Mapping[I].DestinationField;
-        if (FDestQuery.FieldByName(DestColumn).DataType <> ftAutoInc) and
-          (FDestQuery.FieldByName(DestColumn).ReadOnly=false) then
-          FDestQuery.FieldByName(DestColumn).Value := FImporter.GetData(i);
+        CurrentRow:=FImporter.Row;
+        if FDestQuery.State in [dsEdit,dsInsert] then
+        begin
+          try
+            FDestQuery.Post;
+          except on E:exception do
+            begin
+              Result:=False;
+              FErrors.Add('Error on row [' + inttostr(CurrentRow) + '] with message: ' + E.Message);
+              Break;
+            end;
+          end;
+        end;
+        FDestQuery.Insert;
+
+        // Update GUI
+        if CurrentRow mod 100=0 then
+        begin
+          lblProgress.Caption :=
+            'Processing ' + IntToStr(CurrentRow) + '/' + IntToStr(LastRow - 1);
+          pbProgress.Position := CurrentRow;
+        end;
+        Application.ProcessMessages;
+
+        for I := 0 to FImporter.MappingCount-1 do
+        begin
+          DestColumn := FImporter.Mapping[I].DestinationField;
+          // Note: csv import sees everything as strings so let the db convert if possible
+          if (FDestQuery.FieldByName(DestColumn).DataType <> ftAutoInc) and
+            (FDestQuery.FieldByName(DestColumn).ReadOnly = false) then
+            FDestQuery.FieldByName(DestColumn).AsString := FImporter.GetData(i);
+        end;
+      end;
+      pbProgress.StepIt;
+      Result := True;
+    except
+      on E: Exception do
+      begin
+        FErrors.Add('Error on row [' + IntToStr(I) + '] with message: ' + E.Message);
       end;
     end;
-    pbProgress.StepIt;
-  except
-    on E: Exception do
-    begin
-      Result:=False;
-      FErrors.Add('Error on row [' + IntToStr(I) + '] with message: ' + E.Message);
-    end;
+  finally
+    Screen.Cursor:=crDefault;
   end;
-
 end;
 
 procedure TDataImporterForm.LoadInputFile(FileName: string);
@@ -443,7 +460,6 @@ begin
 
   if EnableControls then
     pbProgress.Position := 0;
-
 end;
 
 procedure TDataImporterForm.UpdateMappingListBox;
@@ -480,7 +496,6 @@ begin
   cmbDestColumns.Clear;
   lstColumnsMapping.Clear;
   FErrors.Clear;
-
 end;
 
 function TDataImporterForm.ShowModal(DbInfo: TDbConnectionInfo;

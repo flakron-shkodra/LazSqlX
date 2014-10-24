@@ -5,7 +5,7 @@ object MainForm: TMainForm
   Width = 1089
   Anchors = [akTop, akLeft, akRight, akBottom]
   Caption = 'SQL X Query '
-  ClientHeight = 701
+  ClientHeight = 702
   ClientWidth = 1089
   KeyPreview = True
   Menu = ApplicationMainMenu
@@ -15,7 +15,7 @@ object MainForm: TMainForm
   OnKeyDown = FormKeyDown
   OnShow = FormShow
   Position = poScreenCenter
-  LCLVersion = '1.2.4.0'
+  LCLVersion = '1.3'
   object tlbMain: TToolBar
     Left = 0
     Height = 24
@@ -117,19 +117,19 @@ object MainForm: TMainForm
   end
   object pnlMain: TPanel
     Left = 0
-    Height = 654
+    Height = 658
     Top = 24
     Width = 1089
     Align = alClient
     Anchors = [akTop, akLeft, akBottom]
-    ClientHeight = 654
+    ClientHeight = 658
     ClientWidth = 1089
     Color = clWindow
     ParentColor = False
     TabOrder = 1
     object imgLogo: TImage
       Left = 215
-      Height = 652
+      Height = 656
       Top = 1
       Width = 873
       Align = alClient
@@ -1926,29 +1926,29 @@ object MainForm: TMainForm
     end
     object pnlTables: TPanel
       Left = 1
-      Height = 652
+      Height = 656
       Top = 1
       Width = 209
       Align = alLeft
-      ClientHeight = 652
+      ClientHeight = 656
       ClientWidth = 209
       TabOrder = 0
       Visible = False
       object cmbSchema: TComboBox
         Left = 1
-        Height = 23
+        Height = 21
         Top = 1
         Width = 207
         Align = alTop
-        ItemHeight = 15
+        ItemHeight = 13
         OnChange = cmbSchemaChange
         Style = csDropDownList
         TabOrder = 0
       end
       object pgcLeft: TPageControl
         Left = 1
-        Height = 627
-        Top = 24
+        Height = 633
+        Top = 22
         Width = 207
         ActivePage = tabTables
         Align = alClient
@@ -1956,11 +1956,11 @@ object MainForm: TMainForm
         TabOrder = 1
         object tabTables: TTabSheet
           Caption = 'Tables'
-          ClientHeight = 599
+          ClientHeight = 607
           ClientWidth = 199
           object lstTables: TListBox
             Left = 0
-            Height = 575
+            Height = 583
             Top = 24
             Width = 199
             Align = alClient
@@ -2051,15 +2051,15 @@ object MainForm: TMainForm
     end
     object Splitter2: TSplitter
       Left = 210
-      Height = 652
+      Height = 656
       Top = 1
       Width = 5
     end
   end
   object sbMain: TStatusBar
     Left = 0
-    Height = 23
-    Top = 678
+    Height = 20
+    Top = 682
     Width = 1089
     Panels = <    
       item
@@ -2075,7 +2075,7 @@ object MainForm: TMainForm
   object pnlIndicator: TPanel
     Left = 201
     Height = 20
-    Top = 680
+    Top = 681
     Width = 21
     Anchors = [akLeft, akBottom]
     BevelOuter = bvNone

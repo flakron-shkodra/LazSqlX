@@ -14,7 +14,7 @@ uses
   mysql40conn, mysql41conn, mssqlconn, strutils, SqlConnBuilderFormU,
   BlobFieldFormU, Clipbrd, types, EditMemoFormU, TableInfoFormU, TableInfo,
   DbType, ProcedureInfo, SqlGenerator, FtDetector, SqlExecThread, AsSqlParser,
-  LazSqlXResources, RegExpr, Regex, versionresource, MouseAndKeyInput,
+  LazSqlXResources, RegExpr, Regex, versionresource,
   UnitGetSetText, QueryDesignerFormU, LoadingIndicator,
   SynEditMarkupSpecialLine, SynEditTypes, SynEditKeyCmds, fpsqlparser,LazSqlXCtrls,
   fpsqltree;
@@ -331,6 +331,7 @@ type
     procedure DoSelectiveConnect;
     function GetIsConnected: Boolean;
     procedure UpdateGUI(aIsConnected: boolean);
+    // Show connection form to user and connect to database
     procedure Connect;
     procedure CreateIntelliSense;
     procedure DoExport(exporter: TCustomDatasetExporter; FileExt: string);

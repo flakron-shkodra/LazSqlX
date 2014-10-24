@@ -52,6 +52,8 @@ type
     FCSVParser: TCSVParser;
     FDelimiter: char;
     FDestinationFields: TStringList;
+    // End of file marker
+    FEOF: boolean;
     // Maps file/source field to db field
     FMapping: array of TMap;
     FRow: integer; //current row (0-based)
@@ -81,6 +83,7 @@ type
     // Read in source fields into FSourceFields.
     // Used in Automap as well as GetSourceFields
     procedure ReadSourceFields;
+    // Moves back to beginning of CSV file
     procedure ResetCSVParser;
     procedure SetDelimiter(AValue: char);
     procedure SetSourceFile(AValue: string);
@@ -103,8 +106,8 @@ type
     // Reads file and counts number of rows
     // Returns 0 if invalid/empty
     function GetRowCount: integer;
-    // Reads a row of data. Returns false if no more data present
-    // Data in fields can then be retrieved with GetData
+    // Reads a row of data. Returns false if last row read (end of file)
+    // Data in fields can be retrieved by calling GetData
     function ReadRow: boolean;
 
     // For delimited text files: delimiter that separates fields, such as ;
@@ -216,8 +219,7 @@ begin
       FMapping[i].SourceFieldIndex:=FMapping[i+1].SourceFieldIndex;
       FMapping[i].DestinationField:=FMapping[i+1].DestinationField;
     end;
-    //to do: if this is applied we need to check for valid rowdata first
-    //FRowData.Delete(Item);
+    FRowData.Delete(Item);
     // Release last array item
     SetLength(FMapping,High(FMapping));
   end;
@@ -235,7 +237,10 @@ end;
 
 function TFileImport.GetData(MapIndex: integer): string;
 begin
-  result:=FRowData[MapIndex];
+  if (MapIndex>=0) and (MapIndex<FRowData.Count) then
+    result:=FRowData[MapIndex]
+  else
+    result:=''; //invalid data
 end;
 
 function TFileImport.GetData(DestinationField: string): string;
@@ -372,6 +377,7 @@ end;
 procedure TFileImport.ResetCSVParser;
 begin
   FCSVParser.ResetParser; //rewind to beginning of file
+  FEOF:=false;
   FRow:=FCSVParser.CurrentRow;
 end;
 
@@ -381,31 +387,47 @@ begin
     FreeAndNil(FCSVParser);
   FCSVStream.Position:=0;
   FCSVParser:=TCSVParser.Create;
+  FEOF:=false;
   FCSVParser.SetSource(FCSVStream);
   FCSVParser.Delimiter:=FDelimiter;
 end;
 
 function TFileImport.ReadRow: boolean;
 var
+  i: integer;
   MapIndex: integer;
 begin  
   result:=false;
+  // At end of file; there's nothing left...
+  if FEOF then exit;
+
   if assigned(FCSVStream) then
   begin
     if not(assigned(FCSVParser)) then
       SetupCSVParser;
-    FRow:=FCSVParser.CurrentRow;
-    while FCSVParser.CurrentRow=Row do
+
+    // Remove any previous data
+    for i:=0 to FRowData.Count-1 do
     begin
-      if not(FCSVParser.ParseNextCell) then
-      begin
-        FRowCount:=FCSVParser.CurrentRow+1;
-        exit(false); //end of file
-      end;
+      FRowData[i]:='';
+    end;
+
+    // FRow should still be set to last row we read here
+    FRow:=FCSVParser.CurrentRow;
+    while (FCSVParser.CurrentRow=FRow) do
+    begin
       MapIndex:=GetMappingIndex(FCSVParser.CurrentCol);
       if MapIndex>-1 then
-      begin
         FRowData[MapIndex]:=FCSVParser.CurrentCellText;
+
+      // Move to the next cell; check if at end of file
+      if not(FCSVParser.ParseNextCell) then
+      begin
+        // End of file
+        FEOF:=true; //remember for next ReadRow run
+        FRow:=FCSVParser.CurrentRow;
+        FRowCount:=FCSVParser.CurrentRow+1;
+        break;
       end;
     end;
     result:=true;

@@ -28,7 +28,7 @@
       <AutoIncrementBuild Value="True"/>
       <MajorVersionNr Value="4"/>
       <MinorVersionNr Value="4"/>
-      <BuildNr Value="1426"/>
+      <BuildNr Value="1427"/>
       <StringTable ProductVersion=""/>
     </VersionInfo>
     <BuildModes Count="2">
@@ -46,14 +46,12 @@
             <UnitOutputDirectory Value="..\build64\units"/>
           </SearchPaths>
           <CodeGeneration>
-            <Checks>
-              <StackChecks Value="True"/>
-            </Checks>
             <TargetCPU Value="x86_64"/>
             <TargetOS Value="win64"/>
           </CodeGeneration>
           <Linking>
             <Debugging>
+              <DebugInfoType Value="dsDwarf2Set"/>
               <UseExternalDbgSyms Value="True"/>
             </Debugging>
             <Options>
@@ -62,9 +60,6 @@
               </Win32>
             </Options>
           </Linking>
-          <Other>
-            <CompilerPath Value="$(CompPath)"/>
-          </Other>
         </CompilerOptions>
       </Item2>
     </BuildModes>
@@ -78,7 +73,7 @@
         <FormatVersion Value="1"/>
       </local>
     </RunParams>
-    <RequiredPackages Count="9">
+    <RequiredPackages Count="8">
       <Item1>
         <PackageName Value="RunTimeTypeInfoControls"/>
       </Item1>
@@ -86,28 +81,25 @@
         <PackageName Value="LazControls"/>
       </Item2>
       <Item3>
-        <PackageName Value="lazmouseandkeyinput"/>
+        <PackageName Value="lazdbexport"/>
       </Item3>
       <Item4>
-        <PackageName Value="lazdbexport"/>
+        <PackageName Value="SQLDBLaz"/>
       </Item4>
       <Item5>
-        <PackageName Value="SQLDBLaz"/>
+        <PackageName Value="FCL"/>
       </Item5>
       <Item6>
-        <PackageName Value="FCL"/>
+        <PackageName Value="SynEdit"/>
       </Item6>
       <Item7>
-        <PackageName Value="SynEdit"/>
+        <PackageName Value="zcomponent"/>
       </Item7>
       <Item8>
-        <PackageName Value="zcomponent"/>
-      </Item8>
-      <Item9>
         <PackageName Value="LCL"/>
-      </Item9>
+      </Item8>
     </RequiredPackages>
-    <Units Count="45">
+    <Units Count="46">
       <Unit0>
         <Filename Value="LazSqlX.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -236,6 +228,7 @@
         <ComponentName Value="QueryDesigner"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
+        <UnitName Value="QueryDesignerU"/>
       </Unit22>
       <Unit23>
         <Filename Value="QueryDesigner\QueryDesignerTablesU.pas"/>
@@ -296,6 +289,7 @@
       <Unit33>
         <Filename Value="LazSqlXCtrls\LazSqlXCtrls.pas"/>
         <IsPartOfProject Value="True"/>
+        <UnitName Value="LazSqlXCtrls"/>
       </Unit33>
       <Unit34>
         <Filename Value="QueryDesigner\QueryDesignerPropertyGridU.pas"/>
@@ -344,6 +338,11 @@
         <Filename Value="Resources\TableInfoReserved.dt"/>
         <IsPartOfProject Value="True"/>
       </Unit44>
+      <Unit45>
+        <Filename Value="UtilClasses\fileimport.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="fileimport"/>
+      </Unit45>
     </Units>
   </ProjectOptions>
   <CompilerOptions>
@@ -357,17 +356,10 @@
       <OtherUnitFiles Value="Forms;DbInfo;FileTypeDetector;Generators;UtilClasses;DbInfo\AsSqlKeywords;QueryDesigner;LoadingIndicator;LazSqlXCtrls;DefTypes;Resources"/>
       <UnitOutputDirectory Value="..\build\units"/>
     </SearchPaths>
-    <Parsing>
-      <SyntaxOptions>
-        <IncludeAssertionCode Value="True"/>
-      </SyntaxOptions>
-    </Parsing>
     <CodeGeneration>
       <Checks>
         <StackChecks Value="True"/>
       </Checks>
-      <TargetCPU Value="i386"/>
-      <TargetOS Value="win32"/>
     </CodeGeneration>
     <Linking>
       <Debugging>
@@ -380,9 +372,6 @@
         </Win32>
       </Options>
     </Linking>
-    <Other>
-      <CompilerPath Value="$(CompPath)"/>
-    </Other>
   </CompilerOptions>
   <Debugging>
     <Exceptions Count="6">

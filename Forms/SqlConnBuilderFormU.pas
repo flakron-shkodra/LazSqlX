@@ -70,6 +70,7 @@ type
     procedure lblExpanderClick(Sender: TObject);
     procedure lblClearRecentClick(Sender: TObject);
     procedure lstRecentConnectionsClick(Sender: TObject);
+    procedure lstRecentConnectionsDblClick(Sender: TObject);
     procedure lstRecentConnectionsDrawItem(Control: TWinControl;
      Index: Integer; ARect: TRect; State: TOwnerDrawState);
     procedure mitDeleteClick(Sender: TObject);
@@ -89,6 +90,7 @@ type
 
     procedure FillRecentConnectionListBox;
     function GetConDatabaseType: TDatabaseType;
+    procedure PerformConnection;
     { Private declarations }
   public
     sqlConStr: string;
@@ -203,94 +205,8 @@ begin
 end;
 
 procedure TSqlConnBuilderForm.btnAcceptClick(Sender: TObject);
-var
-  DbConnection: TZConnection;
-  i: integer;
-  wt:TStringWrapType;
-  s: TCaption;
 begin
-
-  if txtPort.Visible then
-    if not TryStrToInt(txtPort.Text, i) then
-    begin
-      ShowMessage('Port must be number');
-    end;
-
-
-   DbInfo.DatabaseType:=TDatabaseType(cmbDatabaseType.ItemIndex);
-   DbInfo.Server:=cmbServerName.Text;
-   DbInfo.Database:=cmbDatabase.Text;
-   DbInfo.Username:=txtUserName.Text;
-   DbInfo.Password:=txtPassword.Text;
-   DbInfo.Port:=txtPort.Value;
-   DbInfo.DbEngine:=TDatabaseEngine(cmbDbEngine.ItemIndex);
-
-
-  DbConnection := TZConnection.Create(nil);
-  try
-
-    try
-      DbConnection.Protocol := LowerCase(cmbDatabaseType.Text);
-
-      if LowerCase(cmbDatabaseType.Text) <> 'sqlite' then
-      begin
-        DbConnection.HostName := cmbServerName.Text;
-        DbConnection.User := txtUserName.Text;
-        DbConnection.Password := txtPassword.Text;
-
-        case DbInfo.DatabaseType of
-          dtMsSql:wt:=swtBrackets;
-          dtOracle:wt:=swtQuotes;
-          else
-          wt := swtNone;
-        end;
-
-        DbConnection.Catalog := TAsStringUtils.WrapString(cmbDatabase.Text,wt);
-
-        DBConnection.LoginPrompt := False;
-        DbConnection.Port := i;
-      end;
-      if (LowerCase(cmbDatabaseType.Text) = 'oracle') or
-        (LowerCase(cmbDatabaseType.Text) = 'oracle-9i') then
-      begin
-        OracleDatabaseDescriptor := TDbUtils.GetOracleDescriptor(DbInfo);
-        DbConnection.Database := OracleDatabaseDescriptor;
-      end
-      else
-      begin
-        if (LowerCase(cmbDatabaseType.Items[cmbDatabaseType.ItemIndex])='mssql') then
-        DbConnection.Database := TAsStringUtils.WrapString(cmbDatabase.Text,TStringWrapType.swtBrackets)
-        else
-          DbConnection.Database :=cmbDatabase.Text;
-      end;
-      DBConnection.Connect;
-      DbConnection.Disconnect;
-
-
-
-      if not RecentConnections.Exists(dbInfo) then
-      RecentConnections.Add(dbInfo);
-
-      if RecentConnections.Count>9 then
-      begin
-        RecentConnections.Delete(0);
-      end;
-
-      SaveRecentConnToFile;
-
-    except
-      on e: Exception do
-      begin
-        Self.ModalResult := mrCancel;
-        ShowMessage('Invalid ConnectionString' + LineEnding + e.Message);
-      end
-    end;
-
-    SaveRecentConnToFile;
-
-  finally
-    DbConnection.Free;
-  end;
+  PerformConnection;
 end;
 
 procedure TSqlConnBuilderForm.btnCancelClick(Sender: TObject);
@@ -382,45 +298,45 @@ end;
 
 procedure TSqlConnBuilderForm.lstRecentConnectionsClick(Sender: TObject);
 var
-   c:TDbConnectionInfo;
+  c: TDbConnectionInfo;
 begin
-
- if lstRecentConnections.ItemIndex>-1 then
- begin
-  try
-   c := RecentConnections[lstRecentConnections.ItemIndex];
-   cmbDatabaseType.ItemIndex:= Integer(c.DatabaseType);
-   cmbDatabaseTypeChange(nil);
-   cmbServerName.Text:=c.Server;
-   cmbDatabase.Text:=c.Database;
-   txtUserName.Text:=c.Username;
-   txtPassword.Text:=c.Password;
-   txtPort.Value:=c.Port;
-  except
+  if lstRecentConnections.ItemIndex>-1 then
+  begin
+    try
+      c:=RecentConnections[lstRecentConnections.ItemIndex];
+      cmbDatabaseType.ItemIndex:=Integer(c.DatabaseType);
+      cmbDatabaseTypeChange(nil);
+      cmbServerName.Text:=c.Server;
+      cmbDatabase.Text:=c.Database;
+      txtUserName.Text:=c.Username;
+      txtPassword.Text:=c.Password;
+      txtPort.Value:=c.Port;
+    except
+      // ignore errors
+    end;
   end;
+end;
 
- end;
-
+procedure TSqlConnBuilderForm.lstRecentConnectionsDblClick(Sender: TObject);
+begin
+  PerformConnection;
 end;
 
 procedure TSqlConnBuilderForm.lstRecentConnectionsDrawItem(
  Control: TWinControl; Index: Integer; ARect: TRect; State: TOwnerDrawState);
 var
   c: TListBox;
-  strDbType:string;
-  aDbtype:TDatabaseType;
+  strDbType: string;
+  aDbtype: TDatabaseType;
 begin
   c := (Control as TListBox);
 
-
   with c.Canvas do
   begin
-
     if Odd(Index) then
       Brush.Color := clWhite
     else
       Brush.Color := $00F9F9F9;
-
 
     FillRect(ARect);
 
@@ -449,11 +365,11 @@ begin
     aDbType := TDbUtils.DatabaseTypeFromString(strDbType);
 
     case aDbtype of
-      dtMsSql:Draw(ARect.Left, ARect.Top,bmpSqlType);
-      dtOracle:Draw(ARect.Left, ARect.Top,bmpOracleType);
-      dtMySql:Draw(ARect.Left, ARect.Top,bmpMySqlType);
-      dtSQLite:Draw(ARect.Left, ARect.Top,bmpSqliteType);
-      dtFirebirdd:Draw(ARect.Left, ARect.Top,bmpFirebird);
+      dtMsSql: Draw(ARect.Left, ARect.Top,bmpSqlType);
+      dtOracle: Draw(ARect.Left, ARect.Top,bmpOracleType);
+      dtMySql: Draw(ARect.Left, ARect.Top,bmpMySqlType);
+      dtSQLite: Draw(ARect.Left, ARect.Top,bmpSqliteType);
+      dtFirebirdd: Draw(ARect.Left, ARect.Top,bmpFirebird);
     end;
 
     Brush.Style := bsClear;
@@ -463,27 +379,24 @@ end;
 
 procedure TSqlConnBuilderForm.mitDeleteClick(Sender: TObject);
 begin
- if lstRecentConnections.ItemIndex>-1 then
- begin
-  RecentConnections.Delete(lstRecentConnections.ItemIndex);
-  RecentConnections.SaveToFile(RecentConnectionsFilename);
-  RecentConnections.LoadFromFile(RecentConnectionsFilename);
-  FillRecentConnectionListBox;
- end;
+  if lstRecentConnections.ItemIndex>-1 then
+  begin
+    RecentConnections.Delete(lstRecentConnections.ItemIndex);
+    RecentConnections.SaveToFile(RecentConnectionsFilename);
+    RecentConnections.LoadFromFile(RecentConnectionsFilename);
+    FillRecentConnectionListBox;
+  end;
 end;
 
 procedure TSqlConnBuilderForm.txtPasswordChange(Sender: TObject);
 begin
- if GetConDatabaseType=dtSQLite then
- begin
-  txtAdvancedProperties.Clear;
-
-   if Trim(txtPassword.Text)<>EmptyStr then
+  if GetConDatabaseType=dtSQLite then
   begin
-    txtAdvancedProperties.Lines.Add('encrypted=true');
-  end;
+    txtAdvancedProperties.Clear;
 
- end;
+    if Trim(txtPassword.Text)<>EmptyStr then
+      txtAdvancedProperties.Lines.Add('encrypted=true');
+  end;
 end;
 
 function TSqlConnBuilderForm.GetConDatabaseType: TDatabaseType;
@@ -491,20 +404,102 @@ begin
   Result := TDatabaseType(cmbDatabaseType.ItemIndex);
 end;
 
+procedure TSqlConnBuilderForm.PerformConnection;
+var
+  DbConnection: TZConnection;
+  i: integer;
+  wt:TStringWrapType;
+  s: TCaption;
+begin
+  if (txtPort.Visible) and
+    (not TryStrToInt(txtPort.Text, i)) then
+  begin
+    ShowMessage('Port must be a number');
+  end;
+
+  DbInfo.DatabaseType:=TDatabaseType(cmbDatabaseType.ItemIndex);
+  DbInfo.Server:=cmbServerName.Text;
+  DbInfo.Database:=cmbDatabase.Text;
+  DbInfo.Username:=txtUserName.Text;
+  DbInfo.Password:=txtPassword.Text;
+  DbInfo.Port:=txtPort.Value;
+  DbInfo.DbEngine:=TDatabaseEngine(cmbDbEngine.ItemIndex);
+
+  DbConnection := TZConnection.Create(nil);
+  try
+    try
+      DbConnection.Protocol := LowerCase(cmbDatabaseType.Text);
+
+      if LowerCase(cmbDatabaseType.Text) <> 'sqlite' then
+      begin
+        DbConnection.HostName := cmbServerName.Text;
+        DbConnection.User := txtUserName.Text;
+        DbConnection.Password := txtPassword.Text;
+
+        case DbInfo.DatabaseType of
+          dtMsSql:wt:=swtBrackets;
+          dtOracle:wt:=swtQuotes;
+          else
+          wt := swtNone;
+        end;
+
+        DbConnection.Catalog := TAsStringUtils.WrapString(cmbDatabase.Text,wt);
+
+        DBConnection.LoginPrompt := False;
+        DbConnection.Port := i;
+      end;
+      if (LowerCase(cmbDatabaseType.Text) = 'oracle') or
+        (LowerCase(cmbDatabaseType.Text) = 'oracle-9i') then
+      begin
+        OracleDatabaseDescriptor := TDbUtils.GetOracleDescriptor(DbInfo);
+        DbConnection.Database := OracleDatabaseDescriptor;
+      end
+      else
+      begin
+        if (LowerCase(cmbDatabaseType.Items[cmbDatabaseType.ItemIndex])='mssql') then
+          DbConnection.Database := TAsStringUtils.WrapString(cmbDatabase.Text,TStringWrapType.swtBrackets)
+        else
+          DbConnection.Database :=cmbDatabase.Text;
+      end;
+      DBConnection.Connect;
+      DbConnection.Disconnect;
+
+      if not RecentConnections.Exists(dbInfo) then
+        RecentConnections.Add(dbInfo);
+
+      if RecentConnections.Count>9 then
+        RecentConnections.Delete(0);
+
+      SaveRecentConnToFile;
+      // Close form and pass on success:
+      Self.ModalResult := mrOK;
+    except
+      on e: Exception do
+      begin
+        // Close form and pass on failure
+        Self.ModalResult := mrCancel;
+        ShowMessage('Invalid ConnectionString' + LineEnding + e.Message);
+      end
+    end;
+  finally
+    DbConnection.Free;
+  end;
+end;
+
 procedure TSqlConnBuilderForm.FillRecentConnectionListBox;
 var
- I: Integer;
+  I: Integer;
 begin
- lstRecentConnections.Clear;
-   for I:=0 to RecentConnections.Count-1 do
-   begin
-     lstRecentConnections.Items.Add
-     (
+  lstRecentConnections.Clear;
+  for I:=0 to RecentConnections.Count-1 do
+  begin
+    lstRecentConnections.Items.Add
+      (
       TDbUtils.DatabaseTypeAsString(RecentConnections[I].DatabaseType, true)+':'+
       RecentConnections[I].Server+'\'+
       RecentConnections[I].Database
-     );
-   end;
+      );
+  end;
 end;
 
 procedure TSqlConnBuilderForm.FormShow(Sender: TObject);

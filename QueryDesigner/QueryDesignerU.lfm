@@ -39,7 +39,7 @@ object QueryDesigner: TQueryDesigner
       OnClick = btnGenerateQueryClick
     end
     object ToolButton1: TToolButton
-      Left = 109
+      Left = 106
       Top = 2
       Width = 10
       Caption = 'ToolButton1'
@@ -47,21 +47,21 @@ object QueryDesigner: TQueryDesigner
       Style = tbsSeparator
     end
     object btnDeleteTable: TToolButton
-      Left = 224
+      Left = 221
       Top = 2
       Caption = 'Delete Table'
       ImageIndex = 2
       OnClick = btnDeleteTableClick
     end
     object btnClear: TToolButton
-      Left = 329
+      Left = 326
       Top = 2
       Caption = 'Clear '
       ImageIndex = 3
       OnClick = btnClearClick
     end
     object btnAddTable: TToolButton
-      Left = 119
+      Left = 116
       Top = 2
       Caption = 'Add Table'
       ImageIndex = 1

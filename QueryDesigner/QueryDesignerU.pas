@@ -9,8 +9,8 @@ uses
   Classes,
   Graphics, Controls, Forms, Dialogs, Contnrs,
   ExtCtrls, TableInfo, DbType, StdCtrls, ToolWin,
-  ComCtrls, ImgList, SqlGenerator, GraphUtil,ZConnection,
-  MouseAndKeyInput,MouseInputIntf,KeyInputIntf,LCL,LCLType,LCLIntf, Menus;
+  ComCtrls, ImgList, SqlGenerator, GraphUtil, ZConnection,
+  LCL, LCLType, LCLIntf, Menus;
 
 type
 
