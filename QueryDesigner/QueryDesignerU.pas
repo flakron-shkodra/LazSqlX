@@ -431,7 +431,7 @@ var
   field: TFieldInfo;
   fieldPanel: TPanel;
   lblFieldCaption: TLabel;
-  ik: TImportedKey;
+  ik: TImportedKeyInfo;
   I: integer;
   tableWidth: integer;
 
@@ -446,13 +446,9 @@ begin
     if FindTableControl(Tablename) = nil then
     begin
 
-      ti := TableInfoList.GetTableInfo(Schema, Tablename);
-      if ti <> nil then
-      begin
 
-        TableInfoList.Add(ti);
+        ti := TableInfoList.Add(Schema,Tablename);
         tableWidth := 10;
-
 
         pnlTable := TPanel.Create(aParent);
         aParent.InsertControl(pnlTable);
@@ -519,7 +515,7 @@ begin
 
         lblTableCaption.Width := pnlTable.Width;
 
-        pnlTable.Name := ti.TableCSharpName;
+        pnlTable.Name := ti.TableNameAsControlName;
 
         AssignEvents(pnlTable);
         pnlTable.BringToFront;
@@ -538,7 +534,7 @@ begin
 
           end;
 
-      end;
+
       FCurrentNodeControl := pnlTable;
       PositionNodes(FCurrentNodeControl);
       pnlTable.PopupMenu:=PopupMenu1;
@@ -712,7 +708,7 @@ procedure TQueryDesigner.OnFieldMouseDown(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: integer);
 var
   fi: TFieldInfo;
-  ik: TImportedKey;
+  ik: TImportedKeyInfo;
   ti :TTableInfo;
   fieldName: string;
   Tablename: string;
@@ -785,7 +781,7 @@ var
   selectFields:TStringList;
   ti: TTableInfo;
   foreignTi: TTableInfo;
-  ik: TImportedKey;
+  ik: TImportedKeyInfo;
   fi: TFieldInfo;
   I:Integer;
 begin
@@ -818,15 +814,14 @@ begin
   begin
     if ik = nil then
     begin
-      ik := TImportedKey.Create;
-      ti.ImportedKeys.Add(ik);
+      ik := ti.ImportedKeys.Add;
     end;
 
-    for fi in ti.AllFields do
+    for I:=0 to ti.AllFields.Count-1 do
     begin
-      if fi.fieldName = sourceField then
+      if ti.AllFields[I].fieldName = sourceField then
       begin
-        fi.IsReference := True;
+        ti.AllFields[I].IsReference := True;
         Break;
       end;
     end;
@@ -866,14 +861,14 @@ end;
 procedure TQueryDesigner.pbAreaPaint(Sender: TObject);
 var
   ti: TTableInfo;
-  ik: TImportedKey;
+  ik: TImportedKeyInfo;
 
   pnlSourceTable: TPanel;
   pnlSourceField: TPanel;
 
   pnlDestTable: TPanel;
   pnlDestField: TPanel;
-  I: integer;
+  I,J: integer;
 
   sourceRect: TRect;
   destRect: TRect;
@@ -899,8 +894,9 @@ begin
         pbArea.Canvas.Pen.Width := 2;
 
         if ti.ImportedKeys <> nil then
-          for ik in ti.ImportedKeys do
+          for J:=0 to ti.ImportedKeys.Count-1 do
           begin
+             ik := ti.ImportedKeys[J];
             arrow := ArrowRightImage.Picture.Bitmap;
             pnlSourceField := FindFieldControl(pnlSourceTable, ik.ColumnName);
             if pnlSourceField <> nil then
@@ -1078,7 +1074,7 @@ begin
 
   if I > -1 then
   begin
-    c := scbDesigner.FindChildControl(TableInfoList[I].TableCSharpName);
+    c := scbDesigner.FindChildControl(TableInfoList[I].TableNameAsControlName);
 
     if c <> nil then
     c.Free;
@@ -1147,7 +1143,7 @@ begin
  FDbInfo:=AValue;
 
  if TableInfoList = nil then
-    TableInfoList := TTableInfos.Create(FDBInfo);
+    TableInfoList := TTableInfos.Create(nil,FDBInfo);
 
 end;
 

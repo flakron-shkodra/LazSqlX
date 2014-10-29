@@ -27,8 +27,8 @@
       <UseVersionInfo Value="True"/>
       <AutoIncrementBuild Value="True"/>
       <MajorVersionNr Value="4"/>
-      <MinorVersionNr Value="4"/>
-      <BuildNr Value="1427"/>
+      <MinorVersionNr Value="5"/>
+      <BuildNr Value="1436"/>
       <StringTable ProductVersion=""/>
     </VersionInfo>
     <BuildModes Count="2">
@@ -60,6 +60,9 @@
               </Win32>
             </Options>
           </Linking>
+          <Other>
+            <CompilerPath Value="$(CompPath)"/>
+          </Other>
         </CompilerOptions>
       </Item2>
     </BuildModes>
@@ -99,10 +102,11 @@
         <PackageName Value="LCL"/>
       </Item8>
     </RequiredPackages>
-    <Units Count="46">
+    <Units Count="47">
       <Unit0>
         <Filename Value="LazSqlX.lpr"/>
         <IsPartOfProject Value="True"/>
+        <UnitName Value="LazSqlX"/>
       </Unit0>
       <Unit1>
         <Filename Value="Forms\BlobFieldFormU.pas"/>
@@ -134,15 +138,17 @@
         <ResourceBaseClass Value="Form"/>
       </Unit4>
       <Unit5>
-        <Filename Value="Forms\TableInfoFormU.pas"/>
+        <Filename Value="Forms\DesignTableFormU.pas"/>
         <IsPartOfProject Value="True"/>
-        <ComponentName Value="TableInfoForm"/>
+        <ComponentName Value="DesignTableForm"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
+        <UnitName Value="DesignTableFormU"/>
       </Unit5>
       <Unit6>
         <Filename Value="DbInfo\DbType.pas"/>
         <IsPartOfProject Value="True"/>
+        <UnitName Value="DbType"/>
       </Unit6>
       <Unit7>
         <Filename Value="DbInfo\ProcedureInfo.pas"/>
@@ -151,6 +157,7 @@
       <Unit8>
         <Filename Value="DbInfo\TableInfo.pas"/>
         <IsPartOfProject Value="True"/>
+        <UnitName Value="TableInfo"/>
       </Unit8>
       <Unit9>
         <Filename Value="FileTypeDetector\FtDetector.pas"/>
@@ -159,6 +166,7 @@
       <Unit10>
         <Filename Value="Generators\SqlGenerator.pas"/>
         <IsPartOfProject Value="True"/>
+        <UnitName Value="SqlGenerator"/>
       </Unit10>
       <Unit11>
         <Filename Value="UtilClasses\sqlexecthread.pas"/>
@@ -171,6 +179,7 @@
       <Unit13>
         <Filename Value="DbInfo\AsSqlParser.pas"/>
         <IsPartOfProject Value="True"/>
+        <UnitName Value="AsSqlParser"/>
       </Unit13>
       <Unit14>
         <Filename Value="DbInfo\AsStringUtils.pas"/>
@@ -207,6 +216,7 @@
         <ComponentName Value="EditIndexForm"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
+        <UnitName Value="EditIndexFormU"/>
       </Unit19>
       <Unit20>
         <Filename Value="Forms\QueryDesignerFormU.pas"/>
@@ -240,6 +250,7 @@
       <Unit24>
         <Filename Value="DbInfo\AsDatabaseCloner.pas"/>
         <IsPartOfProject Value="True"/>
+        <UnitName Value="AsDatabaseCloner"/>
       </Unit24>
       <Unit25>
         <Filename Value="Forms\DatabaseClonerFormU.pas"/>
@@ -247,6 +258,7 @@
         <ComponentName Value="DatabaseClonerForm"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
+        <UnitName Value="DatabaseClonerFormU"/>
       </Unit25>
       <Unit26>
         <Filename Value="Forms\ProgressFormU.pas"/>
@@ -285,6 +297,7 @@
       <Unit32>
         <Filename Value="UtilClasses\csvdocument.pas"/>
         <IsPartOfProject Value="True"/>
+        <UnitName Value="CsvDocument"/>
       </Unit32>
       <Unit33>
         <Filename Value="LazSqlXCtrls\LazSqlXCtrls.pas"/>
@@ -343,6 +356,11 @@
         <IsPartOfProject Value="True"/>
         <UnitName Value="fileimport"/>
       </Unit45>
+      <Unit46>
+        <Filename Value="DbInfo\AsDbFormUtils.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="AsDbFormUtils"/>
+      </Unit46>
     </Units>
   </ProjectOptions>
   <CompilerOptions>
@@ -372,6 +390,9 @@
         </Win32>
       </Options>
     </Linking>
+    <Other>
+      <CompilerPath Value="$(CompPath)"/>
+    </Other>
   </CompilerOptions>
   <Debugging>
     <Exceptions Count="6">

@@ -1,10 +1,10 @@
-object TableInfoForm: TTableInfoForm
+object DesignTableForm: TDesignTableForm
   Left = 421
   Height = 544
   Top = 204
   Width = 708
   BorderIcons = [biSystemMenu, biMaximize]
-  Caption = 'Table Informations'
+  Caption = 'Design Table'
   ClientHeight = 544
   ClientWidth = 708
   Color = clBtnFace
@@ -12,10 +12,9 @@ object TableInfoForm: TTableInfoForm
   Font.Height = -11
   Font.Name = 'Tahoma'
   OnCloseQuery = FormCloseQuery
-  OnCreate = FormCreate
   OnShow = FormShow
   Position = poMainFormCenter
-  LCLVersion = '1.2.4.0'
+  LCLVersion = '1.2.6.0'
   object lblTablename: TLabel
     Left = 43
     Height = 19
@@ -64,10 +63,10 @@ object TableInfoForm: TTableInfoForm
     Height = 478
     Top = 37
     Width = 692
-    ActivePage = tabFields
+    ActivePage = tabIndexes
     Anchors = [akTop, akLeft, akRight, akBottom]
     Images = ilTableInfoImages
-    TabIndex = 0
+    TabIndex = 3
     TabOrder = 0
     object tabFields: TTabSheet
       Caption = 'Fields'
@@ -144,7 +143,7 @@ object TableInfoForm: TTableInfoForm
       end
     end
     object tabDependencies: TTabSheet
-      Caption = 'Constraints'
+      Caption = 'Relations'
       ClientHeight = 451
       ClientWidth = 684
       ImageIndex = 1
@@ -261,7 +260,6 @@ object TableInfoForm: TTableInfoForm
           AutoSize = True
           Caption = 'New'
           ImageIndex = 7
-          OnClick = tbtnNew2Click
         end
         object tbtnDrop2: TToolButton
           Left = 48

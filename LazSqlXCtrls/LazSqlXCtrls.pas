@@ -52,6 +52,7 @@ type
       var AMode: TSynSelectionMode; ALogStartPos: TPoint;
       var AnAction: TSynCopyPasteAction);
     procedure OnQyeryAfterPost(DataSet:TDataSet);
+    procedure OnQueryAfterDelete(DataSet:TDataSet);
     procedure SetDataGrid(AValue: TDBGrid);
     procedure SetMessage(AValue: string);
     procedure SetOnExecutionFinished(AValue: TOnSqlExecThreadFinish);
@@ -342,8 +343,6 @@ begin
       //generate update or delete statement
     end;
     ds.ApplyUpdates;
-    ((ds as TSQLQuery).Transaction AS TSQLTransaction).Commit;
-
     if not ds.Active then
     begin
       ds.Open;
@@ -351,6 +350,17 @@ begin
       ResizeDataGrid;
     end;
   end
+end;
+
+procedure TLazSqlXTabSheet.OnQueryAfterDelete(DataSet: TDataSet);
+var
+ ds: TSQLQuery;
+begin
+  if (DataSet is TSQLQuery) then
+  begin
+    ds := (DataSet as TSQLQuery);
+    ds.ApplyUpdates;
+  end;
 end;
 
 procedure TLazSqlXTabSheet.SetDataGrid(AValue: TDBGrid);
@@ -415,13 +425,7 @@ begin
   try
     cmd := Sender as TSqlExecThread;
 
-    if cmd.IsSelect then
-      FMessage := cmd.Message
-    else
-    begin
-      FMessage := EmptyStr;
-    end;
-
+    FMessage := cmd.Message;
 
     FErrorMemo.Font.Color := clWindowText;
     if (cmd.LastError <> EmptyStr) then
@@ -450,6 +454,9 @@ begin
         FDataGrid.ReadOnly := True;
         FDBNavigator.Visible := False;
       end;
+
+      if not cmd.IsSelect then
+      DisplayMessage(FMessage,False);
 
     end;
   finally
@@ -492,6 +499,7 @@ begin
   FQuery := TSQLQuery.Create(nil);
   FQuery.Name := 'qr' + FNumbering;
   FQuery.AfterPost := @OnQyeryAfterPost;
+  FQuery.AfterDelete:=@OnQueryAfterDelete;
   FTransaction := TSQLTransaction.Create(nil);
   FQuery.Transaction := FTransaction;
 
@@ -887,7 +895,9 @@ begin
       begin
         Add(FProcedures[I], 'PROC');
       end;
+
     end;
+
   end;
   lstVars.Free;
 
@@ -1008,12 +1018,6 @@ begin
       FSynComplete.ItemList.Add(FProcedures[I]);
     end;
 
-
-    if FSynComplete.ItemList.Count > 0 then
-      Posi := 0
-    else
-      Posi := -1;
-
   end
   else
   begin
@@ -1056,12 +1060,6 @@ begin
         end;
       end;
 
-
-      if FSynComplete.ItemList.Count > 0 then
-        Posi := 0
-      else
-        Posi := -1;
-
     end
     else
     begin
@@ -1088,6 +1086,12 @@ begin
       end;
 
     end;
+
+
+   if FSynComplete.ItemList.Count > 0 then
+     Posi := 0
+   else
+     Posi := -1;
 
   end;
   lstVars.Free;

@@ -51,7 +51,7 @@ type
 
   { TDbConnectionInfo }
 
-  TDbConnectionInfo = class
+  TDbConnectionInfo = class(TPersistent)
   private
    FDatabase: string;
    FDbEngine: TDatabaseEngine;
@@ -68,6 +68,12 @@ type
    procedure SetServer(AValue: string);
    procedure SetUsername(AValue: string);
   public
+    function ToFullString:string;
+    function ToZeosConnection:TZConnection;
+    function ToSqlConnector:TSQLConnector;
+    procedure Assign(Source: TPersistent); override;
+  published
+    //constructor Create;
     property DatabaseType:TDatabaseType read FDbType write SetDbType;
     property Server:string read FServer write SetServer;
     property Database:string read FDatabase write SetDatabase;
@@ -75,9 +81,6 @@ type
     property Password:string read FPassword write SetPassword;
     property Port:Integer read FPort write SetPort;
     property DbEngine:TDatabaseEngine read FDbEngine write SetDbEngine;
-    function ToFullString:string;
-    function ToZeosConnection:TZConnection;
-    function ToSqlConnector:TSQLConnector;
   end;
 
   { TDbUtils }
@@ -381,7 +384,6 @@ begin
       con.Open;
       query.SQL.Text:=SqlQuery;
       query.ExecSQL;
-      con.Transaction.Commit;
       con.Close;
       finally
         query.Free;
@@ -563,6 +565,21 @@ begin
    con.Password := FPassword;
    con.ConnectorType := TDbUtils.DatabaseTypeAsConnectorType(FDbType);
    Result:=con;
+end;
+
+procedure TDbConnectionInfo.Assign(Source: TPersistent);
+begin
+ if Source is TDbConnectionInfo then
+ begin
+  FDatabase:=TDbConnectionInfo(Source).Database;
+  FDbEngine:= TDbConnectionInfo(Source).DbEngine;
+  FDbType:=TDbConnectionInfo(Source).DatabaseType;
+  FServer:=TDbConnectionInfo(Source).Server;
+  FUsername:=TDbConnectionInfo(Source).Username;
+  FPassword:=TDbConnectionInfo(Source).Password;
+  FPort:=TDbConnectionInfo(Source).Port;
+ end else
+ inherited Assign(Source);
 end;
 
 { TDbConnectionInfos }

@@ -32,6 +32,16 @@ type
   TQueryTypes = set of TQueryType;
 
   { TSqlGenerator }
+TProcedureNames = object
+ public
+   PnSelect:string;
+   PnSelectItem:string;
+   PnInsert:string;
+   PnUpdate:string;
+   PnDelete:string;
+   Prefix:string;
+   TablenameAfter:Boolean;
+ end;
 
   TSqlGenerator = class
   strict private
@@ -521,8 +531,7 @@ begin
       r.Add(tmpSelectJoins.Text);
       if TableInfo.PrimaryKeys.Count > 0 then
       begin
-        r.Add(strIdent + 'WHERE ' + SqlOpenBr + TableInfo.Tablename +
-          SqlCloseBr + '.' + SqlOpenBr + TableInfo.PrimaryKeys[0].FieldName +
+        r.Add(strIdent + 'WHERE ' + TableInfo.TableAlias+ '.' + SqlOpenBr + TableInfo.PrimaryKeys[0].FieldName +
           SqlCloseBr + '=' + SqlParamChar + TableInfo.PrimaryKeys[0].CSharpName);
         if (TableInfo.PrimaryKeys.Count > 1) then
         begin

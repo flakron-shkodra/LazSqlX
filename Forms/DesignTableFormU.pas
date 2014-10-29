@@ -4,7 +4,7 @@
   mod 2013
   *******************************************************************
 }
-unit TableInfoFormU;
+unit DesignTableFormU;
 
 {$mode objfpc}{$H+}
 interface
@@ -16,9 +16,9 @@ uses
 
 type
 
-  { TTableInfoForm }
+  { TDesignTableForm }
 
-  TTableInfoForm = class(TForm)
+  TDesignTableForm = class(TForm)
     actEditColumn: TAction;
     actDropColumn: TAction;
     actCreateTable: TAction;
@@ -73,14 +73,9 @@ type
     procedure actEditColumnExecute(Sender: TObject);
     procedure actNewColumnExecute(Sender: TObject);
     procedure actNewConstraintExecute(Sender: TObject);
-    procedure btnApplyClick(Sender: TObject);
     procedure btnCloseClick(Sender: TObject);
     procedure FormCloseQuery(Sender: TObject; var CanClose: boolean);
-    procedure FormCreate(Sender: TObject);
     procedure FormShow(Sender: TObject);
-    procedure mitDropColumn2Click(Sender: TObject);
-    procedure tbtnDrop3Click(Sender: TObject);
-    procedure tbtnNew2Click(Sender: TObject);
   private
     FCreateNew: boolean;
     { Private declarations }
@@ -88,6 +83,7 @@ type
     FTablename: string;
     FWorkingTableInfo: TTableInfo;
     FDbInfo:TDbConnectionInfo;
+    FTableInfos:TTableInfos;
     function GetCreateTableSQL: string;
     procedure SetCreateNew(AValue: boolean);
     procedure ExecuteQuery(Query: string);
@@ -101,7 +97,7 @@ const
   LoopSeperator: array [0 .. 1] of char = (' ', ',');
 
 var
-  TableInfoForm: TTableInfoForm;
+  DesignTableForm: TDesignTableForm;
 
 implementation
 
@@ -110,21 +106,21 @@ implementation
 uses MainFormU, EditColumnFormU, EditConstraintsFormU, EditIndexFormU,
  AsDatabaseCloner;
 
-{ TTableInfoForm }
+{ TDesignTableForm }
 
 
-procedure TTableInfoForm.btnCloseClick(Sender: TObject);
+procedure TDesignTableForm.btnCloseClick(Sender: TObject);
 begin
   Close;
 end;
 
-procedure TTableInfoForm.FormCloseQuery(Sender: TObject; var CanClose: boolean);
+procedure TDesignTableForm.FormCloseQuery(Sender: TObject; var CanClose: boolean);
 begin
-  if FCreateNew then
-  FWorkingTableInfo.Free;
+  if FTableInfos<>nil then
+  FTableInfos.Free;
 end;
 
-procedure TTableInfoForm.actEditColumnExecute(Sender: TObject);
+procedure TDesignTableForm.actEditColumnExecute(Sender: TObject);
 var
   sql: string;
   cn: string;
@@ -205,9 +201,8 @@ begin
 
          if fi.IsPrimaryKey then
          begin
-           pk := TFieldInfo.Create;
-           pk.CopyFrom(fi);
-           FWorkingTableInfo.PrimaryKeys.Add(pk);
+           pk := FWorkingTableInfo.PrimaryKeys.Add;
+           pk.Assign(fi);
          end;
 
         end;
@@ -222,7 +217,7 @@ begin
 
 end;
 
-procedure TTableInfoForm.actDropColumnExecute(Sender: TObject);
+procedure TDesignTableForm.actDropColumnExecute(Sender: TObject);
 var
   sql: string;
   cn: string;
@@ -257,7 +252,7 @@ begin
           i := FWorkingTableInfo.PrimaryKeys.GetIndex(fi.FieldName);
           FWorkingTableInfo.PrimaryKeys.Delete(i);
         end;
-       FWorkingTableInfo.AllFields.Remove(fi);
+       FWorkingTableInfo.AllFields.Delete(fi.Index);
 
 
       if FDbInfo.DatabaseType = dtSQLite then
@@ -334,10 +329,10 @@ begin
   PopulateInfo;
 end;
 
-procedure TTableInfoForm.actDropConstraintExecute(Sender: TObject);
+procedure TDesignTableForm.actDropConstraintExecute(Sender: TObject);
 var
   sql:string;
-  ci:TImportedKey;
+  ci:TImportedKeyInfo;
 begin
 
   if lsvDependencies.Selected = nil then
@@ -367,13 +362,13 @@ begin
     begin
       ci :=FWorkingTableInfo.ImportedKeys.GetByName(lsvDependencies.Selected.SubItems[0]);
       if ci <> nil then
-     FWorkingTableInfo.ImportedKeys.Remove(ci);
+     FWorkingTableInfo.ImportedKeys.Delete(ci.Index);
     end;
     PopulateInfo;
   end;
 end;
 
-procedure TTableInfoForm.actDropIndexExecute(Sender: TObject);
+procedure TDesignTableForm.actDropIndexExecute(Sender: TObject);
 var
   sql:string;
   ii:TIndexInfo;
@@ -416,13 +411,13 @@ begin
       ii := FWorkingTableInfo.Indexes.GetByName(lsvIndexes.Selected.Caption);
       if ii<>nil then
       begin
-        FWorkingTableInfo.Indexes.Remove(ii);
+        FWorkingTableInfo.Indexes.Delete(ii.Index);
       end;
   end;
-
+  PopulateInfo;
 end;
 
-procedure TTableInfoForm.actCreateTableExecute(Sender: TObject);
+procedure TDesignTableForm.actCreateTableExecute(Sender: TObject);
 var
   dbcloner:TAsDatabaseCloner;
 begin
@@ -440,7 +435,7 @@ begin
   end;
 end;
 
-procedure TTableInfoForm.actCreateIndexExecute(Sender: TObject);
+procedure TDesignTableForm.actCreateIndexExecute(Sender: TObject);
 var
   sql:string;
   ii:TIndexInfo;
@@ -475,7 +470,7 @@ begin
       end;
     end else
     begin
-      ii := TIndexInfo.Create;
+      ii := FWorkingTableInfo.Indexes.Add;
       ii.Column_Name:=EditIndexForm.Column;
       ii.ASC_OR_DESC:=EditIndexForm.SortOrder;
       ii.INDEX_Name:= EditIndexForm.IndexName;
@@ -487,7 +482,7 @@ begin
 
 end;
 
-procedure TTableInfoForm.actNewColumnExecute(Sender: TObject);
+procedure TDesignTableForm.actNewColumnExecute(Sender: TObject);
 var
   cname: string;
   sql: string;
@@ -549,7 +544,7 @@ begin
         ExecuteQuery(sql)
       end else
       begin
-        fi := TFieldInfo.Create;
+        fi := FWorkingTableInfo.AllFields.Add;
         fi.FieldName:= EditColumnForm.ColumnName;
         fi.FieldType:= EditColumnForm.DataType;
         fi.IsPrimaryKey:= EditColumnForm.IsPrimaryKey;
@@ -563,13 +558,10 @@ begin
 
          fi.IsIdentity:= EditColumnForm.Autonumber;
 
-         FWorkingTableInfo.AllFields.Add(fi);
-
          if fi.IsPrimaryKey then
          begin
-           pk := TFieldInfo.Create;
-           pk.CopyFrom(fi);
-           FWorkingTableInfo.PrimaryKeys.Add(pk);
+           pk := FWorkingTableInfo.PrimaryKeys.Add;
+           pk.Assign(fi);
          end;
 
       end;
@@ -583,10 +575,10 @@ begin
   end;
 end;
 
-procedure TTableInfoForm.actNewConstraintExecute(Sender: TObject);
+procedure TDesignTableForm.actNewConstraintExecute(Sender: TObject);
 var
   sql:string;
-  ci:TImportedKey;
+  ci:TImportedKeyInfo;
 begin
  {
 
@@ -625,7 +617,7 @@ begin
 
       end else
       begin
-         ci:=TImportedKey.Create;
+         ci:=FWorkingTableInfo.ImportedKeys.Add;
          ci.ColumnName:=EditConstraintForm.LocalColumn;
          ci.ForeignSchema:=FSchema;
          ci.ForeignColumnName:=EditConstraintForm.ReferencedColumn;
@@ -633,23 +625,12 @@ begin
 
          ci.ConstraintName:='fk_'+ci.ForeignTableName+ci.ForeignColumnName;
 
-         FWorkingTableInfo.ImportedKeys.Add(ci);
       end;
       PopulateInfo;
   end;
 end;
 
-procedure TTableInfoForm.btnApplyClick(Sender: TObject);
-begin
-
-end;
-
-procedure TTableInfoForm.FormCreate(Sender: TObject);
-begin
-
-end;
-
-procedure TTableInfoForm.FormShow(Sender: TObject);
+procedure TDesignTableForm.FormShow(Sender: TObject);
 begin
   btnApply.Visible := FCreateNew;
   pgcMain.ActivePageIndex := 0;
@@ -662,22 +643,7 @@ begin
 
 end;
 
-procedure TTableInfoForm.mitDropColumn2Click(Sender: TObject);
-begin
-
-end;
-
-procedure TTableInfoForm.tbtnDrop3Click(Sender: TObject);
-begin
-
-end;
-
-procedure TTableInfoForm.tbtnNew2Click(Sender: TObject);
-begin
-
-end;
-
-function TTableInfoForm.GetCreateTableSQL: string;
+function TDesignTableForm.GetCreateTableSQL: string;
 var
   sql: string;
   I: integer;
@@ -779,34 +745,30 @@ begin
 end;
 
 
-procedure TTableInfoForm.SetCreateNew(AValue: boolean);
+procedure TDesignTableForm.SetCreateNew(AValue: boolean);
 begin
   if FCreateNew = AValue then
     Exit;
   FCreateNew := AValue;
 end;
 
-procedure TTableInfoForm.ExecuteQuery(Query: string);
+procedure TDesignTableForm.ExecuteQuery(Query: string);
 begin
   TDbUtils.ExecuteQuery(Query,FDbInfo);
 end;
 
-procedure TTableInfoForm.PopulateInfo;
+procedure TDesignTableForm.PopulateInfo;
 var
-  _tableInfos: TTableInfos;
   I: integer;
   lst: TStringList;
 begin
 
-  try
-
-    with MainForm do
-    begin
-      _tableInfos := TTableInfos.Create(FDbInfo);
-    end;
-
     if not FCreateNew then
-    FWorkingTableInfo := _tableInfos.GetTableInfo(FSchema, FTablename);
+    begin
+      FTableInfos.Clear;
+      FTableInfos.Reconnect;
+      FWorkingTableInfo := FTableInfos.Add(FSchema, FTablename);
+    end;
 
     //-----Populate FieldInfos----------
     lsvFields.Clear;
@@ -918,22 +880,21 @@ begin
       lblTablename.Font.Color := clRed;
     end;
 
-  finally
-    _tableInfos.Free;
-  end;
 end;
 
-function TTableInfoForm.Showmodal(DbInfo: TDbConnectionInfo; Schema: string;
+function TDesignTableForm.Showmodal(DbInfo: TDbConnectionInfo; Schema: string;
  Tablename: string): integer;
 begin
   FDbInfo := DbInfo;
+  FTableInfos := TTableInfos.Create(nil,FDbInfo);
+
   if Tablename = EmptyStr then
   begin
     if InputQuery('New Table', 'Tablename', FTablename) then
     begin
       FCreateNew := True;
       lsvFields.Clear;
-      FWorkingTableInfo := TTableInfo.Create;
+      FWorkingTableInfo := TTableInfo.Create(nil);
       FWorkingTableInfo.Tablename:=FTablename;
       FWorkingTableInfo.Schema:=Schema;
     end

@@ -115,7 +115,7 @@ begin
         dtOracle:
         begin
           TDbUtils.ExecuteQuery
-          ('CREATE SEQUENCE ' + info.TableCSharpName + '_seq ' +
+          ('CREATE SEQUENCE ' + info.TableNameAsControlName + '_seq ' +
             ' START WITH     1 ' +
             ' INCREMENT BY   1 ' + '  NOCACHE ' +
             ' NOCYCLE;',FDbInfo);

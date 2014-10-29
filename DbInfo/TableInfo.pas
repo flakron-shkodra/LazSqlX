@@ -3,7 +3,7 @@ AUTHOR : Flakron Shkodra
 *******************************************************************
 version 1.1, moddate:23.08.2011
 *******************************************************************
-
+Versopm 2 moddate 27.10.2014 (removed FGL usage, used collections instead)
 *******************************************************************
 }
 
@@ -14,15 +14,11 @@ unit TableInfo;
 interface
 
 uses SysUtils,Classes,DbType,ZConnection,ZDataset,ZDbcIntfs,ZSqlMetadata,
-DB,typinfo, fgl,Forms,StdCtrls,AsStringUtils,LazSqlXResources;
+DB,typinfo, Forms,StdCtrls,AsStringUtils,LazSqlXResources,LResources;
 
 
 type
 
-
- ISomething = interface(IInterface)
-
- end;
 
  TControlType = (ctUnknown,ctTextBox,ctComboBox,ctDateTimePicker,ctCheckBox,ctNumeric);
 
@@ -31,204 +27,325 @@ type
 
  TWinFormType = (wfTransaction,wfDefinition);
 
- TProcedureNames = object
- public
-   PnSelect:string;
-   PnSelectItem:string;
-   PnInsert:string;
-   PnUpdate:string;
-   PnDelete:string;
-   Prefix:string;
-   TablenameAfter:Boolean;
- end;
+ { TTriggerInfo }
 
- TTriggerInfo = class
+ TTriggerInfo = class(TCollectionItem)
+ private
+  FCat: string;
+  FDescription: string;
+  FInactive: Boolean;
+  FName: string;
+  FRelation: string;
+  FSchem: string;
+  FTriggerSource: string;
+  FTriggerType: Integer;
+  procedure SetCat(AValue: string);
+  procedure SetDescription(AValue: string);
+  procedure SetInactive(AValue: Boolean);
+  procedure SetName(AValue: string);
+  procedure SetRelation(AValue: string);
+  procedure SetSchem(AValue: string);
+  procedure SetTriggerSource(AValue: string);
+  procedure SetTriggerType(AValue: Integer);
  public
-  Cat:string;
-  Schem:string;
-  Name:string;
-  Relation:string;
-  TriggerType:Integer;
-  Inactive:Boolean;
-  TriggerSource:string;
-  Description:string;
+  procedure Assign(Source: TPersistent); override;
+ published
+  property Cat:string read FCat write SetCat;
+  property Schem:string read FSchem write SetSchem;
+  property Name:string read FName write SetName;
+  property Relation:string read FRelation write SetRelation;
+  property TriggerType:Integer read FTriggerType write SetTriggerType;
+  property Inactive:Boolean read FInactive write SetInactive;
+  property TriggerSource:string read FTriggerSource write SetTriggerSource;
+  property Description:string read FDescription write SetDescription;
  end;
 
  { TTriggerInfos }
 
- TTriggerInfos = class(specialize TFPGObjectList<TTriggerInfo>)
+ TTriggerInfos = class(TOwnedCollection)
+ private
+  function GetItems(Index: Integer): TTriggerInfo;
+  procedure SetItems(Index: Integer; AValue: TTriggerInfo);
  public
-  function GetByName(trigger:string):TTriggerInfo;
+  constructor Create(AOwner:TPersistent);
+  function Add:TTriggerInfo;
+  property Items[Index:Integer]:TTriggerInfo read GetItems write SetItems;default;
  end;
 
- TIndexInfo = class
-  INDEX_Qualifier:string;
-  INDEX_Name:string;
-  IndexType:Integer;
-  Ordinal_Position:Integer;
-  Column_Name:string;
-  ASC_OR_DESC:string;
-  FILTER_CONDITION:string;
-  Is_Unique:Boolean;
+ { TIndexInfo }
+
+ TIndexInfo = class(TCollectionItem)
+ private
+  FASC_OR_DESC: string;
+  FColumn_Name: string;
+  FFILTER_CONDITION: string;
+  FIndexType: Integer;
+  FINDEX_Name: string;
+  FINDEX_Qualifier: string;
+  FIs_Unique: Boolean;
+  FOrdinal_Position: Integer;
+  FOwner:TCollection;
+  procedure SetASC_OR_DESC(AValue: string);
+  procedure SetColumn_Name(AValue: string);
+  procedure SetFILTER_CONDITION(AValue: string);
+  procedure SetIndexType(AValue: Integer);
+  procedure SetINDEX_Name(AValue: string);
+  procedure SetINDEX_Qualifier(AValue: string);
+  procedure SetIs_Unique(AValue: Boolean);
+  procedure SetOrdinal_Position(AValue: Integer);
+ protected
+    function GetDisplayName: string; override;
+ public
+    procedure Assign(Source: TPersistent); override;
+ published
+  property INDEX_Qualifier:string read FINDEX_Qualifier write SetINDEX_Qualifier;
+  property INDEX_Name:string read FINDEX_Name write SetINDEX_Name;
+  property IndexType:Integer read FIndexType write SetIndexType;
+  property Ordinal_Position:Integer read FOrdinal_Position write SetOrdinal_Position;
+  property Column_Name:string read FColumn_Name write SetColumn_Name;
+  property ASC_OR_DESC:string read FASC_OR_DESC write SetASC_OR_DESC;
+  property FILTER_CONDITION:string read FFILTER_CONDITION write SetFILTER_CONDITION;
+  property Is_Unique:Boolean read FIs_Unique write SetIs_Unique;
  end;
 
  { TIndexInfos }
 
- TIndexInfos = class(Specialize TFPGObjectList<TIndexInfo>)
+ TIndexInfos = class(TOwnedCollection)
+ private
+  function GetItems(Index: Integer): TIndexInfo;
+  procedure SetItems(Index: Integer; AValue: TIndexInfo);
  public
+  constructor Create(AOwner:TPersistent);
+  function Add:TIndexInfo;
   function GetByName(IndexName:string):TIndexInfo;
+  property Items[Index:Integer]:TIndexInfo read GetItems write SetItems;default;
  end;
 
  { TFieldInfo }
+ TFieldInfos = class;
 
- TFieldInfo = class
+ TFieldInfo = class(TCollectionItem)
+ private
+  FAllowNull: Boolean;
+  FControlType: TControlType;
+  FCSharpName: string;
+  FCSharpType: string;
+  FDataType: TFieldType;
+  FFieldRef: TField;
+  FFieldDbType: TDatabaseType;
+  FFieldName: string;
+  FFieldType: string;
+  FIsIdentity: Boolean;
+  FIsPrimaryKey: Boolean;
+  FIsReference: Boolean;
+  FLength: Integer;
+  FPrecision: Integer;
+  FReserved: string;
+  FValidate: Boolean;
+  procedure SetAllowNull(AValue: Boolean);
+  procedure SetControlType(AValue: TControlType);
+  procedure SetCSharpName(AValue: string);
+  procedure SetCSharpType(AValue: string);
+  procedure SetDataType(AValue: TFieldType);
+  procedure SetFCollection(AValue: TFieldInfos);
+  procedure SetField(AValue: TField);
+  procedure SetFieldDbType(AValue: TDatabaseType);
+  procedure SetFieldName(AValue: string);
+  procedure SetFieldType(AValue: string);
+  procedure SetIsIdentity(AValue: Boolean);
+  procedure SetIsPrimaryKey(AValue: Boolean);
+  procedure SetIsReference(AValue: Boolean);
+  procedure SetLength(AValue: Integer);
+  procedure SetPrecision(AValue: Integer);
+  procedure SetReserved(AValue: string);
+  procedure SetValidate(AValue: Boolean);
+ protected
+  function GetDisplayName: string; override;
  public
-  FieldName:string;
-
-  FieldType:string;
-  Field:TField;
-  CSharpType:string;
-  CSharpName:string;
-  DataType:TFieldType;
-  IsPrimaryKey:Boolean;
-  IsIdentity:Boolean;
-  AllowNull:Boolean;
-  Length:Integer;
-  Precision:Integer;
-  ControlType:TControlType;
-  Validate:Boolean;//added for DevBooster Form Generator Compat
-  IsReference:Boolean;
-  Reserved:string;
-  FieldDbType:TDatabaseType;
- public
- 		constructor Create;
-    procedure CopyFrom(FieldInfo:TFieldInfo);
-    function WebControlName:string;
-    function WebControlNameWithProp:string;
-    function IsNumeric:Boolean;
-    function WebControlPrefix:string;
-    function WinControlPrefix:string;
-    function WinControlName:string;
-    function GetFieldTypeAs(db:TDatabaseType):String;
-    function GetCompatibleFieldName(dbType: TDatabaseType): string;
+  procedure CopyFrom(FieldInfo:TFieldInfo);
+  function WebControlName:string;
+  function WebControlNameWithProp:string;
+  function IsNumeric:Boolean;
+  function WebControlPrefix:string;
+  function WinControlPrefix:string;
+  function WinControlName:string;
+  function GetFieldTypeAs(db:TDatabaseType):String;
+  function GetCompatibleFieldName(dbType: TDatabaseType): string;
+  procedure Assign(Source: TPersistent); override;
+ published
+  property FieldName:string read FFieldName write SetFieldName;
+  property FieldType:string read FFieldType write SetFieldType;
+  property FieldRef:TField read FFieldRef write SetField;
+  property CSharpType:string read FCSharpType write SetCSharpType;
+  property CSharpName:string read FCSharpName write SetCSharpName;
+  property DataType:TFieldType read FDataType write SetDataType;
+  property IsPrimaryKey:Boolean read FIsPrimaryKey write SetIsPrimaryKey;
+  property IsIdentity:Boolean read FIsIdentity write SetIsIdentity;
+  property AllowNull:Boolean read FAllowNull write SetAllowNull;
+  property Length:Integer read FLength write SetLength;
+  property Precision:Integer read FPrecision write SetPrecision;
+  property ControlType:TControlType read FControlType write SetControlType;
+  property Validate:Boolean read FValidate write SetValidate;//added for DevBooster Form Generator Compat
+  property IsReference:Boolean read FIsReference write SetIsReference;
+  property Reserved:string read FReserved write SetReserved;
+  property FieldDbType:TDatabaseType read FFieldDbType write SetFieldDbType;
  end;
 
  { TFieldInfos }
 
- TFieldInfosClass = specialize TFPGObjectList<TFieldInfo>;
-
- TFieldInfos = class(TFieldInfosClass)
+ TFieldInfos = class(TOwnedCollection)
  private
    function GetFieldInfo(Index: Integer): TFieldInfo;
- private
-    property Item[Index:Integer]:TFieldInfo read GetFieldInfo;default;
  public
+    constructor Create(aOwner:TPersistent);
+    function Add:TFieldInfo;
     function GetIndex(FieldName:string):Integer;
     function ToStringList:TStringList;
+    property Items[Index:Integer]:TFieldInfo read GetFieldInfo;default;
  end;
 
- { TImportedKey }
+ { TImportedKeyInfo }
 
- TImportedKey = class
+ TImportedKeyInfos = class;
+
+ TImportedKeyInfo = class(TCollectionItem)
  private
+    FColumnName: string;
+    FConstraintName: string;
+    FForeignColumnName: string;
+    FForeignFirstTextField: string;
+    FForeignSchema: string;
+    FSelectFields: TStringList;
     FTablename:string;
     FTableAlias:string;
     FForeignTableAlias:string;
     FForeignTablename:string;
+    procedure SetColumnName(AValue: string);
+    procedure SetConstraintName(AValue: string);
+    procedure SetForeignColumnName(AValue: string);
+    procedure SetForeignFirstTextField(AValue: string);
+    procedure SetForeignSchema(AValue: string);
     procedure SetForiegnTablename(AValue: string);
+    procedure SetSelectFields(AValue: TStringList);
     procedure SetTablename(AValue: string);
+ protected
+    function GetDisplayName: string; override;
  public
-   ConstraintName:string;
-   ColumnName:string;
-   SelectFields: TStringList;
-   ForeignSchema:string;
-   ForeignColumnName:string;
-   ForeignFirstTextField:string;
-   Index:Integer;
    function TableAndColumn:string;
-   constructor Create;
-   destructor Destroy;
+   constructor Create(aCollection:TCollection);override;
+   destructor Destroy;override;
    function GetCompatibleColumnName(dbType: TDatabaseType): string;
    function GetCompatibleForeignColumnName(dbType: TDatabaseType): string;
+   procedure Assign(Source: TPersistent); override;
+ published
+   property ConstraintName:string read FConstraintName write SetConstraintName;
+   property ColumnName:string read FColumnName write SetColumnName;
+   property SelectFields: TStringList read FSelectFields write SetSelectFields;
+   property ForeignSchema:string read FForeignSchema write SetForeignSchema;
+   property ForeignColumnName:string read FForeignColumnName write SetForeignColumnName;
+   property ForeignFirstTextField:string read FForeignFirstTextField write SetForeignFirstTextField;
    property Tablename:string read FTablename write SetTablename;
    property TableAlias:string read FTableAlias write FTableAlias;
    property ForeignTableName:string read FForeignTablename write SetForiegnTablename;
    property ForeignTableAlias:string read FForeignTableAlias write FForeignTableAlias;
  end;
 
+  { TImportedKeyInfos }
+
+ TImportedKeyInfos = class(TOwnedCollection)
+ private
+   function GetRefInfo(Index: integer): TImportedKeyInfo;
+   procedure SetRefInfo(Index: integer; AValue: TImportedKeyInfo);
+ public
+    constructor Create(AOwner:TPersistent);
+    function Add:TImportedKeyInfo;
+    function ContainsColumn(Fieldname:string):Boolean;
+    function ContainsTable(Tablename:string):Boolean;
+    function GetIndex(Fieldname:string):Integer;
+    function GetByName(Fieldname:string):TImportedKeyInfo;
+    function GetByField(Field:TFieldInfo):TImportedKeyInfo;
+    property Items[Index:integer]:TImportedKeyInfo read GetRefInfo write SetRefInfo; default;
+ end;
+
  { TExportedKeyInfo }
 
- TExportedKeyInfo = class
+ TExportedKeyInfo = class(TCollectionItem)
  private
+  FColumnName: string;
+  FForeignColumnName: string;
+  FForeignSchemName: string;
    FTable: string;
    FTableAlias:string;
+   procedure SetColumnName(AValue: string);
+   procedure SetForeignColumnName(AValue: string);
+   procedure SetForeignSchemName(AValue: string);
    procedure SetTablename(AValue: string);
-
+ protected
+   function GetDisplayName: string; override;
  public
-   ColumnName:string;
-   ForeignSchemName:string;
-   ForeignColumnName:string;
+   procedure Assign(Source: TPersistent); override;
+ published
+   property ColumnName:string read FColumnName write SetColumnName;
+   property ForeignSchemName:string read FForeignSchemName write SetForeignSchemName;
+   property ForeignColumnName:string read FForeignColumnName write SetForeignColumnName;
    property ForeignTableName:string read FTable write SetTablename;
    property ForeignTableAlias:string read FTableAlias write FTableAlias;
+   property Table:string read FTable write FTable;
+   property TableAlias:string read FTableAlias write FTableAlias;
  end;
 
 
  { TExportedKeyInfos }
 
- TExportedKeyInfos = class(specialize TFPGObjectList<TExportedKeyInfo>)
+ TExportedKeyInfos = class(TOwnedCollection)
  private
-   function GetItm(Index: Integer): TExportedKeyInfo;
- private
-   property Item[Index:Integer]:TExportedKeyInfo read GetItm; default;
-
- end;
-
- { TImportedKeys }
-
- TImportedKeys = class(specialize TFPGObjectList<TImportedKey>)
- private
-   function GetRefInfo(Index: integer): TImportedKey;
- private
-   property Item[Index:integer]:TImportedKey read GetRefInfo;default;
+  function GetItems(Index: Integer): TExportedKeyInfo;
+  procedure SetItems(Index: Integer; AValue: TExportedKeyInfo);
  public
-    function Add(const Itm: TImportedKey): Integer;
-    function ContainsColumn(Fieldname:string):Boolean;
-    function ContainsTable(Tablename:string):Boolean;
-    function GetIndex(Fieldname:string):Integer;
-    function GetByName(Fieldname:string):TImportedKey;
-    function GetByField(Field:TFieldInfo):TImportedKey;
+  constructor Create(AOwner:TPersistent);
+  function Add:TExportedKeyInfo;
+  property Items[Index:Integer]:TExportedKeyInfo read GetItems write SetItems;default;
  end;
+
+
+
 
  { TTableInfo }
 
- TTableInfo = class
+ TTableInfos = class;
+
+ TTableInfo = class(TCollectionItem)
  strict private
-   FExportedKeys: TExportedKeyInfos;
-   FGenerateWebForm: Boolean;
-   FGenerateWinForm: Boolean;
+  FExportedKeys: TExportedKeyInfos;
   FAllFields:TFieldInfos;//to contain all fields
-  FIndexInfos: TIndexInfos;
+  FIndexes: TIndexInfos;
   FPrimaryKeys:TFieldInfos;//to contain only Pks
   FFields:TFieldInfos; //to contain only fields that are not PKs
   FIdentities:TFieldInfos;
   FTableAlias: string;
   FTablename:string;
   FSchema:string;
-  FReferences:TImportedKeys;
+  FImportedKeys:TImportedKeyInfos;
   FHasPrimaryKey:Boolean;
   FTriggerInfos: TTriggerInfos;
-  FWinFormType:TWinFormType;
-  FTableCSharpName:string;
+  FFormType:TWinFormType;
+  FTableNameAsControlName:string;
   function GetHasPrimaryKeys: Boolean;
-  procedure SetGenerateWebForm(const AValue: Boolean);
-  procedure SetGenerateWinForm(const AValue: Boolean);
   procedure SetTableName(AValue: string);
+ protected
+  function GetDisplayName: string; override;
  public
 
-  constructor Create;
+  constructor Create(aCollection:TCollection);override;
   destructor Destroy;override;
+  procedure Assign(Source: TPersistent); override;
+  function FieldByName(Fieldname:string):TFieldInfo;
+  function PrimaryKeysAsDelText:string;
+  {Compares this instance to given tableInfo returns SQL valid code for altering if they are different}
+  function Compare(otherTable:TTableInfo;DbType:TDatabaseType):string;
+ published
   property Tablename:string read FTablename write SetTableName;
-  property TableCSharpName:string read FTableCSharpName write FTableCSharpName;
+  property TableNameAsControlName:string read FTableNameAsControlName write FTableNameAsControlName;
   property Schema:string read FSchema write FSchema;
   {All fields}
   property AllFields:TFieldInfos read FAllFields write FAllFields;
@@ -238,33 +355,25 @@ type
   property Fields:TFieldInfos read FFields write FFields;
   {Fields that are identities only}
   property Identities:TFieldInfos read FIdentities write FIdentities;
-  {Constraints of table}
-  property ImportedKeys:TImportedKeys read FReferences write FReferences;
+  {References to other tables}
+  property ImportedKeys:TImportedKeyInfos read FImportedKeys write FImportedKeys;
   {Shows if this tables PK is reference of another table}
   property ExportedKeys:TExportedKeyInfos read FExportedKeys write FExportedKeys;
 
   property Triggers:TTriggerInfos read FTriggerInfos write FTriggerInfos;
-  property Indexes:TIndexInfos read FIndexInfos write FIndexInfos;
+  property Indexes:TIndexInfos read FIndexes write FIndexes;
 
   property HasPrimaryKeys:Boolean read GetHasPrimaryKeys;
-  property FormType:TWinFormType read FWinFormType write FWinFormType;
-  function FieldByName(Fieldname:string):TFieldInfo;
-  function PrimaryKeysAsDelText:string;
-  property GenerateWinForm:Boolean read FGenerateWinForm write SetGenerateWinForm;
-  property GenerateWebForm:Boolean read FGenerateWebForm write SetGenerateWebForm;
-  {Compares this instance to given tableInfo returns SQL valid code for altering if they are different}
-  function Compare(otherTable:TTableInfo;DbType:TDatabaseType):string;
+  property FormType:TWinFormType read FFormType write FFormType;
+
   property TableAlias:string read FTableAlias write FTableAlias;
 
  end;
 
  { TTableInfos }
 
- TTableInfos = class(specialize TFPGObjectList<TTableInfo>)
-
+ TTableInfos = class(TOwnedCollection)
  private
-   function GetTable(Index: integer): TTableInfo;
- strict private
     adoCon:TZConnection;
     dsMetaData:TZSQLMetadata;
     FLogStrings:TStrings;
@@ -272,36 +381,328 @@ type
 
     FLogListBox:TListBox;
     FDBinfo:TDbConnectionInfo;
-    procedure GetConstraintInfos(Schema:string;Tablename:string;var ConstraintInfos:TImportedKeys);
+    FAutoConnect:Boolean;
+    procedure GetImportedKeyInfos(Schema:string;Tablename:string;var ConstraintInfos:TImportedKeyInfos);
     procedure GetExportedKeyInfos(Schema:string;Tablename:string;var ExportKeyInfos:TExportedKeyInfos);
+    function GetItem(Index: Integer): TTableInfo;
     procedure GetPrimaryKeys(Schema:string;TableName:string;var KeyFields:TStringList);
     function GetSqlType(AdoType:TFieldType):string;
     function GetCSharpType(SqlType:String):string;
     function GetFieldType(SqlType:String):TFieldType;
 
     function GetCSharpName(Tablename,SqlFieldName:string):string;
-    function GetCSharpTableName(TableName:string):string;
+    function GetTableNameAsControl(TableName:string):string;
     function GetControlType(SqlType:string):TControlType;
+    procedure SetDBInfo(AValue: TDbConnectionInfo);
+    procedure SetItem(Index: Integer; AValue: TTableInfo);
     procedure WriteLog(msg:string);
-    property Item[Index:integer]:TTableInfo read GetTable;default;
+    function GetTable(Index: integer): TTableInfo;
+
  public
-    constructor Create(DbInfo:TDbConnectionInfo);
+    constructor Create(aOwner: TComponent; DbInfo: TDbConnectionInfo; AutoConnect:Boolean=true);
     destructor Destroy;override;
     procedure LoadFromTables(Schema:string; Tables:TStrings);
-    function GetTableInfo(Schema:string; Tablename:string):TTableInfo;
-    function  TableByName(Tablename:string):TTableInfo;
+    function Add:TTableInfo;overload;
+    function Add(Schema:string; Tablename:string):TTableInfo;overload;
+    function TableByName(Tablename:string):TTableInfo;
     function IndexOf(TableName:string):Integer;
     function GetCreateSQL(TableIndex:Integer):string;
+    procedure Reconnect;
     procedure AddTable(Schema,Tablename:string);
     property LogStrings:TStrings read FLogStrings write FLogStrings;
     property LogList:TListBox read FLogListBox write FLogListBox;
+    property Items[Index:Integer]:TTableInfo read GetItem write SetItem;default;
+    property DbInfo:TDbConnectionInfo read FDBinfo write SetDBInfo;
+    procedure InitializeConnection;{public for use after ReadingComponentFromStream}
+ end;
+
+ { TDbTablesInfo }
+
+ TDbTablesInfo = class(TComponent)
+ private
+    FItems:TTableInfos;
+    FName: string;
+    FDBInfo:TDbConnectionInfo;
+    FShouldFreeDbInfo : Boolean;
+    procedure SetDBInfo(AValue: TDbConnectionInfo);
+    procedure SetName(AValue: string);
+    procedure OnFindClass(Reader: TReader; const AClassName: string; var ComponentClass: TComponentClass);
+ public
+    constructor Create(aDbInfo:TDbConnectionInfo; AutoConnect:Boolean=True);overload;
+    {this constructor could be used when the object is going to be loaded from file}
+    constructor Create;overload;
+    destructor Destroy; override;
+    procedure Reconnect;
+    procedure Clear;
+    procedure LoadFromFile(Filename:string);
+    procedure SaveToFile(Filename:string);
+ published
+    property Name:string read FName write SetName;
+    property TableInfos:TTableInfos read FItems write FItems;
+    property DbInfo:TDbConnectionInfo read FDBInfo write SetDBInfo;
  end;
 
 
 
 implementation
 
+{ TTriggerInfo }
 
+procedure TTriggerInfo.SetCat(AValue: string);
+begin
+ if FCat=AValue then Exit;
+ FCat:=AValue;
+end;
+
+procedure TTriggerInfo.SetDescription(AValue: string);
+begin
+ if FDescription=AValue then Exit;
+ FDescription:=AValue;
+end;
+
+procedure TTriggerInfo.SetInactive(AValue: Boolean);
+begin
+ if FInactive=AValue then Exit;
+ FInactive:=AValue;
+end;
+
+procedure TTriggerInfo.SetName(AValue: string);
+begin
+ if FName=AValue then Exit;
+ FName:=AValue;
+end;
+
+procedure TTriggerInfo.SetRelation(AValue: string);
+begin
+ if FRelation=AValue then Exit;
+ FRelation:=AValue;
+end;
+
+procedure TTriggerInfo.SetSchem(AValue: string);
+begin
+ if FSchem=AValue then Exit;
+ FSchem:=AValue;
+end;
+
+procedure TTriggerInfo.SetTriggerSource(AValue: string);
+begin
+ if FTriggerSource=AValue then Exit;
+ FTriggerSource:=AValue;
+end;
+
+procedure TTriggerInfo.SetTriggerType(AValue: Integer);
+begin
+ if FTriggerType=AValue then Exit;
+ FTriggerType:=AValue;
+end;
+
+procedure TTriggerInfo.Assign(Source: TPersistent);
+begin
+  if Source=nil then
+  Exit;
+
+ if Source is TTriggerInfo then
+ begin
+   FCat:= TTriggerInfo(Source).Cat;
+   FDescription:= TTriggerInfo(Source).Description;
+   FInactive:= TTriggerInfo(Source).Inactive;
+   FName:= TTriggerInfo(Source).Name;
+   FRelation:=TTriggerInfo(Source).Relation;
+   FSchem:=TTriggerInfo(Source).Schem;
+   FTriggerSource:=TTriggerInfo(Source).TriggerSource;
+   FTriggerType:= TTriggerInfo(Source).TriggerType;
+ end else
+ inherited Assign(Source);
+end;
+
+{ TTriggerInfos }
+
+function TTriggerInfos.GetItems(Index: Integer): TTriggerInfo;
+begin
+ Result := TTriggerInfo(inherited Items[Index]);
+end;
+
+procedure TTriggerInfos.SetItems(Index: Integer; AValue: TTriggerInfo);
+begin
+ Items[Index] := AValue;
+end;
+
+constructor TTriggerInfos.Create(AOwner: TPersistent);
+begin
+ inherited Create(AOwner,TTriggerInfo);
+end;
+
+function TTriggerInfos.Add: TTriggerInfo;
+begin
+ Result := TTriggerInfo(inherited Add);
+end;
+
+{ TIndexInfo }
+
+procedure TIndexInfo.SetASC_OR_DESC(AValue: string);
+begin
+ if FASC_OR_DESC=AValue then Exit;
+ FASC_OR_DESC:=AValue;
+end;
+
+procedure TIndexInfo.SetColumn_Name(AValue: string);
+begin
+ if FColumn_Name=AValue then Exit;
+ FColumn_Name:=AValue;
+end;
+
+procedure TIndexInfo.SetFILTER_CONDITION(AValue: string);
+begin
+ if FFILTER_CONDITION=AValue then Exit;
+ FFILTER_CONDITION:=AValue;
+end;
+
+procedure TIndexInfo.SetIndexType(AValue: Integer);
+begin
+ if FIndexType=AValue then Exit;
+ FIndexType:=AValue;
+end;
+
+procedure TIndexInfo.SetINDEX_Name(AValue: string);
+begin
+ if FINDEX_Name=AValue then Exit;
+ FINDEX_Name:=AValue;
+end;
+
+procedure TIndexInfo.SetINDEX_Qualifier(AValue: string);
+begin
+ if FINDEX_Qualifier=AValue then Exit;
+ FINDEX_Qualifier:=AValue;
+end;
+
+procedure TIndexInfo.SetIs_Unique(AValue: Boolean);
+begin
+ if FIs_Unique=AValue then Exit;
+ FIs_Unique:=AValue;
+end;
+
+procedure TIndexInfo.SetOrdinal_Position(AValue: Integer);
+begin
+ if FOrdinal_Position=AValue then Exit;
+ FOrdinal_Position:=AValue;
+end;
+
+function TIndexInfo.GetDisplayName: string;
+begin
+ Result:=FINDEX_Name;
+end;
+
+procedure TIndexInfo.Assign(Source: TPersistent);
+begin
+  if Source=nil then
+  Exit;
+
+ if Source is TIndexInfo then
+ begin
+   FASC_OR_DESC:= TIndexInfo(Source).ASC_OR_DESC;
+   FColumn_Name:=TIndexInfo(Source).Column_Name;
+   FFILTER_CONDITION:=TIndexInfo(Source).FILTER_CONDITION;
+   FIndexType:=TIndexInfo(Source).IndexType;
+   FINDEX_Name:=TIndexInfo(Source).INDEX_Name;
+   FINDEX_Qualifier:=TIndexInfo(Source).INDEX_Qualifier;
+   FIs_Unique:=TIndexInfo(Source).Is_Unique;
+   FOrdinal_Position:=TIndexInfo(Source).Ordinal_Position;
+ end else
+ inherited Assign(Source);
+end;
+
+{ TDbTablesInfo }
+
+procedure TDbTablesInfo.SetName(AValue: string);
+begin
+ if FName=AValue then Exit;
+ FName:=AValue;
+end;
+
+procedure TDbTablesInfo.SetDBInfo(AValue: TDbConnectionInfo);
+begin
+ FDBInfo := AValue;
+ FItems.DbInfo:=AValue;
+ FShouldFreeDbInfo:=False;
+end;
+
+
+procedure TDbTablesInfo.OnFindClass(Reader: TReader; const AClassName: string;
+ var ComponentClass: TComponentClass);
+begin
+  if CompareText(AClassName,'TDbSchemata')=0 then
+    ComponentClass:=TDbTablesInfo;
+end;
+
+constructor TDbTablesInfo.Create(aDbInfo: TDbConnectionInfo; AutoConnect: Boolean
+ );
+begin
+ inherited Create(nil);
+ FDBInfo := aDbInfo;
+ if FDBInfo=nil then
+ begin
+   FDBInfo := TDbConnectionInfo.Create;
+   FShouldFreeDbInfo:=True;
+ end;
+ FItems := TTableInfos.Create(Self,aDbInfo,AutoConnect);
+end;
+
+constructor TDbTablesInfo.Create;
+begin
+  inherited Create(nil);
+  FDBInfo := TDbConnectionInfo.Create;
+  FShouldFreeDbInfo:=True;
+  FItems := TTableInfos.Create(Self,FDBInfo,False);
+end;
+
+destructor TDbTablesInfo.Destroy;
+begin
+ FItems.Destroy;
+
+  if FShouldFreeDbInfo then
+   FDBInfo.Destroy;
+
+ inherited Destroy;
+end;
+
+procedure TDbTablesInfo.Reconnect;
+begin
+  FItems.Reconnect;
+end;
+
+procedure TDbTablesInfo.Clear;
+begin
+ FItems.Clear;
+end;
+
+procedure TDbTablesInfo.LoadFromFile(Filename: string);
+var
+  mem:TMemoryStream;
+begin
+  try
+    mem := TMemoryStream.Create;
+    mem.LoadFromFile(Filename);
+    ReadComponentFromBinaryStream(mem,TComponent(Self),@OnFindClass);
+    if FItems<>nil then
+    FItems.InitializeConnection;
+  finally
+    mem.Free;
+  end;
+end;
+
+procedure TDbTablesInfo.SaveToFile(Filename: string);
+var
+  mem:TMemoryStream;
+  ti :TTableInfo;
+begin
+  try
+    mem := TMemoryStream.Create;
+    WriteComponentAsBinaryToStream(mem,TComponent(Self));
+    mem.SaveToFile(Filename);
+  finally
+    mem.Free;
+  end;
+end;
 
 { TExportedKeyInfo }
 
@@ -314,9 +715,67 @@ begin
 
 end;
 
+procedure TExportedKeyInfo.SetColumnName(AValue: string);
+begin
+ if FColumnName=AValue then Exit;
+ FColumnName:=AValue;
+end;
+
+procedure TExportedKeyInfo.SetForeignColumnName(AValue: string);
+begin
+ if FForeignColumnName=AValue then Exit;
+ FForeignColumnName:=AValue;
+end;
+
+procedure TExportedKeyInfo.SetForeignSchemName(AValue: string);
+begin
+ if FForeignSchemName=AValue then Exit;
+ FForeignSchemName:=AValue;
+end;
+
+function TExportedKeyInfo.GetDisplayName: string;
+begin
+ Result:=FColumnName;
+end;
+
+procedure TExportedKeyInfo.Assign(Source: TPersistent);
+begin
+  if Source=nil then
+  Exit;
+ if Source is TExportedKeyInfo then
+ begin
+   FColumnName:= TExportedKeyInfo(Source).ColumnName;
+   FForeignColumnName:=TExportedKeyInfo(Source).ForeignColumnName;
+   FForeignSchemName:=TExportedKeyInfo(Source).ForeignSchemName;
+   FTable:=TExportedKeyInfo(Source).Table;
+   FTableAlias:=TExportedKeyInfo(Source).TableAlias;
+ end else
+ inherited Assign(Source);
+end;
+
 
 
 { TIndexInfos }
+
+function TIndexInfos.GetItems(Index: Integer): TIndexInfo;
+begin
+ Result := TIndexInfo(inherited Items[index]);
+end;
+
+procedure TIndexInfos.SetItems(Index: Integer; AValue: TIndexInfo);
+begin
+  Items[Index] := AValue;
+end;
+
+constructor TIndexInfos.Create(AOwner: TPersistent);
+begin
+ inherited Create(AOwner,TIndexInfo);
+end;
+
+function TIndexInfos.Add: TIndexInfo;
+begin
+  Result := TIndexInfo(inherited Add);
+end;
 
 function TIndexInfos.GetByName(IndexName: string): TIndexInfo;
 var
@@ -333,26 +792,46 @@ begin
  end;
 end;
 
-{ TTriggerInfos }
-
-function TTriggerInfos.GetByName(trigger: string): TTriggerInfo;
-begin
-
-end;
 
 
 { TExportedKeyInfos }
 
-function TExportedKeyInfos.GetItm(Index: Integer): TExportedKeyInfo;
+
+function TExportedKeyInfos.GetItems(Index: Integer): TExportedKeyInfo;
 begin
-  Result := Items[Index];
+ Result := TExportedKeyInfo( inherited Items[Index] );
+end;
+
+procedure TExportedKeyInfos.SetItems(Index: Integer; AValue: TExportedKeyInfo);
+begin
+  inherited Items[Index] := AValue;
+end;
+
+constructor TExportedKeyInfos.Create(AOwner: TPersistent);
+begin
+ inherited Create(AOwner,TExportedKeyInfo);
+end;
+
+function TExportedKeyInfos.Add: TExportedKeyInfo;
+begin
+ Result := TExportedKeyInfo(inherited Add);
 end;
 
 { TFieldInfos }
 
 function TFieldInfos.GetFieldInfo(Index: Integer): TFieldInfo;
 begin
-  Result := Items[Index];
+  Result := TFieldInfo(inherited  Items[Index]);
+end;
+
+constructor TFieldInfos.Create(aOwner: TPersistent);
+begin
+ inherited Create(aOwner,TFieldInfo);
+end;
+
+function TFieldInfos.Add: TFieldInfo;
+begin
+ Result := TFieldInfo(inherited Add);
 end;
 
 function TFieldInfos.GetIndex(FieldName: string): Integer;
@@ -384,9 +863,110 @@ end;
 
 {$Region '   TFieldInfo Implemenatation  ' }
 
-constructor TFieldInfo.Create;
+procedure TFieldInfo.SetAllowNull(AValue: Boolean);
+begin
+ if FAllowNull=AValue then Exit;
+ FAllowNull:=AValue;
+end;
+
+procedure TFieldInfo.SetControlType(AValue: TControlType);
+begin
+ if FControlType=AValue then Exit;
+ FControlType:=AValue;
+end;
+
+procedure TFieldInfo.SetCSharpName(AValue: string);
+begin
+ if FCSharpName=AValue then Exit;
+ FCSharpName:=AValue;
+end;
+
+procedure TFieldInfo.SetCSharpType(AValue: string);
+begin
+ if FCSharpType=AValue then Exit;
+ FCSharpType:=AValue;
+end;
+
+procedure TFieldInfo.SetDataType(AValue: TFieldType);
+begin
+ if FDataType=AValue then Exit;
+ FDataType:=AValue;
+end;
+
+procedure TFieldInfo.SetFCollection(AValue: TFieldInfos);
 begin
 
+end;
+
+procedure TFieldInfo.SetField(AValue: TField);
+begin
+ if FFieldRef=AValue then Exit;
+ FFieldRef:=AValue;
+end;
+
+procedure TFieldInfo.SetFieldDbType(AValue: TDatabaseType);
+begin
+ if FFieldDbType=AValue then Exit;
+ FFieldDbType:=AValue;
+end;
+
+procedure TFieldInfo.SetFieldName(AValue: string);
+begin
+ if FFieldName=AValue then Exit;
+ FFieldName:=AValue;
+end;
+
+procedure TFieldInfo.SetFieldType(AValue: string);
+begin
+ if FFieldType=AValue then Exit;
+ FFieldType:=AValue;
+end;
+
+procedure TFieldInfo.SetIsIdentity(AValue: Boolean);
+begin
+ if FIsIdentity=AValue then Exit;
+ FIsIdentity:=AValue;
+end;
+
+procedure TFieldInfo.SetIsPrimaryKey(AValue: Boolean);
+begin
+ if FIsPrimaryKey=AValue then Exit;
+ FIsPrimaryKey:=AValue;
+end;
+
+procedure TFieldInfo.SetIsReference(AValue: Boolean);
+begin
+ if FIsReference=AValue then Exit;
+ FIsReference:=AValue;
+end;
+
+procedure TFieldInfo.SetLength(AValue: Integer);
+begin
+ if FLength=AValue then Exit;
+ FLength:=AValue;
+end;
+
+procedure TFieldInfo.SetPrecision(AValue: Integer);
+begin
+ if FPrecision=AValue then Exit;
+ FPrecision:=AValue;
+end;
+
+procedure TFieldInfo.SetReserved(AValue: string);
+begin
+ if FReserved=AValue then Exit;
+ FReserved:=AValue;
+end;
+
+procedure TFieldInfo.SetValidate(AValue: Boolean);
+begin
+ if FValidate=AValue then Exit;
+ FValidate:=AValue;
+end;
+
+function TFieldInfo.GetDisplayName: string;
+begin
+  Result:=FFieldName
 end;
 
 function TFieldInfo.IsNumeric: Boolean;
@@ -468,7 +1048,7 @@ case db of
       ftBlob,ftOraBlob:
           begin
            Result:='blob';
-           if TDbUtils.IsBlobGUID(Field) then
+           if TDbUtils.IsBlobGUID(FFieldRef) then
            begin
              Result:='varchar';
            end else
@@ -494,7 +1074,7 @@ case db of
       ftBlob,ftOraBlob:
         begin
            Result:='blob';
-           if TDbUtils.IsBlobGUID(Field) then
+           if TDbUtils.IsBlobGUID(FFieldRef) then
            begin
              Result:='varchar';
            end else
@@ -520,7 +1100,7 @@ case db of
       ftBlob,ftOraBlob:
          begin
            Result:='blob';
-           if TDbUtils.IsBlobGUID(Field) then
+           if TDbUtils.IsBlobGUID(FFieldRef) then
            begin
              Result:='varchar';
            end else
@@ -549,7 +1129,7 @@ case db of
       ftBlob,ftOraBlob:
         begin
            Result:='blob';
-           if TDbUtils.IsBlobGUID(Field) then
+           if TDbUtils.IsBlobGUID(FFieldRef) then
            begin
              Result:='varchar';
            end else
@@ -574,7 +1154,7 @@ case db of
       ftBlob,ftOraBlob:
          begin
            Result:='blob';
-           if TDbUtils.IsBlobGUID(Field) then
+           if TDbUtils.IsBlobGUID(FFieldRef) then
            begin
              Result:='varchar';
            end else
@@ -624,6 +1204,32 @@ begin
  Result:=o+FieldName+c;
 end;
 
+procedure TFieldInfo.Assign(Source: TPersistent);
+begin
+  if Source=nil then
+  Exit;
+
+  if Source is TFieldInfo then
+  begin
+    FAllowNull:=TFieldInfo(Source).AllowNull;
+    FControlType:=TFieldInfo(Source).ControlType;
+    FCSharpName:=TFieldInfo(Source).CSharpName;
+    FDataType:=TFieldInfo(Source).DataType;
+    FFieldRef := TFieldInfo(Source).FieldRef;
+    FFieldDbType:= TFieldInfo(Source).FieldDbType;
+    FFieldName:=TFieldInfo(Source).FieldName;
+    FFieldType:=TFieldInfo(Source).FieldType;
+    FIsIdentity:=TFieldInfo(Source).IsIdentity;
+    FIsPrimaryKey:=TFieldInfo(Source).IsPrimaryKey;
+    FIsReference:=TFieldInfo(Source).IsReference;
+    FLength:=TFieldInfo(Source).Length;
+    FPrecision:=TFieldInfo(Source).Precision;
+    FReserved:=TFieldInfo(Source).Reserved;
+    FValidate:=TFieldInfo(Source).Validate;
+  end else
+ inherited Assign(Source);
+end;
+
 function TFieldInfo.WinControlPrefix: string;
 var
  s:string;
@@ -656,7 +1262,7 @@ begin
    AllowNull := FieldInfo.AllowNull;
    ControlType := FieldInfo.ControlType;
    Reserved := FieldInfo.Reserved;
-   Field := FieldInfo.Field;
+   FieldRef := FieldInfo.FieldRef;
    FieldDbType:= FieldInfo.FieldDbType;
   end;
 end;
@@ -667,12 +1273,6 @@ end;
 
 {$REGION 'Constructor/Destructor'}
 
-procedure TTableInfo.SetGenerateWebForm(const AValue: Boolean);
-begin
-  if FGenerateWebForm=AValue then exit;
-  FGenerateWebForm:=AValue;
-end;
-
 function TTableInfo.GetHasPrimaryKeys: Boolean;
 begin
  Result := False;
@@ -680,11 +1280,6 @@ begin
   Result := FPrimaryKeys.Count>0;
 end;
 
-procedure TTableInfo.SetGenerateWinForm(const AValue: Boolean);
-begin
-  if FGenerateWinForm=AValue then exit;
-  FGenerateWinForm:=AValue;
-end;
 
 procedure TTableInfo.SetTableName(AValue: string);
 begin
@@ -693,23 +1288,27 @@ begin
  FTableAlias:=TAsStringUtils.GetFriendlyAlias(FTablename);
 end;
 
-
-constructor TTableInfo.Create;
+function TTableInfo.GetDisplayName: string;
 begin
-  inherited Create;
-  FFields := TFieldInfos.Create;
-  FAllFields := TFieldInfos.Create;
-  FIdentities := TFieldInfos.Create;
-  FPrimaryKeys := TFieldInfos.Create;
+  Result:=FTablename
+end;
 
-  FExportedKeys := TExportedKeyInfos.Create;
-  FReferences := TImportedKeys.Create;
 
-  FTriggerInfos := TTriggerInfos.Create;
-  FIndexInfos := TIndexInfos.Create;
+constructor TTableInfo.Create(aCollection: TCollection);
+begin
+  inherited Create(aCollection);
 
-  FGenerateWinForm:=True;
-  FGenerateWebForm:=True;
+  FFields := TFieldInfos.Create(FFields);
+  FAllFields := TFieldInfos.Create(FAllFields);
+  FIdentities := TFieldInfos.Create(FIdentities);
+  FPrimaryKeys := TFieldInfos.Create(FPrimaryKeys);
+
+  FExportedKeys := TExportedKeyInfos.Create(FExportedKeys);
+  FImportedKeys := TImportedKeyInfos.Create(FImportedKeys);
+
+  FTriggerInfos := TTriggerInfos.Create(FTriggerInfos);
+  FIndexes :=  TIndexInfos.Create(FIndexes);
+
 end;
 
 destructor TTableInfo.Destroy;
@@ -718,11 +1317,35 @@ begin
   FFields.Free;
   FPrimaryKeys.Free;
   FIdentities.Free;
-  FReferences.Free;
+  FImportedKeys.Free;
   FExportedKeys.Free;
   FTriggerInfos.Free;
-  FIndexInfos.Free;
+  FIndexes.Free;
   inherited Destroy;
+end;
+
+procedure TTableInfo.Assign(Source: TPersistent);
+begin
+  if Source=nil then
+  Exit;
+ if Source is TTableInfo then
+ begin
+  FExportedKeys.Assign(TTableInfo(Source).ExportedKeys);
+  FAllFields.Assign(TTableInfo(Source).AllFields);
+  FIndexes.Assign(TTableInfo(Source).Indexes);
+  FPrimaryKeys.Assign(TTableInfo(Source).PrimaryKeys);
+  FFields.Assign(TTableInfo(Source).Fields);
+  FIdentities.Assign(TTableInfo(Source).Identities);
+  FTableAlias:= TTableInfo(Source).TableAlias;
+  FTablename:=TTableInfo(Source).Tablename;
+  FSchema:= TTableInfo(Source).Schema;
+  FImportedKeys.Assign(TTableInfo(Source).ImportedKeys);
+  FHasPrimaryKey:=TTableInfo(Source).HasPrimaryKeys;
+  FTriggerInfos.Assign(TTableInfo(Source).Triggers);
+  FFormType:=TTableInfo(Source).FormType;
+  FTableNameAsControlName:=TTableInfo(Source).TableNameAsControlName;
+ end else
+ inherited Assign(Source);
 end;
 
 function TTableInfo.FieldByName(Fieldname: string): TFieldInfo;
@@ -834,26 +1457,30 @@ end;
 
 {$REGION 'Constructor/Desctructor'}
 
-constructor TTableInfos.Create(DbInfo: TDbConnectionInfo);
+constructor TTableInfos.Create(aOwner: TComponent; DbInfo: TDbConnectionInfo;
+ AutoConnect: Boolean);
 var
  r : TResourceStream;
 begin
 
-  inherited Create;
+  inherited Create(aOwner,TTableInfo);
+  FAutoConnect:=AutoConnect;
 
-  FDBinfo := DbInfo;
-  adoCon := DbInfo.ToZeosConnection;
-  dsMetaData := TZSQLMetadata.Create(nil);
-  dsMetaData.Connection := adoCon;
-  dsMetaData.DisableControls;
-  adoCon.Connect;
+  if DbInfo<>nil then
+  begin
+   FDBinfo := DbInfo;
+   InitializeConnection;
+  end
 
 end;
 
 destructor TTableInfos.Destroy;
 begin
-  adoCon.Free;
-  dsMetaData.Free;
+  if adoCon<>nil then
+  adoCon.Destroy;
+  if dsMetaData<>nil then
+  dsMetaData.Destroy;
+
   inherited Destroy;
 end;
 
@@ -938,6 +1565,19 @@ begin
   Result:=ctTextBox;
 end;
 
+procedure TTableInfos.SetDBInfo(AValue: TDbConnectionInfo);
+begin
+ if FDBinfo=AValue then Exit;
+ FDBinfo:=AValue;
+ if FDBinfo<>nil then
+ InitializeConnection;
+end;
+
+procedure TTableInfos.SetItem(Index: Integer; AValue: TTableInfo);
+begin
+ Items[Index] := AValue;
+end;
+
 function TTableInfos.GetCSharpName(Tablename,SqlFieldName: string): string;
 var
  i:Integer;
@@ -960,7 +1600,7 @@ begin
     Result := CType;
 end;
 
-function TTableInfos.GetCSharpTableName(TableName: string): string;
+function TTableInfos.GetTableNameAsControl(TableName: string): string;
 var
  i:Integer;
  CType:string;
@@ -1030,10 +1670,27 @@ begin
   Result := Items[Index];
 end;
 
-procedure TTableInfos.GetConstraintInfos(Schema: string; Tablename: string;
-  var ConstraintInfos: TImportedKeys);
+procedure TTableInfos.InitializeConnection;
+begin
+   if adoCon<>nil then
+   adoCon.Free;
+
+   adoCon := FDbInfo.ToZeosConnection;
+
+   if dsMetaData<>nil then
+   dsMetaData.Free;
+   dsMetaData := TZSQLMetadata.Create(nil);
+   dsMetaData.Connection := adoCon;
+   dsMetaData.DisableControls;
+
+   if FAutoConnect then
+   adoCon.Connect;
+end;
+
+procedure TTableInfos.GetImportedKeyInfos(Schema: string; Tablename: string;
+ var ConstraintInfos: TImportedKeyInfos);
 var
- CI:TImportedKey;
+ CI:TImportedKeyInfo;
   dsLocalHelper:TZSQLMetadata;
   strType:string;
   qr:TZQuery;
@@ -1041,10 +1698,8 @@ begin
 
 
   if ConstraintInfos=nil then
-  ConstraintInfos := TImportedKeys.Create;
-
-  if ConstraintInfos=nil then
   Exit;
+
   try
   dsLocalHelper := TZSQLMetadata.Create(nil);
   dsLocalHelper.Connection := adoCon;
@@ -1099,7 +1754,7 @@ begin
 
         while not qr.EOF do
         begin
-           CI := TImportedKey.Create;
+           CI := ConstraintInfos.Add;
             CI.ConstraintName:= qr.FieldByName('CONSTRAINT_NAME').AsString;
             CI.TableName := qr.FieldByName('FKTABLE_NAME').AsString;
             CI.ColumnName := qr.FieldByName('FKCOLUMN_NAME').AsString;
@@ -1135,7 +1790,7 @@ begin
             if Trim(CI.ForeignFirstTextField)=EmptyStr then
               CI.ForeignFirstTextField:= CI.ForeignColumnName;
 
-            ConstraintInfos.Add(CI);
+            //ConstraintInfos.Add(CI);
             qr.Next;
         end;
 
@@ -1158,7 +1813,7 @@ begin
          dsMetaData.Open;
          while not dsMetaData.Eof do
          begin
-            CI := TImportedKey.Create;
+            CI := ConstraintInfos.Add;
             CI.ConstraintName:= dsMetaData.FieldByName('FK_NAME').AsString;
             CI.TableName := dsMetaData.FieldByName('FKTABLE_NAME').AsString;
             CI.ColumnName := dsMetaData.FieldByName('FKCOLUMN_NAME').AsString;
@@ -1191,7 +1846,7 @@ begin
             if Trim(CI.ForeignFirstTextField)=EmptyStr then
               CI.ForeignFirstTextField:= CI.ForeignColumnName;
 
-            ConstraintInfos.Add(CI);
+            //ConstraintInfos.Add(CI);
             dsMetaData.Next;
          end;
 
@@ -1210,13 +1865,10 @@ begin
 end;
 
 procedure TTableInfos.GetExportedKeyInfos(Schema: string; Tablename: string;
-  var ExportKeyInfos: TExportedKeyInfos);
+ var ExportKeyInfos: TExportedKeyInfos);
 var
   ei:TExportedKeyInfo;
 begin
-
-  if ExportKeyInfos=nil then
-  ExportKeyInfos := TExportedKeyInfos.Create;
 
   try
       if dsMetaData.Active then dsMetaData.Close;
@@ -1226,7 +1878,7 @@ begin
       dsMetaData.Open;
       while not dsMetaData.EOF do
       begin
-        ei := TExportedKeyInfo.Create;
+        ei := ExportKeyInfos.Add;
         ei.ColumnName:=dsMetaData.FieldByName('PKCOLUMN_NAME').AsString;
 
          if FDBinfo.DatabaseType<>dtFirebirdd then
@@ -1234,13 +1886,18 @@ begin
 
         ei.ForeignTableName:=dsMetaData.FieldByName('FKTABLE_NAME').AsString;
         ei.ColumnName:=dsMetaData.FieldByName('FKCOLUMN_NAME').AsString;
-        ExportKeyInfos.Add(ei);
+        //ExportKeyInfos.Add(ei);
         dsMetaData.Next;
       end;
       dsMetaData.Close;
   finally
   end;
 
+end;
+
+function TTableInfos.GetItem(Index: Integer): TTableInfo;
+begin
+  Result := TTableInfo(inherited Items[Index]);
 end;
 
 procedure TTableInfos.GetPrimaryKeys(Schema: string; TableName: string;
@@ -1341,7 +1998,7 @@ procedure TTableInfos.LoadFromTables(Schema:string; Tables: TStrings);
          begin
          		if TableByName(tbl.ImportedKeys[J].ForeignTableName)=nil then
             begin
-               Add(GetTableInfo(tbl.ImportedKeys[J].ForeignSchema,tbl.ImportedKeys[J].ForeignTableName));
+               AddTable(tbl.ImportedKeys[J].ForeignSchema,tbl.ImportedKeys[J].ForeignTableName);
                CheckDependencies(tbl.ImportedKeys[J].ForeignTableName);
             end;
          end;
@@ -1355,7 +2012,7 @@ begin
     for I := 0 to Tables.Count - 1 do
     begin
       WriteLog('Extracting information ['+Tables[I]+']');
-      Add(GetTableInfo(Schema,Tables[I]));
+      AddTable(Schema,Tables[I]);
     end;
 
     //if table has constraint, if foreign tables not checked for generate,
@@ -1368,25 +2025,34 @@ begin
     WriteLog('Done');
 end;
 
-function TTableInfos.GetTableInfo(Schema: string; Tablename: string
+function TTableInfos.Add: TTableInfo;
+begin
+  Result := TTableInfo(inherited Add);
+end;
+
+function TTableInfos.Add(Schema: string; Tablename: string
   ): TTableInfo;
 var
  lstPKs,lstIdentity:Tstringlist;
  table:TTableInfo;
  field,pkField,idField,nField:TFieldInfo;
- ci:TImportedKeys;
- ei:TExportedKeyInfos;
  ado:TZQuery;
  strSqlCastExpr:string;
  ti:TTriggerInfo;
  ii:TIndexInfo;
+ iks:TImportedKeyInfos;
+ eks:TExportedKeyInfos;
 begin
    try
-     ci := TImportedKeys.Create;
-     ei := TExportedKeyInfos.Create;
+     table := TTableInfo(inherited Add);
+     table.Tablename := Tablename;
+     table.TableNameAsControlName:=GetTableNameAsControl(Tablename);
 
-     GetConstraintInfos(Schema,Tablename,ci);
-     GetExportedKeyInfos(Schema,Tablename,ei);
+     iks := table.ImportedKeys;
+     eks := table.ExportedKeys;
+
+     GetImportedKeyInfos(Schema,Tablename,iks);
+     GetExportedKeyInfos(Schema,Tablename,eks);
 
      ado:=TZQuery.Create(nil);
      ado.Connection := adoCon;
@@ -1399,15 +2065,9 @@ begin
 
      GetPrimaryKeys(Schema,Tablename,lstPKs);
 
-     table := TTableInfo.Create;
-     table.Tablename := Tablename;
-     table.TableCSharpName:=GetCSharpTableName(Tablename);
-
      if FDBinfo.DatabaseType = dtSQLite then Schema:='';
 
      table.Schema := Schema;
-     table.ImportedKeys := ci;
-     table.ExportedKeys := ei;
 
      if dsMetaData.Active then dsMetaData.Close;
 
@@ -1428,7 +2088,7 @@ begin
       end;
 
 
-      field := TFieldInfo.Create;
+      field := table.AllFields.Add;
       field.FieldName := dsMetaData.FieldByName('COLUMN_NAME').AsString;
       field.FieldType := LowerCase(dsMetaData.FieldByName('TYPE_NAME').AsString);
       if field.FieldType='int identity' then field.FieldType:='int';
@@ -1468,13 +2128,13 @@ begin
         ado.Open;
 
         field.DataType := ado.Fields[0].DataType;
-        field.Field := ado.Fields[0];
+        field.FieldRef := ado.Fields[0];
         field.AllowNull := dsMetaData.FieldByName('NULLABLE').AsBoolean;
         field.CSharpType := GetCSharpType(field.FieldType);
         field.CSharpName := GetCSharpName(Tablename,field.FieldName);
         field.Validate := (not field.AllowNull) or (lstPKs.IndexOf(field.FieldName)>-1);
 
-        if ci.ContainsColumn(field.FieldName) then
+        if table.ImportedKeys.ContainsColumn(field.FieldName) then
         begin
           field.ControlType := ctComboBox;
           field.IsReference := True;
@@ -1486,27 +2146,22 @@ begin
         if lstPKs.IndexOf(field.FieldName)>-1 then
         begin
           field.IsPrimaryKey := True;
-          pkField := TFieldInfo.Create;
+          pkField := table.PrimaryKeys.Add;
           pkField.CopyFrom(field);
-          table.PrimaryKeys.Add(pkField);
         end else
         begin
          field.IsPrimaryKey := False;
-         nField := TFieldInfo.Create;
+         nField := table.Fields.Add;
          nField.CopyFrom(field);
-         table.Fields.Add(nField);
         end;
 
         if (dsMetaData.FieldByName('AUTO_INCREMENT').AsBoolean) or (field.DataType=ftAutoInc) then
         begin
           field.IsIdentity := True;
-          idField := TFieldInfo.Create;
+          idField := table.Identities.Add;
           idField.CopyFrom(field);
-
-          table.Identities.Add(idField);
         end;
         field.FieldDbType:=FDBinfo.DatabaseType;
-        table.AllFields.Add(field);
       except
         if Assigned(field) then
         field.Free;
@@ -1523,7 +2178,7 @@ begin
 
      while not dsMetaData.EOF do
      begin
-      ti := TTriggerInfo.Create;
+      ti := table.Triggers.Add;
       ti.Schem:=dsMetaData.FieldByName('TRIGGER_SCHEM').AsString;
       ti.Cat:= dsMetaData.FieldByName('TRIGGER_CAT').AsString;
       ti.Description:= dsMetaData.FieldByName('TRIGGER_DESCRIPTION').AsString;
@@ -1532,7 +2187,6 @@ begin
       ti.TriggerSource:=dsMetaData.FieldByName('TRIGGER_SOURCE').AsString;
       ti.Relation:=dsMetaData.FieldByName('TRIGGER_RELATION').AsString;
       dsMetaData.Next;
-      table.Triggers.Add(ti);
      end;
 
      //now get index infos
@@ -1543,14 +2197,13 @@ begin
 
      while not dsMetaData.EOF do
      begin
-      ii := TIndexInfo.Create;
+      ii := table.Indexes.Add;
       ii.INDEX_Name:=dsMetaData.FieldByName('INDEX_NAME').AsString;
       ii.INDEX_Qualifier:=dsMetaData.FieldByName('INDEX_QUALIFIER').AsString;
       ii.IndexType:= dsMetaData.FieldByName('TYPE').AsInteger;
       ii.ASC_OR_DESC:= dsMetaData.FieldByName('ASC_OR_DESC').AsString;
       ii.FILTER_CONDITION:=dsMetaData.FieldByName('FILTER_CONDITION').AsString;
       ii.Ordinal_Position:=dsMetaData.FieldByName('Ordinal_Position').AsInteger;
-      table.Indexes.Add(ii);
       dsMetaData.Next;
      end;
 
@@ -1721,21 +2374,30 @@ begin
   end;
 end;
 
+procedure TTableInfos.Reconnect;
+begin
+  if adoCon<>nil then
+  begin
+    if adoCon.Connected then
+    adoCon.Disconnect;
+    adoCon.Connect;
+  end;
+end;
+
 procedure TTableInfos.AddTable(Schema, Tablename: string);
 var
   ti:TTableInfo;
 begin
-  ti := GetTableInfo(Schema,Tablename);
-  Add(ti);
+  Add(Schema,Tablename);
 end;
 
 {$ENDREGION}
 
 {$ENDREGION}
 
-{$REGION '  TConstraintInfos Implementation  ' }
+{$REGION '  TImportedKeys Implementation  ' }
 
-function TImportedKeys.GetByField(Field: TFieldInfo): TImportedKey;
+function TImportedKeyInfos.GetByField(Field: TFieldInfo): TImportedKeyInfo;
 var
   i:Integer;
 begin
@@ -1750,7 +2412,7 @@ begin
   end;
 end;
 
-function TImportedKeys.GetByName(Fieldname: string): TImportedKey;
+function TImportedKeyInfos.GetByName(Fieldname: string): TImportedKeyInfo;
 var
   i:Integer;
 begin
@@ -1763,18 +2425,28 @@ begin
     end;
 end;
 
-function TImportedKeys.GetRefInfo(Index: integer): TImportedKey;
+function TImportedKeyInfos.GetRefInfo(Index: integer): TImportedKeyInfo;
 begin
-  Result := Items[Index];
+  Result := TImportedKeyInfo(inherited  Items[Index]);
 end;
 
-function TImportedKeys.Add(const Itm: TImportedKey): Integer;
+procedure TImportedKeyInfos.SetRefInfo(Index: integer; AValue: TImportedKeyInfo);
 begin
-  Itm.Index := Count - 1;
-  Result := inherited Add(Itm);
+ inherited Items[Index] := AValue;
 end;
 
-function TImportedKeys.ContainsColumn(Fieldname: string): Boolean;
+constructor TImportedKeyInfos.Create(AOwner: TPersistent);
+begin
+ inherited Create(AOwner,TImportedKeyInfo);
+end;
+
+
+function TImportedKeyInfos.Add: TImportedKeyInfo;
+begin
+  Result := TImportedKeyInfo(inherited Add);
+end;
+
+function TImportedKeyInfos.ContainsColumn(Fieldname: string): Boolean;
 var
   I: Integer;
 begin
@@ -1789,7 +2461,7 @@ begin
   end;
 end;
 
-function TImportedKeys.ContainsTable(Tablename: string): Boolean;
+function TImportedKeyInfos.ContainsTable(Tablename: string): Boolean;
 var
   I: Integer;
 begin
@@ -1804,7 +2476,7 @@ begin
   end;
 end;
 
-function TImportedKeys.GetIndex(Fieldname: string): Integer;
+function TImportedKeyInfos.GetIndex(Fieldname: string): Integer;
 var
   I: Integer;
 begin
@@ -1819,7 +2491,7 @@ begin
   end;
 end;
 
-procedure TImportedKey.SetTablename(AValue: string);
+procedure TImportedKeyInfo.SetTablename(AValue: string);
 
 begin
  if FTablename=AValue then Exit;
@@ -1827,30 +2499,73 @@ begin
  FTableAlias:=TAsStringUtils.GetFriendlyAlias(FTablename);
 end;
 
-procedure TImportedKey.SetForiegnTablename(AValue: string);
+function TImportedKeyInfo.GetDisplayName: string;
+begin
+ Result:=ColumnName;
+end;
+
+procedure TImportedKeyInfo.SetForiegnTablename(AValue: string);
 begin
  if FForeignTablename=AValue then Exit;
  FForeignTablename:=AValue;
  FForeignTableAlias:= TAsStringUtils.GetFriendlyAlias(FForeignTablename);
 end;
 
+procedure TImportedKeyInfo.SetColumnName(AValue: string);
+begin
+ if FColumnName=AValue then Exit;
+ FColumnName:=AValue;
+end;
 
-function TImportedKey.TableAndColumn: string;
+procedure TImportedKeyInfo.SetConstraintName(AValue: string);
+begin
+ if FConstraintName=AValue then Exit;
+ FConstraintName:=AValue;
+end;
+
+procedure TImportedKeyInfo.SetForeignColumnName(AValue: string);
+begin
+ if FForeignColumnName=AValue then Exit;
+ FForeignColumnName:=AValue;
+end;
+
+procedure TImportedKeyInfo.SetForeignFirstTextField(AValue: string);
+begin
+ if FForeignFirstTextField=AValue then Exit;
+ FForeignFirstTextField:=AValue;
+end;
+
+procedure TImportedKeyInfo.SetForeignSchema(AValue: string);
+begin
+ if FForeignSchema=AValue then Exit;
+ FForeignSchema:=AValue;
+end;
+
+procedure TImportedKeyInfo.SetSelectFields(AValue: TStringList);
+begin
+ if FSelectFields=AValue then Exit;
+ FSelectFields:=AValue;
+end;
+
+
+function TImportedKeyInfo.TableAndColumn: string;
 begin
  Result:= TableName+ColumnName;
 end;
 
-constructor TImportedKey.Create;
+constructor TImportedKeyInfo.Create(aCollection: TCollection);
 begin
- SelectFields := TStringList.Create;
+ inherited Create(aCollection);
+ FSelectFields := TStringList.Create;
 end;
 
-destructor TImportedKey.Destroy;
+destructor TImportedKeyInfo.Destroy;
 begin
- SelectFields.Free;
+ FSelectFields.Free;
+ inherited Destroy;
 end;
 
-function TImportedKey.GetCompatibleColumnName(dbType: TDatabaseType): string;
+function TImportedKeyInfo.GetCompatibleColumnName(dbType: TDatabaseType): string;
 var
  o,c:string;
 begin
@@ -1884,7 +2599,7 @@ begin
  Result:=o+ColumnName+c;
 end;
 
-function TImportedKey.GetCompatibleForeignColumnName(dbType: TDatabaseType
+function TImportedKeyInfo.GetCompatibleForeignColumnName(dbType: TDatabaseType
  ): string;
 var
  o,c:string;
@@ -1917,6 +2632,26 @@ begin
      end;
  end;
  Result:=o+ForeignColumnName+c;
+end;
+
+procedure TImportedKeyInfo.Assign(Source: TPersistent);
+begin
+  if Source=nil then
+  Exit;
+ if Source is TImportedKeyInfo then
+ begin
+    FColumnName:=TImportedKeyInfo(Source).ColumnName;
+    FConstraintName:=TImportedKeyInfo(Source).ConstraintName;
+    FForeignColumnName:=TImportedKeyInfo(Source).ForeignColumnName;
+    FForeignFirstTextField:=TImportedKeyInfo(Source).ForeignFirstTextField;
+    FForeignSchema:=TImportedKeyInfo(Source).ForeignSchema;
+    FSelectFields.Assign(TImportedKeyInfo(Source).SelectFields);
+    FTablename:=TImportedKeyInfo(Source).Tablename;
+    FTableAlias:=TImportedKeyInfo(Source).TableAlias;
+    FForeignTableAlias:=TImportedKeyInfo(Source).ForeignTableAlias;
+    FForeignTablename:=TImportedKeyInfo(Source).ForeignTableName;
+ end else
+ inherited Assign(Source);
 end;
 
 {$ENDREGION}

@@ -12,12 +12,12 @@ uses
   fpdbfexport, fpSQLExport, sqldb, sqldblib, IBConnection, FBAdmin,
   {$ifndef win64}oracleconnection,{$endif} SdfData, sqlite3conn, mysql55conn, mysql51conn, mysql50conn,
   mysql40conn, mysql41conn, mssqlconn, strutils, SqlConnBuilderFormU,
-  BlobFieldFormU, Clipbrd, types, EditMemoFormU, TableInfoFormU, TableInfo,
+  BlobFieldFormU, Clipbrd, types, EditMemoFormU, DesignTableFormU, TableInfo,
   DbType, ProcedureInfo, SqlGenerator, FtDetector, SqlExecThread, AsSqlParser,
   LazSqlXResources, RegExpr, Regex, versionresource,
   UnitGetSetText, QueryDesignerFormU, LoadingIndicator,
   SynEditMarkupSpecialLine, SynEditTypes, SynEditKeyCmds, fpsqlparser,LazSqlXCtrls,
-  fpsqltree;
+  fpsqltree,AsDbFormUtils;
 
 var
   AppVersion: string = '';
@@ -63,7 +63,10 @@ type
     actCheckSyntax: TAction;
     actDisconnect: TAction;
     actDropDatabase: TAction;
-    actEditTable: TAction;
+    actDesignTable: TAction;
+    actEditFormAll: TAction;
+    actEditLimitRecords: TAction;
+    actEditFormCustomFilter: TAction;
     actOpenTable: TAction;
     actSelectAllRows: TAction;
     actQueryDesigner: TAction;
@@ -82,6 +85,13 @@ type
     FindDialog1: TFindDialog;
     imgLogo: TImage;
     itmDataIporter: TMenuItem;
+    mitSep12: TMenuItem;
+    mitOpenTable: TMenuItem;
+    mitEditCustomFilter: TMenuItem;
+    mitEditTopRec: TMenuItem;
+    mitEdit: TMenuItem;
+    mitEditAll: TMenuItem;
+    mitSep11: TMenuItem;
     mitDropDB: TMenuItem;
     sep2: TMenuItem;
     mitDisconnect: TMenuItem;
@@ -131,7 +141,6 @@ type
     lstProcedures: TListBox;
     MenuItem1: TMenuItem;
     MenuItem3: TMenuItem;
-    MenuItem4: TMenuItem;
     mitTabExportToSqlInsert: TMenuItem;
     mitTabExportToRTF: TMenuItem;
     mitTabExportToJason: TMenuItem;
@@ -164,7 +173,6 @@ type
     mitSelectQuery: TMenuItem;
     mitQuery: TMenuItem;
     mitTableInfo: TMenuItem;
-    mitOpenData: TMenuItem;
     mitSep10: TMenuItem;
     mitConnect: TMenuItem;
     MenuItem2: TMenuItem;
@@ -218,7 +226,10 @@ type
     procedure actDisconnectExecute(Sender: TObject);
     procedure actDropDatabaseExecute(Sender: TObject);
     procedure actDropTableExecute(Sender: TObject);
-    procedure actEditTableExecute(Sender: TObject);
+    procedure actEditFormAllExecute(Sender: TObject);
+    procedure actEditFormCustomFilterExecute(Sender: TObject);
+    procedure actDesignTableExecute(Sender: TObject);
+    procedure actEditLimitRecordsExecute(Sender: TObject);
     procedure actExecuteExecute(Sender: TObject);
     procedure actCloseExecute(Sender: TObject);
     procedure actCloseTabExecute(Sender: TObject);
@@ -336,6 +347,7 @@ type
     procedure CreateIntelliSense;
     procedure DoExport(exporter: TCustomDatasetExporter; FileExt: string);
     procedure EnableExporters;
+    procedure ShowEditForm(FormFilter:TAsDbFormFilter);
 
     procedure FillSchemas;
     procedure FillTables;
@@ -570,8 +582,8 @@ begin
     try
       s := TSqlGenerator.Create(ZCon.HostName, ZCon.Database, ZCon.User,
         ZCon.Password, p, SqlConnBuilderForm.ConDatabaseType, ZCon.Port);
-      tis := TTableInfos.Create(DbInfo);
-      ti := tis.GetTableInfo(cmbSchema.Text, table);
+      tis := TTableInfos.Create(nil,DbInfo);
+      ti := tis.Add(cmbSchema.Text, table);
 
       if not IsStoredProcedure then
         Output := s.GenerateQuery(0, ti, queryType)
@@ -591,7 +603,6 @@ begin
     FLoadingIndicator.StopAnimation;
     sbMain.Panels[1].Text := EmptyStr;
     tis.Free;
-    ti.Free;
     s.Free;
   end;
 end;
@@ -1232,6 +1243,25 @@ begin
   end;
 end;
 
+procedure TMainForm.ShowEditForm(FormFilter: TAsDbFormFilter);
+var
+  frm:TAsDbForm;
+  ti:TTableInfos;
+begin
+ if lstTables.ItemIndex>-1 then
+ begin
+  ti := TTableInfos.Create(nil,DbInfo);
+  try
+    ti.AddTable(cmbSchema.Text,lstTables.Items[lstTables.ItemIndex]);
+    frm := TAsDbForm.Create(Self.DbInfo,cmbSchema.Text,ti[0]);
+    frm.ShowModal(FormFilter);
+  finally
+    ti.Free;
+    frm.Free;
+  end;
+ end;
+end;
+
 procedure TMainForm.CreateIntelliSense;
 begin
 
@@ -1688,7 +1718,9 @@ end;
 
 procedure TMainForm.actRefreshTablesExecute(Sender: TObject);
 begin
+  DoDisconnect;
   FillTables;
+  DoSelectiveConnect;
 end;
 
 procedure TMainForm.actRunStoredProcedureExecute(Sender: TObject);
@@ -1753,14 +1785,29 @@ begin
 
 end;
 
-procedure TMainForm.actEditTableExecute(Sender: TObject);
+procedure TMainForm.actEditFormAllExecute(Sender: TObject);
+begin
+ ShowEditForm(dffNone);
+end;
+
+procedure TMainForm.actEditFormCustomFilterExecute(Sender: TObject);
+begin
+  ShowEditForm(dffCustomFilter);
+end;
+
+procedure TMainForm.actDesignTableExecute(Sender: TObject);
 begin
   if lstTables.ItemIndex > -1 then
     begin
       DoDisconnect;
-      TableInfoForm.Showmodal(DbInfo, cmbSchema.Text, lstTables.Items[lstTables.ItemIndex]);
+      DesignTableForm.Showmodal(DbInfo, cmbSchema.Text, lstTables.Items[lstTables.ItemIndex]);
       DoSelectiveConnect;
     end;
+end;
+
+procedure TMainForm.actEditLimitRecordsExecute(Sender: TObject);
+begin
+  ShowEditForm(dffTopRecords);
 end;
 
 procedure TMainForm.actCloseAllButThisExecute(Sender: TObject);
@@ -1782,7 +1829,7 @@ begin
       ProgressForm.Show;
       Application.ProcessMessages;
 
-      infos := TTableInfos.Create(DbInfo);
+      infos := TTableInfos.Create(nil,DbInfo);
 
 
       ProgressForm.MaxProgress := lstTables.Count;
@@ -1908,15 +1955,14 @@ var
 begin
 
   dbc := TAsDatabaseCloner.Create(DbInfo, ZCon.Database);
-  ti := TTableInfos.Create(DbInfo);
-  t := ti.GetTableInfo(cmbSchema.Text, lstTables.Items[lstTables.ItemIndex]);
+  ti := TTableInfos.Create(nil,DbInfo);
+  t := ti.Add(cmbSchema.Text, lstTables.Items[lstTables.ItemIndex]);
   try
     if actNewTab.Execute then
       FPageControl.ActiveTab.QueryEditor.Lines.Add(dbc.GetCreateScript(t, True, False));
   finally
     dbc.Free;
     ti.Free;
-    t.Free;
   end;
 
 end;
@@ -2108,7 +2154,7 @@ end;
 procedure TMainForm.actNewTableExecute(Sender: TObject);
 begin
   DoDisconnect;
-  TableInfoForm.Showmodal(DbInfo,cmbSchema.Text, '');
+  DesignTableForm.Showmodal(DbInfo,cmbSchema.Text, '');
   DoSelectiveConnect;
   FillTables;
 end;
@@ -2164,7 +2210,7 @@ end;
 
 procedure TMainForm.ApplicationPropertiesException(Sender: TObject; E: Exception);
 begin
-
+ MessageDlg('Error',E.Message,mtError,[mbOk],0);
 end;
 
 procedure TMainForm.ApplicationPropertiesIdle(Sender: TObject; var Done: boolean);

@@ -10,7 +10,7 @@ object EditIndexForm: TEditIndexForm
   OnCreate = FormCreate
   OnShow = FormShow
   Position = poScreenCenter
-  LCLVersion = '1.0.10.0'
+  LCLVersion = '1.2.6.0'
   object pnlMain: TPanel
     Left = 8
     Height = 216
@@ -28,17 +28,17 @@ object EditIndexForm: TEditIndexForm
     end
     object lblName: TLabel
       Left = 12
-      Height = 16
+      Height = 15
       Top = 11
-      Width = 64
+      Width = 63
       Caption = 'Index Name'
       ParentColor = False
     end
     object lblOrder: TLabel
       Left = 12
-      Height = 16
+      Height = 15
       Top = 126
-      Width = 55
+      Width = 54
       Caption = 'Sort Order'
       ParentColor = False
     end
@@ -65,9 +65,9 @@ object EditIndexForm: TEditIndexForm
     end
     object lblColumn: TLabel
       Left = 12
-      Height = 16
+      Height = 15
       Top = 67
-      Width = 44
+      Width = 43
       Caption = 'Column'
       ParentColor = False
     end

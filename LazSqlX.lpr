@@ -11,7 +11,7 @@ uses
   {$ENDIF}
   Interfaces, // this includes the LCL widgetset
   Forms, MainFormU, SqlConnBuilderFormU, EditMemoFormU, BlobFieldFormU,
-  TableInfoFormU, AboutFormU, EditColumnFormU, EditConstraintsFormU,
+  DesignTableFormU, AboutFormU, EditColumnFormU, EditConstraintsFormU,
   EditIndexFormU, QueryDesignerFormU, ProgressFormU, DatabaseClonerFormU,
   DataImporterFormU, Utils, SqlGenerator, FtDetector, lazdbexport, zcomponent,
   TableInfo, DbType, SqlExecThread, QueryDesignerDialogU, QueryDesignerTablesU,
@@ -33,7 +33,7 @@ begin
   Application.CreateForm(TSqlConnBuilderForm, SqlConnBuilderForm);
   Application.CreateForm(TBlobFieldForm, BlobFieldForm);
   Application.CreateForm(TEditMemoForm, EditMemoForm);
-  Application.CreateForm(TTableInfoForm, TableInfoForm);
+ Application.CreateForm(TDesignTableForm, DesignTableForm);
   Application.CreateForm(TAboutForm,AboutForm);
   Application.CreateForm(TEditColumnForm,EditColumnForm);
   Application.CreateForm(TEditConstraintForm,EditConstraintForm);

@@ -93,6 +93,7 @@ procedure TEditIndexForm.FillColumns;
 var
  I: Integer;
 begin
+  cmbColumns.Clear;
   for I:=0 to _Table.AllFields.Count-1 do
   begin
     cmbColumns.Items.Add(_Table.AllFields[I].FieldName);
