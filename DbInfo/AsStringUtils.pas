@@ -19,7 +19,7 @@ type
 
   { TAsStringUtils }
 
-  TStringWrapType = (swtBrackets,swtQuotes,swtNone);
+  TAsStringWrapType = (swtBrackets,swtQuotes,swtNone);
 
   TArrayOfString = array of string;
 
@@ -58,8 +58,8 @@ type
 
     class function BlobToString(field:TField):string;
 
-    {surrounds a string with brackets or quotations, depending the TStringwrapType}
-    class function WrapString(aInput:string; typ:TStringWrapType):string;
+    {surrounds a string with brackets or quotations, depending the TAsStringWrapType}
+    class function WrapString(aInput:string; typ:TAsStringWrapType):string;
 
     {Removes vowels if any found uppercase and lowercase}
     class function RemoveVowels(aInput:string):string;
@@ -397,7 +397,7 @@ begin
   end;
 end;
 
-class function TAsStringUtils.WrapString(aInput: string; typ: TStringWrapType
+class function TAsStringUtils.WrapString(aInput: string; typ: TAsStringWrapType
  ): string;
 begin
  case typ of

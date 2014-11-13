@@ -8,7 +8,7 @@ uses
   Messages, SysUtils, Variants,
   Classes, Graphics,
   Controls, Forms, Dialogs, StdCtrls,
-  TableInfo, DbType, QueryDesignerU, Buttons,
+  AsTableInfo, AsDbType, QueryDesignerU, Buttons,
   ExtCtrls,ZConnection;
 
 type
@@ -42,7 +42,7 @@ type
     procedure btnDelClick(Sender: TObject);
   private
     { Private declarations }
-    FDBInfo:TDbConnectionInfo;
+    FDBInfo:TAsDbConnectionInfo;
     FDBSchema: string;
     FKeyField: string;
     FSourceTable:String;
@@ -54,7 +54,7 @@ type
   public
     { Public declarations }
     SelectFields: TStringList;
-    function ShowModal(Con:TDbConnectionInfo;
+    function ShowModal(Con:TAsDbConnectionInfo;
       Schema, SourceTable,SourceField,ForiegnTable, ForeignKeyField: string; aSelectFields: TStringList)
       : TModalResult;
   end;
@@ -182,8 +182,7 @@ begin
   cmbDisplayMember.Items.Clear;
 
   try
-    lst := TStringList.Create;
-    TDbUtils.GetColumnNames(FDBInfo,cmbForeignTable.Items[cmbForeignTable.ItemIndex],lst);
+    lst := TAsDbUtils.GetColumnNames(FDBInfo,cmbForeignTable.Items[cmbForeignTable.ItemIndex]);
     cmbValueMember.Items.AddStrings(lst);
     cmbDisplayMember.Items.AddStrings(lst);
   finally
@@ -227,12 +226,21 @@ begin
   Height := 211;
 
   try
-    lst := TStringList.Create;
-    TDbUtils.GetTableNames(FDBInfo, FDBSchema,lst);
-    cmbForeignTable.Items.AddStrings(lst);
 
-    TDbUtils.GetColumnNames(FDBInfo, FSourceTable,lst);
-    cmbSourceField.Items.AddStrings(lst);
+    lst := TAsDbUtils.GetTableNames(FDBInfo, FDBSchema);
+    try
+      cmbForeignTable.Items.AddStrings(lst);
+    finally
+      lst.Free;
+    end;
+
+
+    lst := TAsDbUtils.GetColumnNames(FDBInfo, FSourceTable);
+    try
+      cmbSourceField.Items.AddStrings(lst);
+    finally
+      lst.Free;
+    end;
 
     cmbForeignTable.ItemIndex := cmbForeignTable.Items.IndexOf(FTableName);
     cmbForeignTableChange(nil);
@@ -290,7 +298,7 @@ begin
     end;
 end;
 
-function TQueryDesignerDialog.ShowModal(Con: TDbConnectionInfo; Schema,
+function TQueryDesignerDialog.ShowModal(Con: TAsDbConnectionInfo; Schema,
  SourceTable, SourceField, ForiegnTable, ForeignKeyField: string;
  aSelectFields: TStringList): TModalResult;
 begin

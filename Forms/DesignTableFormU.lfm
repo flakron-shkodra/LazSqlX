@@ -59,14 +59,14 @@ object DesignTableForm: TDesignTableForm
     Stretch = True
   end
   object pgcMain: TPageControl
-    Left = 8
+    Left = 7
     Height = 478
     Top = 37
     Width = 692
-    ActivePage = tabIndexes
+    ActivePage = tabDependencies
     Anchors = [akTop, akLeft, akRight, akBottom]
     Images = ilTableInfoImages
-    TabIndex = 3
+    TabIndex = 1
     TabOrder = 0
     object tabFields: TTabSheet
       Caption = 'Fields'
@@ -155,18 +155,17 @@ object DesignTableForm: TDesignTableForm
         Align = alClient
         Columns = <        
           item
-            Caption = 'Constraint Name'
-            Width = 150
-          end        
-          item
             Caption = 'Column'
+            ImageIndex = 1
             Width = 150
           end        
           item
             Caption = 'Reference Table'
+            Width = 150
           end        
           item
             Caption = 'Reference Column'
+            Width = 150
           end>
         PopupMenu = EditConstraintsMenu
         ReadOnly = True
@@ -206,7 +205,6 @@ object DesignTableForm: TDesignTableForm
       ClientHeight = 451
       ClientWidth = 684
       ImageIndex = 12
-      TabVisible = False
       object lsvTriggers: TListView
         Left = 0
         Height = 427
@@ -219,19 +217,19 @@ object DesignTableForm: TDesignTableForm
             Width = 130
           end        
           item
-            Caption = 'Relation'
+            Caption = 'Owner'
             Width = 150
           end        
           item
-            Caption = 'Type'
+            Caption = 'Event'
             Width = 150
           end        
           item
-            Caption = 'Inactive'
+            Caption = 'Body'
             Width = 100
           end        
           item
-            Caption = 'Source'
+            Caption = 'Status'
             Width = 150
           end>
         ReadOnly = True
@@ -310,27 +308,15 @@ object DesignTableForm: TDesignTableForm
         Columns = <        
           item
             Caption = 'Name'
-            Width = 80
-          end        
-          item
-            Caption = 'Qualifier'
-            Width = 80
+            Width = 150
           end        
           item
             Caption = 'Column Name'
-            Width = 100
+            Width = 150
           end        
           item
-            Caption = 'AscDesc'
-            Width = 80
-          end        
-          item
-            Caption = 'Ordinal Position'
-            Width = 70
-          end        
-          item
-            Caption = 'Filter'
-            Width = 80
+            Caption = 'Desc'
+            Width = 150
           end>
         PopupMenu = EditIndexes
         ReadOnly = True

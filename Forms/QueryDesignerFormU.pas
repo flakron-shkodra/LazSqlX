@@ -12,7 +12,7 @@ interface
 
 uses
   SysUtils, Variants, Classes, Graphics,
-  Controls, Forms, Dialogs, QueryDesignerU, StdCtrls, ComCtrls, ExtCtrls,ZConnection,DbType, TableInfo;
+  Controls, Forms, Dialogs, QueryDesignerU, StdCtrls, ComCtrls, ExtCtrls, AsDbType, AsTableInfo;
 
 
 type
@@ -34,8 +34,7 @@ type
     procedure cmbSchemaChange(Sender: TObject);
     procedure btnOKClick(Sender: TObject);
   private
-    FDBConnection:TZConnection;
-    FDBInfo: TDbConnectionInfo;
+    FDBInfo: TAsDbConnectionInfo;
     FSchema: string;
     FSQLQuery: string;
     FQueryDesigner:TQueryDesigner;
@@ -51,7 +50,7 @@ type
     property SQLQuery:string read GetSqlQuery;
     property Schema:string read FSchema write SetSchema;
 
-    function ShowModal(aDBInfo: TDbConnectionInfo): TModalResult;
+    function ShowModal(aDBInfo: TAsDbConnectionInfo): TModalResult;
 
     procedure Clear;
 
@@ -95,16 +94,8 @@ end;
 procedure TQueryDesignerForm.FormShow(Sender: TObject);
 begin
 
-
-  if not FDBConnection.Connected then
-  begin
-    FDBConnection.Connect;
-  end;
   PopulateSchemas;
   PopulateTables;
-
-  if FQueryDesigner.Connection=nil then
-  FQueryDesigner.Connection := FDBConnection;
 
   FQueryDesigner.Schema:=MainForm.cmbSchema.Text;
   FQueryDesigner.DbInfo:=FDBInfo;
@@ -217,10 +208,10 @@ begin
   FSQLQuery := Value;
 end;
 
-function TQueryDesignerForm.ShowModal(aDBInfo: TDbConnectionInfo): TModalResult;
+function TQueryDesignerForm.ShowModal(aDBInfo: TAsDbConnectionInfo
+ ): TModalResult;
 begin
   FDBInfo := aDBInfo;
-  FDBConnection := aDBInfo.ToZeosConnection;
   FQueryDesigner.DbInfo := FDBInfo;
   Result := inherited ShowModal;
 end;

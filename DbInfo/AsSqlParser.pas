@@ -11,14 +11,14 @@ unit AsSqlParser;
 interface
 
 uses
-  Classes, SysUtils, db, ZConnection, ZSqlMetadata, DbType,fgl,strutils,LazSqlXResources,AsStringUtils;
+  Classes, SysUtils, db, AsDbType,fgl,strutils,LazSqlXResources,AsStringUtils;
 
 type
 
-  { TAsColumnInfo }
+  { TAsPColumnInfo }
 
 
-  TAsColumnInfo = class
+  TAsPColumnInfo = class
   private
     FName: string;
     FDataType: string;
@@ -39,30 +39,30 @@ type
     property NameWithRefernce: string read GetNameWithAlias;
   end;
 
-  { TAsColumnInfoList }
+  { TAsPColumnInfoList }
 
-  TAsColumnInfoObjectList = specialize TFPGObjectList<TAsColumnInfo>;
+  TAsPColumnInfoObjectList = specialize TFPGObjectList<TAsPColumnInfo>;
 
-  TAsColumnInfoList = class(TAsColumnInfoObjectList)
+  TAsPColumnInfoList = class(TAsPColumnInfoObjectList)
   private
-    function GetItm(Name: string): TAsColumnInfo;
-    procedure SetItm(Name: string; const Value: TAsColumnInfo);
-    property Itm[NameWithDotRef: string]: TAsColumnInfo read GetItm
+    function GetItm(Name: string): TAsPColumnInfo;
+    procedure SetItm(Name: string; const Value: TAsPColumnInfo);
+    property Itm[NameWithDotRef: string]: TAsPColumnInfo read GetItm
       write SetItm; default;
   end;
 
-  { TAsTableInfo }
+  { TAsPTableInfo }
 
-  TAsTableInfo = class
+  TAsPTableInfo = class
   private
     FJoinKeyword: string;
     FName: string;
-    FColumns: TAsColumnInfoList;
+    FColumns: TAsPColumnInfoList;
     FAlias: string;
     FJoinCondition: string;
     FJoinTableAlias: string;
     procedure SetAlias(const Value: string);
-    procedure SetColumns(const Value: TAsColumnInfoList);
+    procedure SetColumns(const Value: TAsPColumnInfoList);
     procedure SetJoinKeyword(AValue: string);
     procedure SetName(const Value: string);
     function GetNameWithAlias: string;
@@ -72,7 +72,7 @@ type
     constructor Create;
     destructor Destroy; override;
     property TableAlias: string read FAlias write SetAlias;
-    property Columns: TAsColumnInfoList read FColumns write SetColumns;
+    property Columns: TAsPColumnInfoList read FColumns write SetColumns;
     property JoinCondition: string read FJoinCondition write SetJoinCondition;
     property JoinTableAlias: string read FJoinTableAlias write SetJoinTableAlias;
     property JoinKeyword:string read FJoinKeyword write SetJoinKeyword;
@@ -80,12 +80,12 @@ type
     property NameWithAlias: string read GetNameWithAlias;
   end;
 
-  { TAsTableInfoList }
-  TasTableInfoObjectList = specialize TFPGObjectList<TAsTableInfo>;
-  TAsTableInfoList = class(TasTableInfoObjectList)
+  { TAsPTableInfoList }
+  TAsPTableInfoObjectList = specialize TFPGObjectList<TAsPTableInfo>;
+  TAsPTableInfoList = class(TAsPTableInfoObjectList)
   public
-    function FindByAlias(TableAlias: string): TAsTableInfo;
-    function FindByName(Tablename:string):TAsTableInfo;
+    function FindByAlias(TableAlias: string): TAsPTableInfo;
+    function FindByName(Tablename:string):TAsPTableInfo;
   end;
 
   { TFlamerSqlParser }
@@ -101,15 +101,14 @@ type
     FIsParsed: Boolean;
     FOrderByClause: string;
     FSchema: string;
-    FDBInfo:TDbConnectionInfo;
-    FDBConn: TZConnection;
-    FDBType: TDatabaseType;
+    FDBInfo:TAsDbConnectionInfo;
+    FDBType: TAsDatabaseType;
     FCondition: string;
-    FFromTables: TAsTableInfoList;
-    FJoinTables: TAsTableInfoList;
+    FFromTables: TAsPTableInfoList;
+    FJoinTables: TAsPTableInfoList;
     FErrorList: TStringList;
-    FSelectColumns: TAsColumnInfoList;
-    FAllColumns: TAsColumnInfoList;
+    FSelectColumns: TAsPColumnInfoList;
+    FAllColumns: TAsPColumnInfoList;
     FProcessedTables: TStringList;
     FQueries:TStringList;
     FTopCount: Integer;
@@ -117,7 +116,7 @@ type
     FHasJoin:Boolean;
     function GetErrors: string;
     function GetFieldType(aSchema, aTable, aFieldName: string): string;
-    function GetColumnInfos(Table: TAsTableInfo): TAsColumnInfoList;
+    function GetColumnInfos(Table: TAsPTableInfo): TAsPColumnInfoList;
     function ParseSelect(Sql:string):boolean;
     function ParseInsert(Sql:string):boolean;
     function ParseUpdate(Sql:string):boolean;
@@ -128,13 +127,13 @@ type
     procedure SetOrderByClause(AValue: string);
     procedure SetTopCount(AValue: Integer);
   public
-    constructor Create(Schema: string; DbInfo: TDbConnectionInfo);
+    constructor Create(Schema: string; DbInfo: TAsDbConnectionInfo);
     destructor Destroy; override;
     function ParseCommand(Sql: string): Boolean;
     function RegenerateSelect(CastWidestrings: Boolean): string;
-    property SelectColumns: TAsColumnInfoList read FSelectColumns;
-    property FromTables: TAsTableInfoList read FFromTables;
-    property JoinTables: TAsTableInfoList read FJoinTables;
+    property SelectColumns: TAsPColumnInfoList read FSelectColumns;
+    property FromTables: TAsPTableInfoList read FFromTables;
+    property JoinTables: TAsPTableInfoList read FJoinTables;
     property TopCount:Integer read FTopCount write SetTopCount;
     property Condition: string read FCondition;
     property BeforeSelectInput: string read FBeforeSelectInput write SetBeforeSelectInput;
@@ -153,7 +152,7 @@ type
 
 implementation
 
-{ TAsTableInfoList }
+{ TAsPTableInfoList }
 
 function RemoveBrackets(input: string): string;
 begin
@@ -165,7 +164,7 @@ begin
   Result := TAsStringUtils.SplitString(input,seperator);
 end;
 
-function TAsTableInfoList.FindByAlias(TableAlias: string): TAsTableInfo;
+function TAsPTableInfoList.FindByAlias(TableAlias: string): TAsPTableInfo;
 var
   I: integer;
 begin
@@ -181,7 +180,7 @@ begin
   end;
 end;
 
-function TAsTableInfoList.FindByName(Tablename: string): TAsTableInfo;
+function TAsPTableInfoList.FindByName(Tablename: string): TAsPTableInfo;
 var
   I: integer;
 begin
@@ -197,30 +196,30 @@ begin
   end;
 end;
 
-{ TAsTableInfo }
+{ TAsPTableInfo }
 
-procedure TAsTableInfo.SetAlias(const Value: string);
+procedure TAsPTableInfo.SetAlias(const Value: string);
 begin
   FAlias:=Value;
 end;
 
-procedure TAsTableInfo.SetColumns(const Value: TAsColumnInfoList);
+procedure TAsPTableInfo.SetColumns(const Value: TAsPColumnInfoList);
 begin
   FColumns := Value;
 end;
 
-procedure TAsTableInfo.SetJoinKeyword(AValue: string);
+procedure TAsPTableInfo.SetJoinKeyword(AValue: string);
 begin
   if FJoinKeyword=AValue then Exit;
   FJoinKeyword:=AValue;
 end;
 
-procedure TAsTableInfo.SetName(const Value: string);
+procedure TAsPTableInfo.SetName(const Value: string);
 begin
   FName:=Value;
 end;
 
-function TAsTableInfo.GetNameWithAlias: string;
+function TAsPTableInfo.GetNameWithAlias: string;
 begin
   if Trim(FAlias) <> EmptyStr then
     Result := FName + ' '+FAlias
@@ -229,31 +228,31 @@ begin
 
 end;
 
-procedure TAsTableInfo.SetJoinCondition(const Value: string);
+procedure TAsPTableInfo.SetJoinCondition(const Value: string);
 begin
    FJoinCondition:=Value;
 end;
 
-procedure TAsTableInfo.SetJoinTableAlias(const Value: string);
+procedure TAsPTableInfo.SetJoinTableAlias(const Value: string);
 begin
    FJoinTableAlias:=Value;
 end;
 
-constructor TAsTableInfo.Create;
+constructor TAsPTableInfo.Create;
 begin
     inherited Create;
-   FColumns := TAsColumnInfoList.Create;
+   FColumns := TAsPColumnInfoList.Create;
 end;
 
-destructor TAsTableInfo.Destroy;
+destructor TAsPTableInfo.Destroy;
 begin
   FColumns.Free;
   inherited Destroy;
 end;
 
-{ TAsColumnInfoList }
+{ TAsPColumnInfoList }
 
-function TAsColumnInfoList.GetItm(Name: string): TAsColumnInfo;
+function TAsPColumnInfoList.GetItm(Name: string): TAsPColumnInfo;
 var
   I: integer;
   modName: string;
@@ -270,7 +269,7 @@ begin
   end;
 end;
 
-procedure TAsColumnInfoList.SetItm(Name: string; const Value: TAsColumnInfo);
+procedure TAsPColumnInfoList.SetItm(Name: string; const Value: TAsPColumnInfo);
 var
   I: integer;
 begin
@@ -284,24 +283,24 @@ begin
   end;
 end;
 
-{ TAsColumnInfo }
+{ TAsPColumnInfo }
 
-procedure TAsColumnInfo.SetDataType(const Value: string);
+procedure TAsPColumnInfo.SetDataType(const Value: string);
 begin
   FDataType:=Value;
 end;
 
-procedure TAsColumnInfo.SetName(const Value: string);
+procedure TAsPColumnInfo.SetName(const Value: string);
 begin
     FName:=Value;
 end;
 
-procedure TAsColumnInfo.SetParentAlias(const Value: string);
+procedure TAsPColumnInfo.SetParentAlias(const Value: string);
 begin
   FParentAlias:= Value;
 end;
 
-function TAsColumnInfo.GetNameWithAlias: string;
+function TAsPColumnInfo.GetNameWithAlias: string;
 var
   dot: string;
   p:string;
@@ -319,7 +318,7 @@ begin
   Result := RemoveBrackets( UpperCase(p + dot + FName) );
 end;
 
-function TAsColumnInfo.GetParentWithAlias: string;
+function TAsPColumnInfo.GetParentWithAlias: string;
 var
   dot: string;
 begin
@@ -331,7 +330,7 @@ begin
   Result := RemoveBrackets( UpperCase(ParentAlias + dot + Parent) );
 end;
 
-procedure TAsColumnInfo.SetParent(const Value: string);
+procedure TAsPColumnInfo.SetParent(const Value: string);
 begin
   FParent := Value;
 end;
@@ -345,45 +344,44 @@ end;
 
 function TAsSqlParser.GetFieldType(aSchema, aTable, aFieldName: string): string;
 var
-  dsMetadata: TZSQLMetadata;
   fn:string;
+  cols:TAsColumns;
+  c:TAsColumn;
 begin
+  fn :=StringReplace( StringReplace(aFieldName,'[','',[rfReplaceAll]),']','',[rfReplaceAll]);
   try
-    fn :=StringReplace( StringReplace(aFieldName,'[','',[rfReplaceAll]),']','',[rfReplaceAll]);
-    dsMetadata := TZSQLMetadata.Create(nil);
-    dsMetadata.Connection := FDBConn;
-    dsMetadata.Schema := aSchema;
-    dsMetadata.TableName := aTable;
-    dsMetadata.MetadataType := mdColumns;
-    dsMetadata.DisableControls;
-    dsMetadata.Open;
-    if dsMetadata.Locate('COLUMN_NAME', fn, [loCaseInsensitive]) then
+    cols := TAsDbUtils.GetColumns(FDBInfo,aSchema,aTable);
+    for c in cols do
     begin
-      Result := LowerCase(dsMetadata.FieldByName('TYPE_NAME').AsString);
+      if CompareText(Trim(c.Column_Name),aFieldName)=0 then
+      begin
+        Result := c.Data_Type;
+        Break;
+      end;
     end;
   finally
-    dsMetadata.Free;
+    cols.Free;
   end;
 end;
 
-function TAsSqlParser.GetColumnInfos(Table: TAsTableInfo): TAsColumnInfoList;
+function TAsSqlParser.GetColumnInfos(Table: TAsPTableInfo): TAsPColumnInfoList;
 var
   j: integer;
   tmpFields: TStringList;
-  Field: TAsColumnInfo;
-  strColumnName: String;
+  Field: TAsPColumnInfo;
+  s: String;
 begin
   try
-    tmpFields := TStringList.Create;
-    Result := TAsColumnInfoList.Create;
+
+    Result := TAsPColumnInfoList.Create;
 
     // Get Columns from DB for this Table
-    FDBConn.GetColumnNames(Table.Name, '', tmpFields);
-    for j := 0 to tmpFields.Count - 1 do
+    tmpFields := TAsDbUtils.GetColumnNames(FDBInfo,Table.Name);
+
+    for s in tmpFields do
     begin
-      strColumnName :=tmpFields[j];
-      Field := TAsColumnInfo.Create;
-      Field.Name := UpperCase(strColumnName);
+      Field := TAsPColumnInfo.Create;
+      Field.Name := UpperCase(s);
       Field.ParentAlias := Table.TableAlias;
       Field.Parent:=UpperCase(Table.Name);
       Field.DataType := GetFieldType(FSchema, Table.Name, Field.Name);
@@ -391,6 +389,7 @@ begin
 
       FAllColumns.Add(Field);
     end;
+
   finally
     tmpFields.Free;
   end;
@@ -404,8 +403,8 @@ var
   tmpFields: TStringList;
   I: integer;
   DelimitedList: TStringList;
-  Table: TAsTableInfo;
-  Field: TAsColumnInfo;
+  Table: TAsPTableInfo;
+  Field: TAsPColumnInfo;
   j, fp, ip: integer;
 
   strTableName:string;
@@ -416,7 +415,7 @@ var
     OrderPos,
     GroupPos:  TIntegerList;
   // A var to store INNER JOIN Positions
-  ciList:TAsColumnInfoList;
+  ciList:TAsPColumnInfoList;
   strColumn: String;
   strPref: String;
   LastJoinKeyword: String;
@@ -428,11 +427,8 @@ begin
   FIsParsed := False;
   try
     try
-      if not FDBConn.Connected then
-        FDBConn.Connected := True;
 
       // Im just getting all fields that I can, so I have what to compare with substrings
-      AllTablenames := TStringList.Create;
       tmpFields := TStringList.Create;
       DelimitedList := TStringList.Create;
 
@@ -443,7 +439,7 @@ begin
       OrderPos := TIntegerList.Create;
       GroupPos := TIntegerList.Create;
 
-      FDBConn.GetTableNames(FSchema, '', AllTablenames);
+      AllTablenames := TAsDbUtils.GetTablenames(FDBInfo,FSchema);
 
       // would be delimiting with whitespace and comma
       DelimitedList.Delimiter := ',';
@@ -513,7 +509,7 @@ begin
 
           if (AllTablenames.IndexOf(strTableName) > -1) and (not FProcessedTables.IndexOf(strTableName)>-1) then
           begin
-            Table := TAsTableInfo.Create;
+            Table := TAsPTableInfo.Create;
             Table.Name :=strTableName;
             if I < DelimitedList.Count - 1 then
             begin
@@ -564,7 +560,7 @@ begin
           //this verifies if exists as table                this checks if it is already procecessed
           if (AllTablenames.IndexOf(strTableName) > -1) and (not FProcessedTables.IndexOf(strTableName)>-1) then
           begin
-            Table := TAsTableInfo.Create;
+            Table := TAsPTableInfo.Create;
             Table.Name := strTableName;
             if I < DelimitedList.Count - 1 then
             begin
@@ -657,7 +653,7 @@ begin
               //this finds column in variable that has been previously assigned
               if (FAllColumns[strColumn]) <> nil then
               begin
-                Field := TAsColumnInfo.Create;
+                Field := TAsPColumnInfo.Create;
 
                 try
                   Field.Name := SplitString( DelimitedList[I],'.')[1];
@@ -782,22 +778,20 @@ begin
   FTopCount:=AValue;
 end;
 
-constructor TAsSqlParser.Create(Schema: string; DbInfo: TDbConnectionInfo);
+constructor TAsSqlParser.Create(Schema: string; DbInfo: TAsDbConnectionInfo);
 var
   r:TResourceStream;
 begin
   FSchema := UpperCase(Schema);
 
-  FDBConn := DbInfo.ToZeosConnection;
-
-  FDBType := TDbUtils.DatabaseTypeFromString(FDBConn.Protocol);
+  FDBInfo := DbInfo;
 
   FErrorList := TStringList.Create;
 
-  FAllColumns := TAsColumnInfoList.Create;
-  FFromTables := TAsTableInfoList.Create;
-  FJoinTables := TAsTableInfoList.Create;
-  FSelectColumns := TAsColumnInfoList.Create;
+  FAllColumns := TAsPColumnInfoList.Create;
+  FFromTables := TAsPTableInfoList.Create;
+  FJoinTables := TAsPTableInfoList.Create;
+  FSelectColumns := TAsPColumnInfoList.Create;
   FProcessedTables := TStringList.Create;
   FQueries := TStringList.Create;
 
@@ -811,7 +805,6 @@ begin
   FErrorList.Free;
   FProcessedTables.Free;
   FQueries.Free;
-  FDBConn.Free;
   inherited Destroy;
 end;
 
@@ -838,7 +831,7 @@ var
   CMD: TStringList;
   s: string;
   tab : char;
-  c:TAsColumnInfo;
+  c:TAsPColumnInfo;
   pref,suf:string;
   strJoinCondition: String;
 begin

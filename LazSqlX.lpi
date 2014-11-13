@@ -27,8 +27,8 @@
       <UseVersionInfo Value="True"/>
       <AutoIncrementBuild Value="True"/>
       <MajorVersionNr Value="4"/>
-      <MinorVersionNr Value="5"/>
-      <BuildNr Value="1436"/>
+      <MinorVersionNr Value="6"/>
+      <BuildNr Value="1483"/>
       <StringTable ProductVersion=""/>
     </VersionInfo>
     <BuildModes Count="2">
@@ -76,33 +76,36 @@
         <FormatVersion Value="1"/>
       </local>
     </RunParams>
-    <RequiredPackages Count="8">
+    <RequiredPackages Count="9">
       <Item1>
-        <PackageName Value="RunTimeTypeInfoControls"/>
+        <PackageName Value="lazreport"/>
       </Item1>
       <Item2>
-        <PackageName Value="LazControls"/>
+        <PackageName Value="RunTimeTypeInfoControls"/>
       </Item2>
       <Item3>
-        <PackageName Value="lazdbexport"/>
+        <PackageName Value="LazControls"/>
       </Item3>
       <Item4>
-        <PackageName Value="SQLDBLaz"/>
+        <PackageName Value="lazdbexport"/>
       </Item4>
       <Item5>
-        <PackageName Value="FCL"/>
+        <PackageName Value="SQLDBLaz"/>
       </Item5>
       <Item6>
-        <PackageName Value="SynEdit"/>
+        <PackageName Value="FCL"/>
       </Item6>
       <Item7>
-        <PackageName Value="zcomponent"/>
+        <PackageName Value="SynEdit"/>
       </Item7>
       <Item8>
-        <PackageName Value="LCL"/>
+        <PackageName Value="zcomponent"/>
       </Item8>
+      <Item9>
+        <PackageName Value="LCL"/>
+      </Item9>
     </RequiredPackages>
-    <Units Count="47">
+    <Units Count="52">
       <Unit0>
         <Filename Value="LazSqlX.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -114,6 +117,7 @@
         <ComponentName Value="BlobFieldForm"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
+        <UnitName Value="BlobFieldFormU"/>
       </Unit1>
       <Unit2>
         <Filename Value="Forms\EditMemoFormU.pas"/>
@@ -121,6 +125,7 @@
         <ComponentName Value="EditMemoForm"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
+        <UnitName Value="EditMemoFormU"/>
       </Unit2>
       <Unit3>
         <Filename Value="Forms\MainFormU.pas"/>
@@ -136,6 +141,7 @@
         <ComponentName Value="SqlConnBuilderForm"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
+        <UnitName Value="SqlConnBuilderFormU"/>
       </Unit4>
       <Unit5>
         <Filename Value="Forms\DesignTableFormU.pas"/>
@@ -146,35 +152,39 @@
         <UnitName Value="DesignTableFormU"/>
       </Unit5>
       <Unit6>
-        <Filename Value="DbInfo\DbType.pas"/>
+        <Filename Value="DbInfo\AsDbType.pas"/>
         <IsPartOfProject Value="True"/>
-        <UnitName Value="DbType"/>
+        <UnitName Value="AsDbType"/>
       </Unit6>
       <Unit7>
-        <Filename Value="DbInfo\ProcedureInfo.pas"/>
+        <Filename Value="DbInfo\AsProcedureInfo.pas"/>
         <IsPartOfProject Value="True"/>
+        <UnitName Value="AsProcedureInfo"/>
       </Unit7>
       <Unit8>
-        <Filename Value="DbInfo\TableInfo.pas"/>
+        <Filename Value="DbInfo\AsTableInfo.pas"/>
         <IsPartOfProject Value="True"/>
-        <UnitName Value="TableInfo"/>
+        <UnitName Value="AsTableInfo"/>
       </Unit8>
       <Unit9>
         <Filename Value="FileTypeDetector\FtDetector.pas"/>
         <IsPartOfProject Value="True"/>
+        <UnitName Value="FtDetector"/>
       </Unit9>
       <Unit10>
-        <Filename Value="Generators\SqlGenerator.pas"/>
+        <Filename Value="DbInfo\AsSqlGenerator.pas"/>
         <IsPartOfProject Value="True"/>
-        <UnitName Value="SqlGenerator"/>
+        <UnitName Value="AsSqlGenerator"/>
       </Unit10>
       <Unit11>
         <Filename Value="UtilClasses\sqlexecthread.pas"/>
         <IsPartOfProject Value="True"/>
+        <UnitName Value="SqlExecThread"/>
       </Unit11>
       <Unit12>
         <Filename Value="UtilClasses\Utils.pas"/>
         <IsPartOfProject Value="True"/>
+        <UnitName Value="Utils"/>
       </Unit12>
       <Unit13>
         <Filename Value="DbInfo\AsSqlParser.pas"/>
@@ -184,6 +194,7 @@
       <Unit14>
         <Filename Value="DbInfo\AsStringUtils.pas"/>
         <IsPartOfProject Value="True"/>
+        <UnitName Value="AsStringUtils"/>
       </Unit14>
       <Unit15>
         <Filename Value="Forms\AboutFormU.pas"/>
@@ -191,6 +202,7 @@
         <ComponentName Value="AboutForm"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
+        <UnitName Value="AboutFormU"/>
       </Unit15>
       <Unit16>
         <Filename Value="Forms\EditColumnFormU.pas"/>
@@ -198,10 +210,12 @@
         <ComponentName Value="EditColumnForm"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
+        <UnitName Value="EditColumnFormU"/>
       </Unit16>
       <Unit17>
         <Filename Value="UtilClasses\VersionSupport.pas"/>
         <IsPartOfProject Value="True"/>
+        <UnitName Value="VersionSupport"/>
       </Unit17>
       <Unit18>
         <Filename Value="Forms\EditConstraintsFormU.pas"/>
@@ -209,6 +223,7 @@
         <ComponentName Value="EditConstraintForm"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
+        <UnitName Value="EditConstraintsFormU"/>
       </Unit18>
       <Unit19>
         <Filename Value="Forms\EditIndexFormU.pas"/>
@@ -224,6 +239,7 @@
         <ComponentName Value="QueryDesignerForm"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
+        <UnitName Value="QueryDesignerFormU"/>
       </Unit20>
       <Unit21>
         <Filename Value="QueryDesigner\QueryDesignerDialogU.pas"/>
@@ -231,6 +247,7 @@
         <ComponentName Value="QueryDesignerDialog"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
+        <UnitName Value="QueryDesignerDialogU"/>
       </Unit21>
       <Unit22>
         <Filename Value="QueryDesigner\QueryDesignerU.pas"/>
@@ -314,6 +331,7 @@
       <Unit35>
         <Filename Value="Resources\LazSqlXResources.pas"/>
         <IsPartOfProject Value="True"/>
+        <UnitName Value="LazSqlXResources"/>
       </Unit35>
       <Unit36>
         <Filename Value="Resources\FileTypeDetector.ftd"/>
@@ -348,19 +366,44 @@
         <IsPartOfProject Value="True"/>
       </Unit43>
       <Unit44>
-        <Filename Value="Resources\TableInfoReserved.dt"/>
-        <IsPartOfProject Value="True"/>
-      </Unit44>
-      <Unit45>
         <Filename Value="UtilClasses\fileimport.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="fileimport"/>
-      </Unit45>
-      <Unit46>
+      </Unit44>
+      <Unit45>
         <Filename Value="DbInfo\AsDbFormUtils.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="AsDbFormUtils"/>
+      </Unit45>
+      <Unit46>
+        <Filename Value="Resources\ReportTemplate.lrf"/>
+        <IsPartOfProject Value="True"/>
       </Unit46>
+      <Unit47>
+        <Filename Value="DbInfo\DbMetadata\AsMssqlMetadata.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="AsMssqlMetadata"/>
+      </Unit47>
+      <Unit48>
+        <Filename Value="DbInfo\DbMetadata\AsOracleMetadata.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="AsOracleMetadata"/>
+      </Unit48>
+      <Unit49>
+        <Filename Value="DbInfo\DbMetadata\AsMySqlMetadata.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="AsMySqlMetadata"/>
+      </Unit49>
+      <Unit50>
+        <Filename Value="DbInfo\DbMetadata\AsFirebirdMetadata.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="AsFirebirdMetadata"/>
+      </Unit50>
+      <Unit51>
+        <Filename Value="DbInfo\DbMetadata\AsSqliteMetadata.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="AsSqliteMetadata"/>
+      </Unit51>
     </Units>
   </ProjectOptions>
   <CompilerOptions>
@@ -371,7 +414,7 @@
     </Target>
     <SearchPaths>
       <IncludeFiles Value="$(ProjOutDir)"/>
-      <OtherUnitFiles Value="Forms;DbInfo;FileTypeDetector;Generators;UtilClasses;DbInfo\AsSqlKeywords;QueryDesigner;LoadingIndicator;LazSqlXCtrls;DefTypes;Resources"/>
+      <OtherUnitFiles Value="Forms;DbInfo;FileTypeDetector;Generators;UtilClasses;DbInfo\AsSqlKeywords;QueryDesigner;LoadingIndicator;LazSqlXCtrls;DefTypes;Resources;DbInfo\DbMetadata"/>
       <UnitOutputDirectory Value="..\build\units"/>
     </SearchPaths>
     <CodeGeneration>

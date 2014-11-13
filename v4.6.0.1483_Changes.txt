@@ -1,0 +1,26 @@
+v4.6.0.1483
+
+GUI:
+
+-Query result printing ability 
+-AsDbForm printing (with the ability to show/hide grid columns as you want them to appear in lazReport)
+-FindReplace dialog
+-MainMenu Search item added for Find&Replace dialogs
+-RunProcedure dialog now returns text and excecution goes through active tab 
+-Trigger info can now be viewed in DesignTable
+
+
+Code:
+
+-A lot of code refactorings all over the project
+-Everything should work with either sqldb or zeos, depending on main connection
+-Metadatas are now retrieved through classes that implement IAsDbMetadata, depending on the database type 
+-Fix: Find Dialog
+-Fix: DataImporter's Import was always true, even if failed
+-Other minor fixes 
+
+Next:
+alter,add,create,drop column/table to be handled similarly as with IAsDbMetadata coding style: an interface then classes that implement that
+
+Help:
+ RunProcedure Dialog: help needed about oracle procedure execution through TSQLQuery or TZQuery they both fail by default an)

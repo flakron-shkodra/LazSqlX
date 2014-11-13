@@ -12,7 +12,7 @@ interface
 
 uses
   Classes, SysUtils, FileUtil, Forms, Controls, Graphics, Dialogs, StdCtrls,
-  ExtCtrls, Buttons, DbType, TableInfo,ZConnection;
+  ExtCtrls, Buttons, AsDbType, AsTableInfo;
 
 type
 
@@ -34,11 +34,10 @@ type
     procedure txtConstraintNameChange(Sender: TObject);
   private
     { private declarations }
-    _DBType:TDatabaseType;
-    _Con:TZConnection;
-    _Tablename:string;
-    _WorkingTable:TTableInfo;
-    _Schema:string;
+    FDBInfo:TAsDbConnectionInfo;
+    FTablename:string;
+    FWorkingTable:TTableInfo;
+    FSchema:string;
     function GetForeignColumn: string;
     function GetForeignTable: string;
     function GetLocalColumn: string;
@@ -48,7 +47,7 @@ type
     function GetReferenceName: string;
   public
     { public declarations }
-    function ShowModal(aCon:TZConnection; Schema:string; WorkingTable:TTableInfo):TModalResult;
+    function ShowModal(aDbInfo:TAsDbConnectionInfo; Schema:string; WorkingTable:TTableInfo):TModalResult;
     property LocalColumn:string read GetLocalColumn;
     property ReferencedTable:string read GetForeignTable;
     property ReferencedColumn:string read GetForeignColumn;
@@ -108,9 +107,9 @@ var
 begin
   cmbColumns.Clear;
 
-  for I:=0 to _WorkingTable.AllFields.Count-1 do
+  for I:=0 to FWorkingTable.AllFields.Count-1 do
   begin
-    cmbColumns.Items.Add(_WorkingTable.AllFields[I].FieldName);
+    cmbColumns.Items.Add(FWorkingTable.AllFields[I].FieldName);
   end;
 
 end;
@@ -123,7 +122,7 @@ begin
   cmbReferenceTables.Clear;
   lst := TStringList.Create;
   try
-    _Con.GetTableNames(_Schema,'',lst);
+    lst := TAsDbUtils.GetTablenames(FDBInfo,FSchema);
     for I:=0 to lst.Count-1 do
     begin
       cmbReferenceTables.Items.Add(lst[I]);
@@ -139,9 +138,8 @@ var
   I: Integer;
 begin
   cmbReferenceColumns.Clear;
-  lst := TStringList.Create;
   try
-    _Con.GetColumnNames(tblName,'',lst);
+    lst := TAsDbUtils.GetColumnNames(FDBInfo,tblName);
     for I:=0 to lst.Count-1 do
     begin
       cmbReferenceColumns.Items.Add(lst[I]);
@@ -156,19 +154,13 @@ begin
 
 end;
 
-function TEditConstraintForm.ShowModal(aCon: TZConnection; Schema: string;
- WorkingTable: TTableInfo): TModalResult;
+function TEditConstraintForm.ShowModal(aDbInfo: TAsDbConnectionInfo;
+ Schema: string; WorkingTable: TTableInfo): TModalResult;
 begin
-  _Con := aCon;
-  if _Con.Connected then
-  _Con.Disconnect;
-
-  _Con.Connect;
-
-  _Schema:=Schema;
-  _DBType:=TDbUtils.DatabaseTypeFromString(_Con.Protocol);
-  _WorkingTable := WorkingTable;
-  _Tablename:= WorkingTable.Tablename;
+  FDBInfo := aDbInfo;
+  FSchema:=Schema;
+  FWorkingTable := WorkingTable;
+  FTablename:= WorkingTable.Tablename;
   Result := inherited ShowModal;
 end;
 

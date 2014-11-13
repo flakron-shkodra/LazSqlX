@@ -8,14 +8,14 @@ Date Modified : 18/05/2010 14:10:31
 }
 
 
-unit SqlGenerator;
+unit AsSqlGenerator;
 
 {$mode objfpc}{$H+}
 interface
 
 uses SysUtils, Classes, Dialogs, StdCtrls, ComCtrls, ExtCtrls, DB,
-  Forms, StrUtils, TableInfo, DbType, LazSqlXResources, ZConnection, ZDataset,
-  ZSqlMetadata, ZDbcIntfs;
+  Forms, StrUtils, AsTableInfo, AsDbType, LazSqlXResources;
+
 
 type
 
@@ -31,8 +31,8 @@ type
 
   TQueryTypes = set of TQueryType;
 
-  { TSqlGenerator }
-TProcedureNames = object
+  { TAsSqlGenerator }
+TAsProcedureNames = object
  public
    PnSelect:string;
    PnSelectItem:string;
@@ -43,51 +43,42 @@ TProcedureNames = object
    TablenameAfter:Boolean;
  end;
 
-  TSqlGenerator = class
+  TAsSqlGenerator = class
   strict private
-    adoConnection: TZConnection;
-    _procNames: TProcedureNames;
-    _LogList: TStrings;
-    _schema: string;
-    _cmd: TZQuery;
-    _application: TApplication;
-    _lstExistingProcedures: TStringList;
-    _spPrefix: string;
-    _DbType: TDatabaseType;
-
+    FprocNames: TAsProcedureNames;
+    FSchema: string;
+    FlstExistingProcedures: TStringList;
+    FspPrefix: string;
+    FDBConInfo:TAsDbConnectionInfo;
+    FAsQuery:TAsQuery;
     procedure CheckProcedureName(Tablename: string);
     procedure DropProcedure(spName: string);
     {Used in GetCreateSql}
-    function GetDataType(FieldInfo: TFieldInfo; DbType: TDatabaseType): string;
+    function GetDataType(FieldInfo: TAsFieldInfo; AsDbType: TAsDatabaseType): string;
 
     procedure WriteLog(Msg: string);
     procedure _cmdBeforeOpen(DataSet: TDataSet);
     procedure _DataSetGetText(Sender: TField; var aText: string;
       DisplayText: boolean);
-    procedure GetStoredProcedures(var storedProcedures: TStringList);
+
     function GetDbParamPrefix: string;
 
-    function GetSql(Ident: integer; TableInfo: TTableInfo;
+    function GetSql(Ident: integer; AsTableInfo: TTableInfo;
       QueryType: TQueryType): TStringList;
   public
-    constructor Create(Server, Database, Userame, Password: string;
-      ProcedureNames: TProcedureNames; ADatabaseType: TDatabaseType;
-      Port: integer = 0); overload;
-    constructor Create(Server, Database, Userame, Password: string;
-      LogList: TStrings; ProcedureNames: TProcedureNames;
-      ADatabaseType: TDatabaseType; Port: integer = 0); overload;
-    destructor Destroy; override;
-    procedure Generate(Tables: TTableInfos; QueryTypes: TQueryTypes;
+    constructor Create(DbConInfo:TAsDbConnectionInfo;ProcedureNames: TAsProcedureNames); overload;
+    destructor Destroy;
+    procedure Generate(Tables: TAsTableInfos; QueryTypes: TQueryTypes;
       Prefix: string = 'usp'); overload;
-    procedure Generate(TableInfo: TTableInfo; QueryTypes: TQueryTypes;
+    procedure Generate(AsTableInfo: TTableInfo; QueryTypes: TQueryTypes;
       Prefix: string = 'usp'); overload;
-    function GenerateStoredProcedure(TableInfo: TTableInfo;
+    function GenerateStoredProcedure(AsTableInfo: TTableInfo;
       QueryType: TQueryType; Prefix: string = 'usp'): string;
     {Used in Generate procedures and functions}
-    function GetCreateSql(TableInfo: TTableInfo; QueryType: TQueryType;
+    function GetCreateSql(AsTableInfo: TTableInfo; QueryType: TQueryType;
       SqlSpKeyword: string = 'CREATE '): TStringList;
-    procedure GetProcedures(Tablename: string; Items: TStrings);
-    function GenerateQuery(Ident: integer; TableInfo: TTableInfo;
+
+    function GenerateQuery(Ident: integer; AsTableInfo: TTableInfo;
       QueryType: TQueryType): TStringList;
   end;
 
@@ -95,84 +86,49 @@ implementation
 
 uses AsStringUtils;
 
-{ TSqlGenerator }
+{ TAsSqlGenerator }
 
 {$REGION 'Constructor/Destructor'}
 
-constructor TSqlGenerator.Create(Server, Database, Userame, Password: string;
-  ProcedureNames: TProcedureNames; ADatabaseType: TDatabaseType; Port: integer = 0);
+constructor TAsSqlGenerator.Create(DbConInfo: TAsDbConnectionInfo;
+ ProcedureNames: TAsProcedureNames);
 var
   s: string;
   i: integer;
 begin
-  inherited Create;
-  _application := Application;
-  _procNames := ProcedureNames;
 
-  if ADatabaseType = dtOracle then
+  FprocNames := ProcedureNames;
+  FDBConInfo := DbConInfo;
+  if FDBConInfo.DbType = dtOracle then
   begin
-    _spPrefix := UpperCase(_spPrefix);
-    _procNames.PnSelect := UpperCase(_procNames.PnSelect);
-    _procNames.PnSelectItem := UpperCase(_procNames.PnSelectItem);
-    _procNames.PnInsert := UpperCase(_procNames.PnInsert);
-    _procNames.PnUpdate := UpperCase(_procNames.PnUpdate);
-    _procNames.PnDelete := UpperCase(_procNames.PnDelete);
-    _procNames.Prefix := UpperCase(_procNames.Prefix);
+    FspPrefix := UpperCase(FspPrefix);
+    FprocNames.PnSelect := UpperCase(FprocNames.PnSelect);
+    FprocNames.PnSelectItem := UpperCase(FprocNames.PnSelectItem);
+    FprocNames.PnInsert := UpperCase(FprocNames.PnInsert);
+    FprocNames.PnUpdate := UpperCase(FprocNames.PnUpdate);
+    FprocNames.PnDelete := UpperCase(FprocNames.PnDelete);
+    FprocNames.Prefix := UpperCase(FprocNames.Prefix);
   end;
-  adoConnection := TZConnection.Create(nil);
-  _cmd := TZQuery.Create(nil);
-  _DbType := ADatabaseType;
+  FAsQuery := TAsQuery.Create(DbConInfo);
+  FlstExistingProcedures := TAsDbUtils.GetProcedureNames(FDBConInfo,FSchema);
 
-
-  adoConnection.Protocol := TDbUtils.DatabaseTypeAsString(ADatabaseType, True);
-  adoConnection.Database := Database;
-  adoConnection.Properties.Add('Encoding=UTF8');
-  if _DbType <> dtSQLite then
-  begin
-    adoConnection.HostName := Server;
-    adoConnection.User := Userame;
-    adoConnection.Password := Password;
-    adoConnection.Catalog := Database;
-    adoConnection.LoginPrompt := False;
-    adoConnection.Port := Port;
-  end;
-
-
-  _cmd.DisableControls;
-  _cmd.Connection := adoConnection;
-  adoConnection.Connect;
-  _lstExistingProcedures := TStringList.Create;
-  GetStoredProcedures(_lstExistingProcedures);
 end;
 
-
-constructor TSqlGenerator.Create(Server, Database, Userame, Password: string;
-  LogList: TStrings; ProcedureNames: TProcedureNames; ADatabaseType: TDatabaseType;
-  Port: integer = 0);
+destructor TAsSqlGenerator.Destroy;
 begin
-  Create(Server, Database, Userame, Password, ProcedureNames, ADatabaseType, Port);
-  _LogList := LogList;
+  FAsQuery.Free;
+  FlstExistingProcedures.Free;
 end;
 
-
-
-destructor TSqlGenerator.Destroy;
-begin
-  _cmd.Free;
-  adoConnection.Free;
-  _lstExistingProcedures.Free;
-  inherited Destroy;
-end;
-
-procedure TSqlGenerator.DropProcedure(spName: string);
+procedure TAsSqlGenerator.DropProcedure(spName: string);
 begin
   try
-    case _DbType of
-      dtMsSql: _cmd.SQL.Text := ' drop procedure ' + spName;
-      dtMySql: _cmd.SQL.Text := ' drop procedure ' + spName;
-      dtOracle: _cmd.SQL.Text := ' drop procedure ' + spName;
+    case FDBConInfo.DbType of
+      dtMsSql: FAsQuery.SQL.Text := ' drop procedure ' + spName;
+      dtMySql: FAsQuery.SQL.Text := ' drop procedure ' + spName;
+      dtOracle: FAsQuery.SQL.Text := ' drop procedure ' + spName;
     end;
-    _cmd.ExecSQL;
+    FAsQuery.ExecSQL;
   except
   end;
 
@@ -183,44 +139,42 @@ end;
 {$REGION 'Public Methods'}
 
 
-procedure TSqlGenerator.Generate(TableInfo: TTableInfo; QueryTypes: TQueryTypes;
+procedure TAsSqlGenerator.Generate(AsTableInfo: TTableInfo; QueryTypes: TQueryTypes;
   Prefix: string);
 var
   tmpLst: TStringList;
   lstStoredProcs: TStringList;
 begin
-  _LogList.Clear;
-  lstStoredProcs := TStringList.Create;
-  _spPrefix := UpperCase(Prefix);
 
-  adoConnection.GetStoredProcNames('*', lstStoredProcs);
+
+  FspPrefix := UpperCase(Prefix);
+
+  lstStoredProcs := TAsDbUtils.GetProcedureNames(FDBConInfo,FSchema);
+
 
   WriteLog('===============STORED PROCEDURE GENERATION BEGIN===============');
 
-  if not adoConnection.Connected then
-  begin
-    ShowMessage('Not connected to database');
-    Exit;
-  end;
-  _schema := TableInfo.Schema;
 
-  WriteLog('*************Processing [' + TableInfo.Tablename + ']*************');
+
+  FSchema := AsTableInfo.Schema;
+
+  WriteLog('*************Processing [' + AsTableInfo.Tablename + ']*************');
 
   //checks if sp Names are identical with those to be generated
   //if so, existing procedures will be dropped
-  CheckProcedureName(TableInfo.Tablename);
+  CheckProcedureName(AsTableInfo.Tablename);
 
   if qtSelect in QueryTypes then
   begin
     try
-      tmpLst := GetCreateSql(TableInfo, qtSelect);
+      tmpLst := GetCreateSql(AsTableInfo, qtSelect);
 
-      _cmd.SQL.Text := tmpLst.Text;
-      _cmd.ExecSQL;
+      FAsQuery.SQL.Text := tmpLst.Text;
+      FAsQuery.ExecSQL;
     except
       on e: Exception do
       begin
-        WriteLog('Select for [' + TableInfo.Tablename + '] : ' + e.Message);
+        WriteLog('Select for [' + AsTableInfo.Tablename + '] : ' + e.Message);
       end;
     end;
     tmpLst.Free;
@@ -229,13 +183,13 @@ begin
   if qtSelectItem in QueryTypes then
   begin
     try
-      tmpLst := GetCreateSql(TableInfo, qtSelectItem);
-      _cmd.SQL.Text := tmpLst.Text;
-      _cmd.ExecSQL;
+      tmpLst := GetCreateSql(AsTableInfo, qtSelectItem);
+      FAsQuery.SQL.Text := tmpLst.Text;
+      FAsQuery.ExecSQL;
     except
       on e: Exception do
       begin
-        WriteLog('SelectItem for [' + TableInfo.Tablename + '] : ' + e.Message);
+        WriteLog('SelectItem for [' + AsTableInfo.Tablename + '] : ' + e.Message);
       end;
     end;
     tmpLst.Free;
@@ -244,13 +198,13 @@ begin
   if qtInsert in QueryTypes then
   begin
     try
-      tmpLst := GetCreateSql(TableInfo, qtInsert);
-      _cmd.SQL.Text := tmpLst.Text;
-      _cmd.ExecSQL;
+      tmpLst := GetCreateSql(AsTableInfo, qtInsert);
+      FAsQuery.SQL.Text := tmpLst.Text;
+      FAsQuery.ExecSQL;
     except
       on e: Exception do
       begin
-        WriteLog('Insert for [' + TableInfo.Tablename + '] : ' + e.Message);
+        WriteLog('Insert for [' + AsTableInfo.Tablename + '] : ' + e.Message);
       end;
     end;
     tmpLst.Free;
@@ -259,13 +213,13 @@ begin
   if qtUpdate in QueryTypes then
   begin
     try
-      tmpLst := GetCreateSql(TableInfo, qtUpdate);
-      _cmd.SQL.Text := tmpLst.Text;
-      _cmd.ExecSQL;
+      tmpLst := GetCreateSql(AsTableInfo, qtUpdate);
+      FAsQuery.SQL.Text := tmpLst.Text;
+      FAsQuery.ExecSQL;
     except
       on e: Exception do
       begin
-        WriteLog('Update for [' + TableInfo.Tablename + '] : ' + e.Message);
+        WriteLog('Update for [' + AsTableInfo.Tablename + '] : ' + e.Message);
       end;
     end;
     tmpLst.Free;
@@ -274,13 +228,13 @@ begin
   if qtDelete in QueryTypes then
   begin
     try
-      tmpLst := GetCreateSql(TableInfo, qtDelete);
-      _cmd.SQL.Text := tmpLst.Text;
-      _cmd.ExecSQL;
+      tmpLst := GetCreateSql(AsTableInfo, qtDelete);
+      FAsQuery.SQL.Text := tmpLst.Text;
+      FAsQuery.ExecSQL;
     except
       on e: Exception do
       begin
-        WriteLog('Delete for [' + TableInfo.Tablename + '] : ' + e.Message);
+        WriteLog('Delete for [' + AsTableInfo.Tablename + '] : ' + e.Message);
       end;
     end;
     tmpLst.Free;
@@ -290,7 +244,7 @@ begin
   WriteLog('===========STORED PROCEDURE GENERATION END===========');
 end;
 
-function TSqlGenerator.GenerateStoredProcedure(TableInfo: TTableInfo;
+function TAsSqlGenerator.GenerateStoredProcedure(AsTableInfo: TTableInfo;
   QueryType: TQueryType; Prefix: string): string;
 var
   lstAll: TStringList;
@@ -301,20 +255,20 @@ begin
   try
     if QueryType = qtAll then
     begin
-      lst := GetCreateSql(TableInfo, qtSelect);
+      lst := GetCreateSql(AsTableInfo, qtSelect);
       lstAll.AddStrings(lst);
-      lst := GetCreateSql(TableInfo, qtSelectItem);
+      lst := GetCreateSql(AsTableInfo, qtSelectItem);
       lstAll.AddStrings(lst);
-      lst := GetCreateSql(TableInfo, qtInsert);
+      lst := GetCreateSql(AsTableInfo, qtInsert);
       lstAll.AddStrings(lst);
-      lst := GetCreateSql(TableInfo, qtUpdate);
+      lst := GetCreateSql(AsTableInfo, qtUpdate);
       lstAll.AddStrings(lst);
-      lst := GetCreateSql(TableInfo, qtDelete);
+      lst := GetCreateSql(AsTableInfo, qtDelete);
       lstAll.AddStrings(lst);
     end
     else
     begin
-      lst := GetCreateSql(TableInfo, QueryType);
+      lst := GetCreateSql(AsTableInfo, QueryType);
       lstAll.AddStrings(lst);
     end;
 
@@ -326,7 +280,7 @@ begin
   end;
 end;
 
-function TSqlGenerator.GetSql(Ident: integer; TableInfo: TTableInfo;
+function TAsSqlGenerator.GetSql(Ident: integer; AsTableInfo: TTableInfo;
   QueryType: TQueryType): TStringList;
 var
   seperator, tmpFTablename, tmpTablename: string;
@@ -348,11 +302,11 @@ var
   F: Integer;
 begin
 
-  _schema := TableInfo.Schema;
+  FSchema := AsTableInfo.Schema;
 
-  if _DbType=dtFirebirdd then
+  if FDBConInfo.DbType=dtFirebirdd then
   begin
-    _schema:='';
+    FSchema:='';
   end;
 
   for I := 0 to Ident - 1 do
@@ -362,16 +316,16 @@ begin
 
   SqlFromDot := '.';
 
-  if _DbType= dtFirebirdd then
+  if FDBConInfo.DbType= dtFirebirdd then
   begin
-    _schema:='';
+    FSchema:='';
   end;
-  case _DbType of
+  case FDBConInfo.DbType of
     dtMsSql:
     begin
       SqlOpenBr := '[';
       SqlCloseBr := ']';
-      SqlTable := TableInfo.Tablename;
+      SqlTable := AsTableInfo.Tablename;
       SqlDot := '.';
       SqlParamChar := ':';
     end;
@@ -379,7 +333,7 @@ begin
     begin
       SqlOpenBr := '"';
       SqlCloseBr := '"';
-      SqlTable := TableInfo.Tablename;
+      SqlTable := AsTableInfo.Tablename;
       SqlDot := '.';
       SqlParamChar := ' :';
     end;
@@ -388,7 +342,7 @@ begin
       SqlOpenBr := '';
       SqlCloseBr := '';
       SqlTable := '';
-      SqlTable := TableInfo.Tablename;
+      SqlTable := AsTableInfo.Tablename;
       SqlDot := '.';
       SqlParamChar := ':';
     end;
@@ -396,7 +350,7 @@ begin
     begin
       SqlOpenBr := '[';
       SqlCloseBr := ']';
-      SqlTable := TableInfo.Tablename;
+      SqlTable := AsTableInfo.Tablename;
       SqlDot := '.';
       SqlParamChar := ':';
       SqlFromDot := '';
@@ -405,20 +359,20 @@ begin
     begin
       SqlOpenBr := '';
       SqlCloseBr := '';
-      SqlTable := TableInfo.Tablename;
+      SqlTable := AsTableInfo.Tablename;
       SqlDot := '.';
       SqlParamChar := ':';
       SqlFromDot := '';
     end;
   end;
 
-  if Trim(TableInfo.TableAlias)=EmptyStr then
-  TableInfo.TableAlias:=TableInfo.Tablename[1];
+  if Trim(AsTableInfo.TableAlias)=EmptyStr then
+  AsTableInfo.TableAlias:=AsTableInfo.Tablename[1];
 
 
   r := TStringList.Create;
 
-  if (TableInfo.PrimaryKeys.Count = 0) and not (QueryType in [qtSelect, qtInsert]) then
+  if (AsTableInfo.PrimaryKeys.Count = 0) and not (QueryType in [qtSelect, qtInsert]) then
     raise Exception.Create('No primary keys found!');
 
 
@@ -430,89 +384,89 @@ begin
   tmpSelectJoins := TStringList.Create;
   tmpSelectInsert := TStringList.Create;
 
-  for I := 0 to TableInfo.AllFields.Count - 1 do
+  for I := 0 to AsTableInfo.AllFields.Count - 1 do
   begin
-    if I < (TableInfo.AllFields.Count - 1) then
+    if I < (AsTableInfo.AllFields.Count - 1) then
       seperator := ','
     else
       seperator := '';
 
-    if (I + 1) = TableInfo.AllFields.Count - 1 then
+    if (I + 1) = AsTableInfo.AllFields.Count - 1 then
       if (QueryType in [qtInsert]) then
-        if TableInfo.AllFields[I + 1].IsIdentity then
+        if AsTableInfo.AllFields[I + 1].IsIdentity then
           seperator := '';
 
-    if TableInfo.AllFields[I].IsReference then
+    if AsTableInfo.AllFields[I].IsReference then
     begin
 
-      oIndex := TableInfo.ImportedKeys.GetIndex(TableInfo.AllFields[I].FieldName);
-      tmpSelect.Add(strIdent + '    ' + TableInfo.TableAlias + SqlDot + SqlOpenBr + TableInfo.AllFields[I].FieldName + SqlCloseBr + ',');
+      oIndex := AsTableInfo.ImportedKeys.GetIndex(AsTableInfo.AllFields[I].FieldName);
+      tmpSelect.Add(strIdent + '    ' + AsTableInfo.TableAlias + SqlDot + SqlOpenBr + AsTableInfo.AllFields[I].FieldName + SqlCloseBr + ',');
 
       //tmpSelect.Add(strIdent + '    ' +  't' + IntToStr(oIndex + 1) +
       //  SqlDot + SqlOpenBr +
       //  TableInfo.ImportedKeys[oIndex].ForeignFirstTextField + SqlCloseBr + seperator);
 
-      if tableInfo.ImportedKeys[oIndex]<>nil then
-      if tableInfo.ImportedKeys[oIndex].TableName<>'' then
-      for F := 0 to TableInfo.ImportedKeys[oIndex].SelectFields.Count-1 do
+      if AsTableInfo.ImportedKeys[oIndex]<>nil then
+      if AsTableInfo.ImportedKeys[oIndex].TableName<>'' then
+      for F := 0 to AsTableInfo.ImportedKeys[oIndex].SelectFields.Count-1 do
       begin
         tmpSelect.Add(strIdent + '    ' + 't' + IntToStr(oIndex + 1) +
-          SqlDot + SqlOpenBr + TableInfo.ImportedKeys[oIndex].SelectFields[F] +
+          SqlDot + SqlOpenBr + AsTableInfo.ImportedKeys[oIndex].SelectFields[F] +
           SqlCloseBr + seperator);
       end;
 
     end
     else
     begin
-      tmpSelect.Add(strIdent + '    ' + TableInfo.TableAlias +
-        SqlDot + SqlOpenBr + TableInfo.AllFields[I].FieldName + SqlCloseBr + seperator);
+      tmpSelect.Add(strIdent + '    ' + AsTableInfo.TableAlias +
+        SqlDot + SqlOpenBr + AsTableInfo.AllFields[I].FieldName + SqlCloseBr + seperator);
     end;
 
-    if (not TableInfo.AllFields[I].IsIdentity) then
+    if (not AsTableInfo.AllFields[I].IsIdentity) then
     begin
       tmpInsert.Add(strIdent + '    ' + SqlParamChar +
-        TableInfo.AllFields[I].CSharpName + seperator);
+        AsTableInfo.AllFields[I].CSharpName + seperator);
       tmpSelectInsert.Add(strIdent + '    ' + SqlOpenBr +
-        TableInfo.AllFields[I].FieldName + SqlCloseBr + seperator);
+        AsTableInfo.AllFields[I].FieldName + SqlCloseBr + seperator);
 
       //this check will prevent some unwanted stuff like : (..set Status=@Status, where.. )
-      if (I + 1) = TableInfo.AllFields.Count - 1 then
-        if (TableInfo.AllFields[I + 1].IsPrimaryKey) and
-          (TableInfo.PrimaryKeys.Count <> TableInfo.AllFields.Count) then
+      if (I + 1) = AsTableInfo.AllFields.Count - 1 then
+        if (AsTableInfo.AllFields[I + 1].IsPrimaryKey) and
+          (AsTableInfo.PrimaryKeys.Count <> AsTableInfo.AllFields.Count) then
           seperator := '';
 
-      if not TableInfo.AllFields[I].IsPrimaryKey then
-        tmpUpdate.Add(strIdent + '    ' + SqlOpenBr + TableInfo.AllFields[I].FieldName +
-          SqlCloseBr + '=' + SqlParamChar + TableInfo.AllFields[I].CSharpName +
+      if not AsTableInfo.AllFields[I].IsPrimaryKey then
+        tmpUpdate.Add(strIdent + '    ' + SqlOpenBr + AsTableInfo.AllFields[I].FieldName +
+          SqlCloseBr + '=' + SqlParamChar + AsTableInfo.AllFields[I].CSharpName +
           seperator);
 
       tmpUpdateAll.Add(strIdent + '    ' + SqlOpenBr +
-        TableInfo.AllFields[I].FieldName + SqlCloseBr + '=' +
-        SqlParamChar + TableInfo.AllFields[I].CSharpName + seperator);
+        AsTableInfo.AllFields[I].FieldName + SqlCloseBr + '=' +
+        SqlParamChar + AsTableInfo.AllFields[I].CSharpName + seperator);
 
     end;
   end;
 
   //make joins for SELECTs
-  for I := 0 to TableInfo.ImportedKeys.Count - 1 do
+  for I := 0 to AsTableInfo.ImportedKeys.Count - 1 do
   begin
-    tmpFTablename := TableInfo.ImportedKeys[I].ForeignTableName;
-    tmpTablename := TableInfo.ImportedKeys[i].TableAlias;
+    tmpFTablename := AsTableInfo.ImportedKeys[I].ForeignTableName;
+    tmpTablename := AsTableInfo.ImportedKeys[i].TableAlias;
     if trim(tmpTablename)=EmptyStr then
-    tmpTablename:=TableInfo.ImportedKeys[i].Tablename[1];
+    tmpTablename:=AsTableInfo.ImportedKeys[i].Tablename[1];
 
     tmpSelectJoins.Add
     (
       strIdent + ' INNER JOIN  ' + tmpFTablename + ' t' +
       IntToStr(I + 1) + ' ON ' + tmpTablename + '.' + SqlOpenBr +
-      TableInfo.ImportedKeys[I].ColumnName + SqlCloseBr + ' = ' +
+      AsTableInfo.ImportedKeys[I].ColumnName + SqlCloseBr + ' = ' +
       't' + IntToStr(I + 1) + '.' + SqlOpenBr +
-      TableInfo.ImportedKeys[I].ForeignColumnName + SqlCloseBr
+      AsTableInfo.ImportedKeys[I].ForeignColumnName + SqlCloseBr
       );
   end;
 
 
-  tmpTablename:=SqlOpenBr + TableInfo.Tablename + SqlCloseBr;
+  tmpTablename:=SqlOpenBr + AsTableInfo.Tablename + SqlCloseBr;
 
   case QueryType of
     qtSelect:
@@ -520,32 +474,32 @@ begin
 
       r.Add(strIdent + 'SELECT ');
       r.Add(tmpSelect.Text);
-      r.Add(strIdent + 'FROM ' + tmpTablename+' '+TableInfo.TableAlias);
+      r.Add(strIdent + 'FROM ' + tmpTablename+' '+AsTableInfo.TableAlias);
       r.Add(tmpSelectJoins.Text);
     end;
     qtSelectItem:
     begin
       r.Add(strIdent + 'SELECT ');
       r.Add(tmpSelect.Text);
-      r.Add(strIdent + 'FROM ' + tmpTablename+' '+TableInfo.TableAlias);
+      r.Add(strIdent + 'FROM ' + tmpTablename+' '+AsTableInfo.TableAlias);
       r.Add(tmpSelectJoins.Text);
-      if TableInfo.PrimaryKeys.Count > 0 then
+      if AsTableInfo.PrimaryKeys.Count > 0 then
       begin
-        r.Add(strIdent + 'WHERE ' + TableInfo.TableAlias+ '.' + SqlOpenBr + TableInfo.PrimaryKeys[0].FieldName +
-          SqlCloseBr + '=' + SqlParamChar + TableInfo.PrimaryKeys[0].CSharpName);
-        if (TableInfo.PrimaryKeys.Count > 1) then
+        r.Add(strIdent + 'WHERE ' + AsTableInfo.TableAlias+ '.' + SqlOpenBr + AsTableInfo.PrimaryKeys[0].FieldName +
+          SqlCloseBr + '=' + SqlParamChar + AsTableInfo.PrimaryKeys[0].CSharpName);
+        if (AsTableInfo.PrimaryKeys.Count > 1) then
         begin
-          for I := 1 to TableInfo.PrimaryKeys.Count - 1 do
-            r.Add(strIdent + ' AND ' + SqlOpenBr + TableInfo.Tablename +
-              SqlCloseBr + '.' + SqlOpenBr + TableInfo.PrimaryKeys[I].FieldName +
-              SqlCloseBr + '=' + SqlParamChar + TableInfo.PrimaryKeys[I].CSharpName);
+          for I := 1 to AsTableInfo.PrimaryKeys.Count - 1 do
+            r.Add(strIdent + ' AND ' + SqlOpenBr + AsTableInfo.Tablename +
+              SqlCloseBr + '.' + SqlOpenBr + AsTableInfo.PrimaryKeys[I].FieldName +
+              SqlCloseBr + '=' + SqlParamChar + AsTableInfo.PrimaryKeys[I].CSharpName);
         end;
       end;
 
     end;
     qtInsert:
     begin
-      r.Add(strIdent + 'INSERT INTO ' + SqlOpenBr + TableInfo.TableName + SqlCloseBr);
+      r.Add(strIdent + 'INSERT INTO ' + SqlOpenBr + AsTableInfo.TableName + SqlCloseBr);
       r.Add(strIdent + '(');
       r.Add(tmpSelectInsert.Text);
       r.Add(strIdent + ')');
@@ -556,7 +510,7 @@ begin
     end;
     qtUpdate:
     begin
-      r.Add(strIdent + 'UPDATE ' + SqlOpenBr + TableInfo.TableName + SqlCloseBr);
+      r.Add(strIdent + 'UPDATE ' + SqlOpenBr + AsTableInfo.TableName + SqlCloseBr);
       r.Add(strIdent + 'SET ');
 
       //if tmpUpdate.Count > 0 then
@@ -564,16 +518,16 @@ begin
       //else
         r.Add(tmpUpdateAll.Text);
 
-      if TableInfo.PrimaryKeys.Count > 0 then
+      if AsTableInfo.PrimaryKeys.Count > 0 then
       begin
         r.Add(strIdent + 'WHERE ' + SqlOpenBr + SqlTable + SqlCloseBr +
-          SqlDot + SqlOpenBr + TableInfo.PrimaryKeys[0].FieldName +
+          SqlDot + SqlOpenBr + AsTableInfo.PrimaryKeys[0].FieldName +
           SqlCloseBr + '=' + SqlParamChar + 'p1');
-        if (TableInfo.PrimaryKeys.Count > 1) then
+        if (AsTableInfo.PrimaryKeys.Count > 1) then
         begin
-          for I := 1 to TableInfo.PrimaryKeys.Count - 1 do
+          for I := 1 to AsTableInfo.PrimaryKeys.Count - 1 do
             r.Add(strIdent + ' AND ' + SqlOpenBr + SqlTable +
-              SqlCloseBr + SqlDot + SqlOpenBr + TableInfo.PrimaryKeys[I].FieldName +
+              SqlCloseBr + SqlDot + SqlOpenBr + AsTableInfo.PrimaryKeys[I].FieldName +
               SqlCloseBr + '=' + SqlParamChar + 'p'+IntToStr(I+1));
         end;
       end;
@@ -581,16 +535,16 @@ begin
     qtDelete:
     begin
       r.Add(strIdent + 'DELETE FROM ' + SqlOpenBr+SqlTable+SqlCloseBr);
-      if TableInfo.PrimaryKeys.Count > 0 then
+      if AsTableInfo.PrimaryKeys.Count > 0 then
       begin
         r.Add(strIdent + 'WHERE ' + SqlOpenBr + SqlTable + SqlCloseBr +
-          SqlDot + SqlOpenBr + TableInfo.PrimaryKeys[0].FieldName +
+          SqlDot + SqlOpenBr + AsTableInfo.PrimaryKeys[0].FieldName +
           SqlCloseBr + '=' + SqlParamChar + 'p1');
-        if (TableInfo.PrimaryKeys.Count > 1) then
+        if (AsTableInfo.PrimaryKeys.Count > 1) then
         begin
-          for I := 1 to TableInfo.PrimaryKeys.Count - 1 do
+          for I := 1 to AsTableInfo.PrimaryKeys.Count - 1 do
             r.Add(strIdent + ' AND ' + SqlOpenBr + SqlTable +
-              SqlCloseBr + SqlDot + SqlOpenBr + TableInfo.PrimaryKeys[I].FieldName +
+              SqlCloseBr + SqlDot + SqlOpenBr + AsTableInfo.PrimaryKeys[I].FieldName +
               SqlCloseBr + '=' + SqlParamChar + 'p'+IntToStr(I+1));
         end;
       end;
@@ -609,27 +563,22 @@ begin
   strTest := StringReplace(Result.Text,'[]','',[rfReplaceAll]);
 end;
 
-procedure TSqlGenerator.Generate(Tables: TTableInfos; QueryTypes: TQueryTypes;
+procedure TAsSqlGenerator.Generate(Tables: TAsTableInfos; QueryTypes: TQueryTypes;
   Prefix: string = 'usp');
 var
   I: integer;
   tmpLst, tmp2: TStringList;
   lstStoredProcs: TStringList;
 begin
-  _LogList.Clear;
-  lstStoredProcs := TStringList.Create;
-  _spPrefix := Prefix;
 
-  adoConnection.GetStoredProcNames('*', lstStoredProcs);
+
+  FspPrefix := Prefix;
+  lstStoredProcs := TAsDbUtils.GetProcedureNames(FDBConInfo,FSchema);
 
   WriteLog('===============STORED PROCEDURE GENERATION BEGIN===============');
 
-  if not adoConnection.Connected then
-  begin
-    ShowMessage('Not connected to database');
-    Exit;
-  end;
-  _schema := Tables[0].Schema;
+
+  FSchema := Tables[0].Schema;
   for I := 0 to Tables.Count - 1 do
   begin
     WriteLog('*************Processing [' + Tables[i].Tablename + ']*************');
@@ -642,9 +591,9 @@ begin
     begin
       try
         tmpLst := GetCreateSql(Tables[i], qtSelect);
-        _cmd.SQL.Clear;
-        _cmd.SQL.AddStrings(tmpLst);
-        _cmd.ExecSQL;
+        FAsQuery.SQL.Clear;
+        FAsQuery.SQL.AddStrings(tmpLst);
+        FAsQuery.ExecSQL;
       except
         on e: Exception do
         begin
@@ -658,9 +607,9 @@ begin
     begin
       try
         tmpLst := GetCreateSql(Tables[i], qtSelectItem);
-        _cmd.SQL.Clear;
-        _cmd.SQL.AddStrings(tmpLst);
-        _cmd.ExecSQL;
+        FAsQuery.SQL.Clear;
+        FAsQuery.SQL.AddStrings(tmpLst);
+        FAsQuery.ExecSQL;
       except
         on e: Exception do
         begin
@@ -674,8 +623,8 @@ begin
     begin
       try
         tmpLst := GetCreateSql(Tables[i], qtInsert);
-        _cmd.SQL.Text := tmpLst.Text;
-        _cmd.ExecSQL;
+        FAsQuery.SQL.Text := tmpLst.Text;
+        FAsQuery.ExecSQL;
       except
         on e: Exception do
         begin
@@ -689,8 +638,8 @@ begin
     begin
       try
         tmpLst := GetCreateSql(Tables[i], qtUpdate);
-        _cmd.SQL.Text := tmpLst.Text;
-        _cmd.ExecSQL;
+        FAsQuery.SQL.Text := tmpLst.Text;
+        FAsQuery.ExecSQL;
       except
         on e: Exception do
         begin
@@ -704,8 +653,8 @@ begin
     begin
       try
         tmpLst := GetCreateSql(Tables[i], qtDelete);
-        _cmd.SQL.Text := tmpLst.Text;
-        _cmd.ExecSQL;
+        FAsQuery.SQL.Text := tmpLst.Text;
+        FAsQuery.ExecSQL;
       except
         on e: Exception do
         begin
@@ -715,38 +664,13 @@ begin
       tmpLst.Free;
     end;
 
-    _application.ProcessMessages;
   end;
 
   lstStoredProcs.Free;
   WriteLog('===============STORED PROCEDURE GENERATION END===============');
 end;
 
-procedure TSqlGenerator.GetProcedures(Tablename: string; Items: TStrings);
-var
-  I: integer;
-begin
-
-  if not adoConnection.Connected then
-  begin
-    WriteLog('Not connected to any database');
-    Exit;
-  end;
-
-  _lstExistingProcedures.Clear;
-  adoConnection.GetStoredProcNames('*', _lstExistingProcedures);
-
-  Items.Clear;
-
-  for I := 0 to _lstExistingProcedures.Count - 1 do
-  begin
-    if AnsiContainsStr(_lstExistingProcedures[I], Tablename) then
-      Items.Add(StringReplace(_lstExistingProcedures[I], ';1', '', [rfReplaceAll]));
-  end;
-
-end;
-
-function TSqlGenerator.GenerateQuery(Ident: integer; TableInfo: TTableInfo;
+function TAsSqlGenerator.GenerateQuery(Ident: integer; AsTableInfo: TTableInfo;
   QueryType: TQueryType): TStringList;
 var
   lst: TStringList;
@@ -755,29 +679,29 @@ begin
     if QueryType = qtAll then
     begin
       Result := TStringList.Create;
-      lst := GetSql(0, TableInfo, qtSelect);
+      lst := GetSql(0, AsTableInfo, qtSelect);
       Result.AddStrings(lst);
       lst.Free;
 
-      lst := GetSql(0, TableInfo, qtSelectItem);
+      lst := GetSql(0, AsTableInfo, qtSelectItem);
       Result.AddStrings(lst);
       lst.Free;
 
-      lst := GetSql(0, TableInfo, qtInsert);
+      lst := GetSql(0, AsTableInfo, qtInsert);
       Result.AddStrings(lst);
       lst.Free;
 
-      lst := GetSql(0, TableInfo, qtUpdate);
+      lst := GetSql(0, AsTableInfo, qtUpdate);
       Result.AddStrings(lst);
       lst.Free;
 
-      lst := GetSql(0, TableInfo, qtDelete);
+      lst := GetSql(0, AsTableInfo, qtDelete);
       Result.AddStrings(lst);
       lst.Free;
     end
     else
     begin
-      Result := GetSql(0, TableInfo, QueryType);
+      Result := GetSql(0, AsTableInfo, QueryType);
     end;
 
 
@@ -787,7 +711,7 @@ end;
 
 {$REGION 'Private Methods'}
 
-procedure TSqlGenerator._cmdBeforeOpen(DataSet: TDataSet);
+procedure TAsSqlGenerator._cmdBeforeOpen(DataSet: TDataSet);
 var
   I: integer;
 begin
@@ -797,104 +721,60 @@ begin
   end;
 end;
 
-procedure TSqlGenerator._DataSetGetText(Sender: TField; var aText: string;
+procedure TAsSqlGenerator._DataSetGetText(Sender: TField; var aText: string;
   DisplayText: boolean);
 begin
   aText := Utf8ToAnsi(Sender.AsWideString);
   DisplayText := True;
 end;
 
-procedure TSqlGenerator.GetStoredProcedures(var storedProcedures: TStringList);
-begin
-  storedProcedures.Clear;
-  case _DbType of
-    dtMsSql: adoConnection.GetStoredProcNames('', storedProcedures);
-    dtOracle:
-    begin
-      if _cmd.Active then
-        _cmd.Close;
-      _cmd.SQL.Text := 'select OBJECT_NAME from SYS.ALL_OBJECTS' +
-        ' where upper(OBJECT_TYPE) = upper(''PROCEDURE'') and' +
-        ' Owner=''' + UpperCase(adoConnection.User) + '''' +
-        ' order by OBJECT_NAME';
-      try
-        _cmd.Open;
-        while not _cmd.EOF do
-        begin
-          storedProcedures.Add(_cmd.Fields[0].AsString + ';1');
-          _cmd.Next;
-        end;
-      finally
-        _cmd.Close;
-      end;
-    end;
-    dtMySql:
-    begin
-      if _cmd.Active then
-        _cmd.Close;
-      _cmd.SQL.Text := 'SELECT SPECIFIC_NAME FROM INFORMATION_SCHEMA.ROUTINES ' +
-        ' WHERE ROUTINE_SCHEMA=''' + adoConnection.Database + '''';
-      try
 
-        _cmd.Open;
-        while not _cmd.EOF do
-        begin
-          storedProcedures.Add(_cmd.Fields[0].AsString + ';1');
-          _cmd.Next;
-        end;
-      finally
-        _cmd.Close;
-      end;
-    end;
-  end;
-end;
-
-function TSqlGenerator.GetDbParamPrefix: string;
+function TAsSqlGenerator.GetDbParamPrefix: string;
 begin
-  case _DbType of
+  case FDBConInfo.DbType of
     dtMsSql: Result := '@';
     dtOracle: Result := '_';
     dtMySql: Result := '_';
   end;
 end;
 
-procedure TSqlGenerator.CheckProcedureName(Tablename: string);
+procedure TAsSqlGenerator.CheckProcedureName(Tablename: string);
 var
   spInsertName, spSelectName, spSelectItemName, spUpdateName, spDeleteName, uid: string;
 begin
   uid := ';1';
-  spSelectName := _spPrefix + '' + Tablename + '' + _procNames.pnSelect;
-  spSelectItemName := _spPrefix + '' + Tablename + '' + _procNames.pnSelectItem;
-  spInsertName := _spPrefix + '' + Tablename + '' + _procNames.pnInsert;
-  spDeleteName := _spPrefix + '' + Tablename + '' + _procNames.pnUpdate;
-  spUpdateName := _spPrefix + '' + Tablename + '' + _procNames.pnDelete;
+  spSelectName := FspPrefix + '' + Tablename + '' + FprocNames.pnSelect;
+  spSelectItemName := FspPrefix + '' + Tablename + '' + FprocNames.pnSelectItem;
+  spInsertName := FspPrefix + '' + Tablename + '' + FprocNames.pnInsert;
+  spDeleteName := FspPrefix + '' + Tablename + '' + FprocNames.pnUpdate;
+  spUpdateName := FspPrefix + '' + Tablename + '' + FprocNames.pnDelete;
 
-  if _lstExistingProcedures.IndexOf(spSelectName + uid) > -1 then
+  if FlstExistingProcedures.IndexOf(spSelectName + uid) > -1 then
   begin
     WriteLog('Existing storedProc [' + spSelectName + '], executing cleanup...');
     DropProcedure(spSelectName);
   end;
 
-  if _lstExistingProcedures.IndexOf(spSelectItemName + uid) > -1 then
+  if FlstExistingProcedures.IndexOf(spSelectItemName + uid) > -1 then
   begin
     WriteLog('Existing storedProc found [' + spSelectItemName +
       '], executing cleanup...');
     DropProcedure(spSelectItemName);
   end;
 
-  if _lstExistingProcedures.IndexOf(spInsertName + uid) > -1 then
+  if FlstExistingProcedures.IndexOf(spInsertName + uid) > -1 then
   begin
     WriteLog('Existing storedProc found [' + spInsertName + '], executing cleanup...');
     DropProcedure(spInsertName);
   end;
 
-  if _lstExistingProcedures.IndexOf(spUpdateName + uid) > -1 then
+  if FlstExistingProcedures.IndexOf(spUpdateName + uid) > -1 then
   begin
     WriteLog('Existing storedProc found [' + spUpdateName + '], executing cleanup...');
     DropProcedure(spUpdateName);
   end;
 
-  if _lstExistingProcedures.IndexOf(spDeleteName + uid) > -1 then
+  if FlstExistingProcedures.IndexOf(spDeleteName + uid) > -1 then
   begin
     WriteLog('Existing storedProc found [' + spDeleteName + '], executing cleanup...');
     DropProcedure(spDeleteName);
@@ -902,14 +782,14 @@ begin
 end;
 
 {Used in GetCreateSql}
-function TSqlGenerator.GetDataType(FieldInfo: TFieldInfo; DbType: TDatabaseType): string;
+function TAsSqlGenerator.GetDataType(FieldInfo: TAsFieldInfo; AsDbType: TAsDatabaseType): string;
 var
   dtype: string;
 begin
   case FieldInfo.DataType of
     ftFloat, ftCurrency, ftFMTBcd, ftBCD:
     begin
-      if DbType <> dtOracle then
+      if AsDbType <> dtOracle then
       begin
 
         if (FieldInfo.FieldType = 'real') or (FieldInfo.FieldType =
@@ -929,14 +809,14 @@ begin
     end;
     ftInteger, ftSmallint, ftWord, ftLargeint:
     begin
-      if DbType <> dtOracle then
+      if AsDbType <> dtOracle then
         dtype := 'int'
       else
         dtype := 'number';
     end;
     ftBoolean:
     begin
-      case DbType of
+      case AsDbType of
         dtMsSql: dtype := 'bit';
         dtMySql: dtype := 'boolean';
         dtOracle: dtype := 'number(1)';//>9i supports boolean
@@ -946,7 +826,7 @@ begin
     ftDateTime, ftDate: dtype := 'datetime';
     ftGuid:
     begin
-      case DbType of
+      case AsDbType of
         dtMsSql: dtype := 'uniqueidentifier';
         //dtMySql: dtype:='uniqueidentifier'; not supported
         dtOracle: dtype := 'uuid';
@@ -971,7 +851,7 @@ begin
     dtype := 'nvarchar(' + IntToStr(FieldInfo.Length) + ')';
 
   //no need for any param length when oracle ;(
-  if DbType = dtOracle then
+  if AsDbType = dtOracle then
   begin
     dtype := FieldInfo.FieldType;
   end;
@@ -980,7 +860,7 @@ begin
 end;
 
 {Used in Generate procedures and functions}
-function TSqlGenerator.GetCreateSql(TableInfo: TTableInfo; QueryType: TQueryType;
+function TAsSqlGenerator.GetCreateSql(AsTableInfo: TTableInfo; QueryType: TQueryType;
   SqlSpKeyword: string = 'CREATE '): TStringList;
 var
   dtype, seperator, tmpFTablename, tmpTablename: string;
@@ -1006,12 +886,12 @@ begin
   EC := ' ';
   TC := #9;
 
-  _schema := TableInfo.Schema;
+  FSchema := AsTableInfo.Schema;
 
-  case _DbType of
+  case FDBConInfo.DbType of
     dtOracle:
     begin
-      _spPrefix := UpperCase(_spPrefix);
+      FspPrefix := UpperCase(FspPrefix);
       SqlOpenBr := '"';
       SqlCloseBr := '"';
       SqlBeginProc := SqlSpKeyword + 'PROCEDURE ';
@@ -1019,7 +899,7 @@ begin
       SqlParamChar := 'P';//to differentiate from original column name
       SqlPreParam := '';
       SqlPostParam := ' IN ';
-      SqlTablename := TableInfo.Tablename;
+      SqlTablename := AsTableInfo.Tablename;
       SqlDot := '.';
       SqlBegin := 'BEGIN';
       SqlEnd := 'END;';
@@ -1033,7 +913,7 @@ begin
       SqlParamChar := '@';
       SqlPreParam := '';
       SqlPostParam := '';
-      SqlTablename := TableInfo.Tablename;
+      SqlTablename := AsTableInfo.Tablename;
       SqlDot := '.';
       SqlBegin := 'BEGIN';
       SqlEnd := 'END';
@@ -1065,7 +945,7 @@ begin
       SqlParamChar := 'P';
       SqlPreParam := '';
       SqlPostParam := '';
-      SqlTablename := TableInfo.Tablename;
+      SqlTablename := AsTableInfo.Tablename;
       SqlDot := '.';
       SqlBegin := 'BEGIN';
       SqlEnd := 'END';
@@ -1075,7 +955,7 @@ begin
 
   r := TStringList.Create;
 
-  if (TableInfo.PrimaryKeys.Count = 0) and not (QueryType in [qtSelect, qtInsert]) then
+  if (AsTableInfo.PrimaryKeys.Count = 0) and not (QueryType in [qtSelect, qtInsert]) then
     raise Exception.Create('No primary keys found!');
 
 
@@ -1091,107 +971,107 @@ begin
   tmpSelectJoins := TStringList.Create;
   tmpSelectInsert := TStringList.Create;
 
-  for I := 0 to TableInfo.AllFields.Count - 1 do
+  for I := 0 to AsTableInfo.AllFields.Count - 1 do
   begin
-    if I < (TableInfo.AllFields.Count - 1) then
+    if I < (AsTableInfo.AllFields.Count - 1) then
       seperator := ','
     else
       seperator := '';
 
-    if (I + 1) = TableInfo.AllFields.Count - 1 then
+    if (I + 1) = AsTableInfo.AllFields.Count - 1 then
       if (QueryType in [qtInsert]) then
-        if TableInfo.AllFields[I + 1].IsIdentity then
+        if AsTableInfo.AllFields[I + 1].IsIdentity then
           seperator := '';
 
-    dtype := GetDataType(TableInfo.AllFields[I], _DbType);
+    dtype := GetDataType(AsTableInfo.AllFields[I], FDBConInfo.DbType);
 
-    tmpParamDeclare.Add(EC + EC + SqlParamChar + TableInfo.AllFields[I].CSharpName +
+    tmpParamDeclare.Add(EC + EC + SqlParamChar + AsTableInfo.AllFields[I].CSharpName +
       SqlPostParam + EC + dtype + seperator);
 
-    if TableInfo.AllFields[I].IsReference then
+    if AsTableInfo.AllFields[I].IsReference then
     begin
-      oIndex := TableInfo.ImportedKeys.GetIndex(TableInfo.AllFields[I].FieldName);
+      oIndex := AsTableInfo.ImportedKeys.GetIndex(AsTableInfo.AllFields[I].FieldName);
       tmpSelect.Add(TC + TC + SqlOpenBr + SqlTablename + SqlCloseBr +
-        SqlDot + SqlOpenBr + TableInfo.AllFields[I].FieldName + SqlCloseBr + ',');
+        SqlDot + SqlOpenBr + AsTableInfo.AllFields[I].FieldName + SqlCloseBr + ',');
       tmpSelect.Add(TC + TC + 't' + IntToStr(oIndex + 1) + '.' +
-        SqlOpenBr + TableInfo.ImportedKeys[oIndex].ForeignFirstTextField +
+        SqlOpenBr + AsTableInfo.ImportedKeys[oIndex].ForeignFirstTextField +
         SqlCloseBr + seperator);
     end
     else
     begin
       tmpSelect.Add(TC + TC + SqlOpenBr + SqlTablename + SqlCloseBr +
-        SqlDot + SqlOpenBr + TableInfo.AllFields[I].FieldName + SqlCloseBr + seperator);
+        SqlDot + SqlOpenBr + AsTableInfo.AllFields[I].FieldName + SqlCloseBr + seperator);
     end;
 
-    if (not TableInfo.AllFields[I].IsIdentity) then
+    if (not AsTableInfo.AllFields[I].IsIdentity) then
     begin
 
       tmpInsertParamDeclare.Add(EC + SqlPreParam + SqlParamChar +
-        TableInfo.AllFields[I].CSharpName + SqlPostParam + EC + dtype + seperator);
+        AsTableInfo.AllFields[I].CSharpName + SqlPostParam + EC + dtype + seperator);
 
-      tmpInsert.Add(TC + TC + SqlParamChar + TableInfo.AllFields[I].CSharpName +
+      tmpInsert.Add(TC + TC + SqlParamChar + AsTableInfo.AllFields[I].CSharpName +
         seperator);
-      tmpSelectInsert.Add('    ' + SqlOpenBr + TableInfo.AllFields[I].FieldName +
+      tmpSelectInsert.Add('    ' + SqlOpenBr + AsTableInfo.AllFields[I].FieldName +
         SqlCloseBr + seperator);
 
       //this check will prevent some unwanted stuff like : (..set Status=@Status, where.. )
-      if (I + 1) = TableInfo.AllFields.Count - 1 then
-        if (TableInfo.AllFields[I + 1].IsPrimaryKey) and
-          (TableInfo.PrimaryKeys.Count <> TableInfo.AllFields.Count) then
+      if (I + 1) = AsTableInfo.AllFields.Count - 1 then
+        if (AsTableInfo.AllFields[I + 1].IsPrimaryKey) and
+          (AsTableInfo.PrimaryKeys.Count <> AsTableInfo.AllFields.Count) then
           seperator := '';
 
-      if not TableInfo.AllFields[I].IsPrimaryKey then
-        tmpUpdate.Add(TC + TC + TC + SqlOpenBr + TableInfo.AllFields[I].FieldName +
-          SqlCloseBr + '=' + SqlParamChar + TableInfo.AllFields[I].CSharpName +
+      if not AsTableInfo.AllFields[I].IsPrimaryKey then
+        tmpUpdate.Add(TC + TC + TC + SqlOpenBr + AsTableInfo.AllFields[I].FieldName +
+          SqlCloseBr + '=' + SqlParamChar + AsTableInfo.AllFields[I].CSharpName +
           seperator);
 
-      tmpUpdateAll.Add(TC + TC + SqlOpenBr + TableInfo.AllFields[I].FieldName +
-        SqlCloseBr + '=' + SqlParamChar + TableInfo.AllFields[I].CSharpName + seperator);
+      tmpUpdateAll.Add(TC + TC + SqlOpenBr + AsTableInfo.AllFields[I].FieldName +
+        SqlCloseBr + '=' + SqlParamChar + AsTableInfo.AllFields[I].CSharpName + seperator);
 
     end;
 
   end;
 
   //declare params for delete (only ids)
-  for I := 0 to TableInfo.PrimaryKeys.Count - 1 do
+  for I := 0 to AsTableInfo.PrimaryKeys.Count - 1 do
   begin
-    dtype := GetDataType(TableInfo.PrimaryKeys[I], _DbType);
-    if I < TableInfo.PrimaryKeys.Count - 1 then
+    dtype := GetDataType(AsTableInfo.PrimaryKeys[I], FDBConInfo.DbType);
+    if I < AsTableInfo.PrimaryKeys.Count - 1 then
       seperator := ','
     else
       seperator := '';
 
     tmpDelParamDeclare.Add(TC + TC + SqlPreParam + SqlParamChar +
-      TableInfo.PrimaryKeys[I].CSharpName + SqlPostParam + ' ' + dtype + seperator);
+      AsTableInfo.PrimaryKeys[I].CSharpName + SqlPostParam + ' ' + dtype + seperator);
     tmpSelectItemParam.Add(TC + TC + SqlPreParam + SqlParamChar +
-      TableInfo.PrimaryKeys[I].CSharpName + SqlPostParam + ' ' + dtype + seperator);
+      AsTableInfo.PrimaryKeys[I].CSharpName + SqlPostParam + ' ' + dtype + seperator);
   end;
 
   //make joins for SELECTs
-  for I := 0 to TableInfo.ImportedKeys.Count - 1 do
+  for I := 0 to AsTableInfo.ImportedKeys.Count - 1 do
   begin
-    tmpFTablename := SqlOpenBr + TableInfo.ImportedKeys[I].ForeignSchema +
-      SqlCloseBr + '.' + SqlOpenBr + TableInfo.ImportedKeys[I].ForeignTableName +
+    tmpFTablename := SqlOpenBr + AsTableInfo.ImportedKeys[I].ForeignSchema +
+      SqlCloseBr + '.' + SqlOpenBr + AsTableInfo.ImportedKeys[I].ForeignTableName +
       SqlCloseBr;
-    tmpTablename := SqlOpenBr + TableInfo.Schema + SqlCloseBr + '.' +
-      SqlOpenBr + TableInfo.ImportedKeys[i].TableName + SqlCloseBr;
+    tmpTablename := SqlOpenBr + AsTableInfo.Schema + SqlCloseBr + '.' +
+      SqlOpenBr + AsTableInfo.ImportedKeys[i].TableName + SqlCloseBr;
     tmpSelectJoins.Add
     (
       EC + 'INNER' + EC + 'JOIN' + EC + tmpFTablename + EC + 't' +
       IntToStr(I + 1) + EC + 'ON' + EC + tmpTablename + '.' + SqlOpenBr +
-      TableInfo.ImportedKeys[I].ColumnName + SqlCloseBr + ' = ' +
+      AsTableInfo.ImportedKeys[I].ColumnName + SqlCloseBr + ' = ' +
       't' + IntToStr(I + 1) + '.' + SqlOpenBr +
-      TableInfo.ImportedKeys[I].ForeignColumnName + SqlCloseBr
+      AsTableInfo.ImportedKeys[I].ForeignColumnName + SqlCloseBr
       );
   end;
 
   case QueryType of
     qtSelect:
     begin
-      r.Add(SqlBeginProc + TableInfo.Schema + '.' + _spPrefix + '' +
-        TableInfo.TableName + '' + _procNames.pnSelect);
+      r.Add(SqlBeginProc + AsTableInfo.Schema + '.' + FspPrefix + '' +
+        AsTableInfo.TableName + '' + FprocNames.pnSelect);
 
-      if _DbType = dtOracle then
+      if FDBConInfo.DbType = dtOracle then
       begin
         r[r.Count - 1] :=
           r[r.Count - 1] + ' (' + EC + 'RESULT' + EC + 'OUT' + EC +
@@ -1200,25 +1080,25 @@ begin
 
       r.Add(SqlAsProc + EC + SqlBegin);
 
-      if _DbType = dtOracle then
+      if FDBConInfo.DbType = dtOracle then
       begin
         r.Add('OPEN' + EC + 'RESULT' + EC + 'FOR');
       end;
 
       r.Add('SELECT' + EC);
       r.Add(tmpSelect.Text);
-      r.Add('FROM' + EC + SqlOpenBr + TableInfo.Schema + SqlCloseBr +
-        '.' + SqlOpenBr + TableInfo.Tablename + SqlCloseBr);
+      r.Add('FROM' + EC + SqlOpenBr + AsTableInfo.Schema + SqlCloseBr +
+        '.' + SqlOpenBr + AsTableInfo.Tablename + SqlCloseBr);
       if Trim(tmpSelectJoins.Text) <> EmptyStr then
         r.Add(tmpSelectJoins.Text);
     end;
     qtSelectItem:
     begin
-      r.Add(SqlBeginProc + TableInfo.schema + '.' + _spPrefix + '' +
-        TableInfo.TableName + '' + _procNames.pnSelectItem);
+      r.Add(SqlBeginProc + AsTableInfo.schema + '.' + FspPrefix + '' +
+        AsTableInfo.TableName + '' + FprocNames.pnSelectItem);
       r.Add('(');
       r.Add('' + tmpSelectItemParam.Text);
-      if _DbType = dtOracle then
+      if FDBConInfo.DbType = dtOracle then
       begin
         r[r.Count - 1] :=
           r[r.Count - 1] + ',' + EC + 'RESULT' + EC + 'OUT' + EC + 'SYS_REFCURSOR';
@@ -1226,41 +1106,41 @@ begin
 
       r.Add(') ' + SqlAsProc + ' ' + SqlBegin);
 
-      if _DbType = dtOracle then
+      if FDBConInfo.DbType = dtOracle then
       begin
         r.Add('OPEN' + EC + 'RESULT' + EC + 'FOR');
       end;
       r.Add('SELECT' + EC);
       r.Add(tmpSelect.Text);
-      r.Add('FROM' + EC + SqlOpenBr + TableInfo.schema + SqlCloseBr +
-        '.' + SqlOpenBr + TableInfo.TableName + SqlCloseBr);
+      r.Add('FROM' + EC + SqlOpenBr + AsTableInfo.schema + SqlCloseBr +
+        '.' + SqlOpenBr + AsTableInfo.TableName + SqlCloseBr);
 
       if Trim(tmpSelectJoins.Text) <> EmptyStr then
         r.Add(tmpSelectJoins.Text);
 
-      if TableInfo.PrimaryKeys.Count > 0 then
+      if AsTableInfo.PrimaryKeys.Count > 0 then
       begin
         r.Add('WHERE' + EC + SqlOpenBr + SqlTablename + SqlCloseBr +
-          SqlDot + SqlOpenBr + TableInfo.PrimaryKeys[0].FieldName +
-          SqlCloseBr + '=' + SqlParamChar + TableInfo.PrimaryKeys[0].CSharpName);
-        if (TableInfo.PrimaryKeys.Count > 1) then
+          SqlDot + SqlOpenBr + AsTableInfo.PrimaryKeys[0].FieldName +
+          SqlCloseBr + '=' + SqlParamChar + AsTableInfo.PrimaryKeys[0].CSharpName);
+        if (AsTableInfo.PrimaryKeys.Count > 1) then
         begin
-          for I := 1 to TableInfo.PrimaryKeys.Count - 1 do
-            r.Add(EC + 'AND' + EC + SqlOpenBr + TableInfo.Tablename +
-              SqlCloseBr + '.' + SqlOpenBr + TableInfo.PrimaryKeys[I].FieldName +
-              SqlCloseBr + '=' + SqlParamChar + TableInfo.PrimaryKeys[I].CSharpName);
+          for I := 1 to AsTableInfo.PrimaryKeys.Count - 1 do
+            r.Add(EC + 'AND' + EC + SqlOpenBr + AsTableInfo.Tablename +
+              SqlCloseBr + '.' + SqlOpenBr + AsTableInfo.PrimaryKeys[I].FieldName +
+              SqlCloseBr + '=' + SqlParamChar + AsTableInfo.PrimaryKeys[I].CSharpName);
         end;
       end;
     end;
     qtInsert:
     begin
-      r.Add(SqlBeginProc + TableInfo.schema + '.' + _spPrefix + '' +
-        TableInfo.TableName + '' + _procNames.pnInsert);
+      r.Add(SqlBeginProc + AsTableInfo.schema + '.' + FspPrefix + '' +
+        AsTableInfo.TableName + '' + FprocNames.pnInsert);
       r.Add('(');
       r.Add(tmpInsertParamDeclare.Text);
       r.Add(')' + EC + SqlAsProc + EC + SqlBegin);
-      r.Add('INSERT INTO ' + SqlOpenBr + TableInfo.schema + SqlCloseBr +
-        '.' + SqlOpenBr + TableInfo.TableName + SqlCloseBr);
+      r.Add('INSERT INTO ' + SqlOpenBr + AsTableInfo.schema + SqlCloseBr +
+        '.' + SqlOpenBr + AsTableInfo.TableName + SqlCloseBr);
       r.Add('(');
       r.Add(tmpSelectInsert.Text);
       r.Add(')');
@@ -1271,13 +1151,13 @@ begin
     end;
     qtUpdate:
     begin
-      r.Add(SqlBeginProc + TableInfo.schema + '.' + _spPrefix + '' +
-        TableInfo.TableName + '' + _procNames.pnUpdate);
+      r.Add(SqlBeginProc + AsTableInfo.schema + '.' + FspPrefix + '' +
+        AsTableInfo.TableName + '' + FprocNames.pnUpdate);
       r.Add('(');
       r.Add('' + tmpParamDeclare.Text);
       r.Add(') ' + SqlAsProc + ' ' + SqlBegin);
-      r.Add('UPDATE' + EC + SqlOpenBr + TableInfo.schema + SqlCloseBr +
-        '.' + SqlOpenBr + TableInfo.TableName + SqlCloseBr);
+      r.Add('UPDATE' + EC + SqlOpenBr + AsTableInfo.schema + SqlCloseBr +
+        '.' + SqlOpenBr + AsTableInfo.TableName + SqlCloseBr);
       r.Add('SET' + EC);
 
       if tmpUpdate.Count > 0 then
@@ -1285,46 +1165,46 @@ begin
       else
         r.Add(tmpUpdateAll.Text);
 
-      if TableInfo.PrimaryKeys.Count > 0 then
+      if AsTableInfo.PrimaryKeys.Count > 0 then
       begin
-        r.Add('WHERE' + EC + SqlOpenBr + TableInfo.Tablename +
-          SqlCloseBr + '.' + SqlOpenBr + TableInfo.PrimaryKeys[0].FieldName +
-          SqlCloseBr + '=' + SqlParamChar + TableInfo.PrimaryKeys[0].CSharpName);
-        if (TableInfo.PrimaryKeys.Count > 1) then
+        r.Add('WHERE' + EC + SqlOpenBr + AsTableInfo.Tablename +
+          SqlCloseBr + '.' + SqlOpenBr + AsTableInfo.PrimaryKeys[0].FieldName +
+          SqlCloseBr + '=' + SqlParamChar + AsTableInfo.PrimaryKeys[0].CSharpName);
+        if (AsTableInfo.PrimaryKeys.Count > 1) then
         begin
-          for I := 1 to TableInfo.PrimaryKeys.Count - 1 do
-            r.Add(EC + 'AND' + EC + SqlOpenBr + TableInfo.Tablename +
-              SqlCloseBr + '.' + SqlOpenBr + TableInfo.PrimaryKeys[I].FieldName +
-              SqlCloseBr + '=' + SqlParamChar + TableInfo.PrimaryKeys[I].CSharpName);
+          for I := 1 to AsTableInfo.PrimaryKeys.Count - 1 do
+            r.Add(EC + 'AND' + EC + SqlOpenBr + AsTableInfo.Tablename +
+              SqlCloseBr + '.' + SqlOpenBr + AsTableInfo.PrimaryKeys[I].FieldName +
+              SqlCloseBr + '=' + SqlParamChar + AsTableInfo.PrimaryKeys[I].CSharpName);
         end;
       end;
     end;
     qtDelete:
     begin
-      r.Add(SqlBeginProc + TableInfo.schema + '.' + _spPrefix + '' +
-        TableInfo.TableName + _procNames.pnDelete);
+      r.Add(SqlBeginProc + AsTableInfo.schema + '.' + FspPrefix + '' +
+        AsTableInfo.TableName + FprocNames.pnDelete);
       r.Add('(');
       r.Add('' + tmpDelParamDeclare.Text);
       r.Add(')' + EC + SqlAsProc + EC + SqlBegin);
-      r.Add('DELETE' + EC + 'FROM' + EC + SqlOpenBr + TableInfo.schema +
-        SqlCloseBr + '.' + SqlOpenBr + TableInfo.TableName + SqlCloseBr);
-      if TableInfo.PrimaryKeys.Count > 0 then
+      r.Add('DELETE' + EC + 'FROM' + EC + SqlOpenBr + AsTableInfo.schema +
+        SqlCloseBr + '.' + SqlOpenBr + AsTableInfo.TableName + SqlCloseBr);
+      if AsTableInfo.PrimaryKeys.Count > 0 then
       begin
-        r.Add('WHERE' + EC + SqlOpenBr + TableInfo.Tablename +
-          SqlCloseBr + '.' + SqlOpenBr + TableInfo.PrimaryKeys[0].FieldName +
-          SqlCloseBr + '=' + SqlParamChar + TableInfo.PrimaryKeys[0].CSharpName);
-        if (TableInfo.PrimaryKeys.Count > 1) then
+        r.Add('WHERE' + EC + SqlOpenBr + AsTableInfo.Tablename +
+          SqlCloseBr + '.' + SqlOpenBr + AsTableInfo.PrimaryKeys[0].FieldName +
+          SqlCloseBr + '=' + SqlParamChar + AsTableInfo.PrimaryKeys[0].CSharpName);
+        if (AsTableInfo.PrimaryKeys.Count > 1) then
         begin
-          for I := 1 to TableInfo.PrimaryKeys.Count - 1 do
-            r.Add(EC + 'AND' + EC + SqlOpenBr + TableInfo.Tablename +
-              SqlCloseBr + '.' + SqlOpenBr + TableInfo.PrimaryKeys[I].FieldName +
-              SqlCloseBr + '=' + SqlParamChar + TableInfo.PrimaryKeys[I].CSharpName);
+          for I := 1 to AsTableInfo.PrimaryKeys.Count - 1 do
+            r.Add(EC + 'AND' + EC + SqlOpenBr + AsTableInfo.Tablename +
+              SqlCloseBr + '.' + SqlOpenBr + AsTableInfo.PrimaryKeys[I].FieldName +
+              SqlCloseBr + '=' + SqlParamChar + AsTableInfo.PrimaryKeys[I].CSharpName);
         end;
       end;
     end;
   end;
 
-  case _DbType of
+  case FDBConInfo.DbType of
     dtMySql: if (QueryType <> qtSelect) then
         r[r.Count - 1] := r[r.Count - 1] + ';';
     dtOracle: r[r.Count - 1] := r[r.Count - 1] + ';';
@@ -1333,7 +1213,7 @@ begin
 
   r.Add(SqlEnd);
 
-  if _DbType = dtOracle then
+  if FDBConInfo.DbType = dtOracle then
     r.Add('/');
 
   tmpDelParamDeclare.Free;
@@ -1351,7 +1231,7 @@ begin
 end;
 
 
-procedure TSqlGenerator.WriteLog(Msg: string);
+procedure TAsSqlGenerator.WriteLog(Msg: string);
 begin
 
 end;

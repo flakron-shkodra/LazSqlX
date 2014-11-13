@@ -12,7 +12,7 @@ interface
 
 uses
   Classes, SysUtils, FileUtil, Forms, Controls, Graphics, Dialogs, StdCtrls,
-  ExtCtrls, Buttons, TableInfo,ZConnection;
+  ExtCtrls, Buttons, AsTableInfo;
 
 type
 

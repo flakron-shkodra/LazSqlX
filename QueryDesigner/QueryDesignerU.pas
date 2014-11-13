@@ -8,8 +8,8 @@ uses
   SysUtils, Variants,
   Classes,
   Graphics, Controls, Forms, Dialogs, Contnrs,
-  ExtCtrls, TableInfo, DbType, StdCtrls, ToolWin,
-  ComCtrls, ImgList, SqlGenerator, GraphUtil, ZConnection,
+  ExtCtrls, AsTableInfo, AsDbType, StdCtrls, ToolWin,
+  ComCtrls, ImgList, AsSqlGenerator, GraphUtil,
   LCL, LCLType, LCLIntf, Menus;
 
 type
@@ -50,7 +50,7 @@ type
     procedure scbDesignerMouseWheelUp(Sender: TObject; Shift: TShiftState; MousePos: TPoint; var Handled: Boolean);
     procedure scbDesignerResize(Sender: TObject);
   private
-   FDbInfo: TDbConnectionInfo;
+   FDbInfo: TAsDbConnectionInfo;
    FSchema: String;
     { Private declarations }
 
@@ -60,11 +60,10 @@ type
     SelectedControl: TObject;
     ControlPressed: boolean;
     FNodes: TObjectList;
-    FCon: TZConnection;
-    FTableInfoList: TTableInfos;
+    FTableInfoList: TAsTableInfos;
     IsFieldDragging: boolean;
     FFCurrentNodeControl: TWinControl;
-    procedure SetDbInfo(AValue: TDbConnectionInfo);
+    procedure SetDbInfo(AValue: TAsDbConnectionInfo);
     procedure SetFCurrentNodeControl(const Value: TWinControl);
     procedure SetSchema(AValue: String);
     property FCurrentNodeControl: TWinControl read FFCurrentNodeControl
@@ -105,8 +104,8 @@ type
      foreignKey: string);
     function GenerateTableControl(CursorPos: TPoint; aParent: TWinControl;
       Schema, Tablename: string):Boolean;
-    procedure SetDatabaseInfo(const Value: TZConnection);
-    procedure SetTableInfoList(const Value: TTableInfos);
+
+    procedure SetTableInfoList(const Value: TAsTableInfos);
 
     function FindTableControl(Tablename: string): TPanel;
     function FindFieldControl(tableControl: TPanel; fieldName: string): TPanel;
@@ -125,13 +124,12 @@ type
 
     procedure GenerateQuery;
 
-    property Connection: TZConnection read FCon write SetDatabaseInfo;
-    property TableInfoList: TTableInfos read FTableInfoList
+    property TableInfoList: TAsTableInfos read FTableInfoList
       write SetTableInfoList;
     property Schema:String read FSchema write SetSchema;
 
     property SqlQuery: string read GetSqlQuery;
-    property DbInfo:TDbConnectionInfo read FDbInfo write SetDbInfo;
+    property DbInfo:TAsDbConnectionInfo read FDbInfo write SetDbInfo;
 
 
   end;
@@ -392,8 +390,8 @@ end;
 
 procedure TQueryDesigner.GenerateQuery;
 var
-  p: TProcedureNames;
-  s: TSqlGenerator;
+  p: TAsProcedureNames;
+  s: TAsSqlGenerator;
   ti: TTableInfo;
   outPut: TStringList;
 begin
@@ -403,7 +401,7 @@ begin
       ti := TableInfoList.TableByName(FCurrentNodeControl.Hint);
       if ti <> nil then
       begin
-        s := TSqlGenerator.Create(FCon.HostName,FCon.Database,FCon.User,FCon.Password, p,TDbUtils.DatabaseTypeFromString(FCon.Protocol),FCon.Port);
+        s := TAsSqlGenerator.Create(FDbInfo,p);
         outPut := s.GenerateQuery(0, ti, qtSelect);
         txtSqlQuery.Lines := outPut;
       end;
@@ -428,7 +426,7 @@ var
   pnlTable: TPanel;
   tlbToolbar: TToolBar;
   lblTableCaption: TLabel;
-  field: TFieldInfo;
+  field: TAsFieldInfo;
   fieldPanel: TPanel;
   lblFieldCaption: TLabel;
   ik: TImportedKeyInfo;
@@ -707,7 +705,7 @@ end;
 procedure TQueryDesigner.OnFieldMouseDown(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: integer);
 var
-  fi: TFieldInfo;
+  fi: TAsFieldInfo;
   ik: TImportedKeyInfo;
   ti :TTableInfo;
   fieldName: string;
@@ -782,7 +780,7 @@ var
   ti: TTableInfo;
   foreignTi: TTableInfo;
   ik: TImportedKeyInfo;
-  fi: TFieldInfo;
+  fi: TAsFieldInfo;
   I:Integer;
 begin
 
@@ -1125,11 +1123,6 @@ begin
  FSchema:=AValue;
 end;
 
-procedure TQueryDesigner.SetDatabaseInfo(const Value: TZConnection);
-begin
-  FCon := Value;
-end;
-
 procedure TQueryDesigner.SetFCurrentNodeControl(const Value: TWinControl);
 begin
   FFCurrentNodeControl := Value;
@@ -1137,13 +1130,13 @@ begin
   SetNodesVisible(FFCurrentNodeControl <> nil);
 end;
 
-procedure TQueryDesigner.SetDbInfo(AValue: TDbConnectionInfo);
+procedure TQueryDesigner.SetDbInfo(AValue: TAsDbConnectionInfo);
 begin
  if FDbInfo=AValue then Exit;
  FDbInfo:=AValue;
 
  if TableInfoList = nil then
-    TableInfoList := TTableInfos.Create(nil,FDBInfo);
+    TableInfoList := TAsTableInfos.Create(nil,FDBInfo);
 
 end;
 
@@ -1156,7 +1149,7 @@ begin
 end;
 
 
-procedure TQueryDesigner.SetTableInfoList(const Value: TTableInfos);
+procedure TQueryDesigner.SetTableInfoList(const Value: TAsTableInfos);
 begin
   FTableInfoList := Value;
 end;
@@ -1179,8 +1172,8 @@ var
 begin
 
   try
-    lst := TStringList.Create;
-    FCon.GetTableNames(FSchema,'',lst);
+    lst := TAsDbUtils.GetTablenames(FDbInfo,FSchema);
+
 
     if QueryDesignerTables = nil then
     QueryDesignerTables := TQueryDesignerTables.Create(Self);

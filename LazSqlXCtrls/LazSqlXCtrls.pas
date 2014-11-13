@@ -7,8 +7,8 @@ interface
 uses
   Classes, SysUtils, Controls, StdCtrls, ComCtrls, ExtCtrls, Graphics,Dialogs, sqldb, db,
   ZDataset, ZConnection, DbCtrls, DBGrids, SynEdit, SynCompletion, SynEditTypes,
-  Grids, Menus, AsStringUtils, DbType, Utils, SynHighlighterSQL, Types, strutils,
-  LCLType, SqlExecThread, SqlGenerator;
+  Grids, Menus, AsStringUtils, AsDbType, Utils, SynHighlighterSQL, Types, strutils,
+  LCLType, SqlExecThread, AsSqlGenerator;
 
 
 type
@@ -40,7 +40,7 @@ type
     FExecutionInProgress:Boolean;
     FEditMode:Boolean;
     FTransaction:TSQLTransaction;
-    function GetDbInfo:TDbConnectionInfo;
+    function GetDbInfo:TAsDbConnectionInfo;
     function GetHasActiveData: Boolean;
     function GetSqlQuery: string;
     procedure OnDBGridDrawColumnCell(Sender: TObject; const Rect: TRect; DataCol: integer; Column: TColumn; State: TGridDrawState);
@@ -93,7 +93,7 @@ type
     FTrans:TSQLTransaction;
     FCon:TSQLConnector;
     FDataGridPopUpMenu: TPopupMenu;
-    FDBInfo: TDbConnectionInfo;
+    FDBInfo: TAsDbConnectionInfo;
     FFieldIcon: TBitmap;
     FFunctionIcon: TBitmap;
     FHighlighter: TSynSQLSyn;
@@ -118,7 +118,7 @@ type
     procedure OnCompletionSearchPos(var Posi: integer); //Complete SearchPos
 
     procedure SetDataGridPopUpMenu(AValue: TPopupMenu);
-    procedure SetDBInfo(AValue: TDbConnectionInfo);
+    procedure SetDBInfo(AValue: TAsDbConnectionInfo);
     procedure SetFieldIcon(AValue: TBitmap);
     procedure SetFunctionIcon(AValue: TBitmap);
     procedure SetHighlighter(AValue: TSynSQLSyn);
@@ -149,7 +149,7 @@ type
     procedure RemoveAllTabsButActive;
     procedure RemoveAllTabs;
 
-    property DBInfo:TDbConnectionInfo read FDBInfo write SetDBInfo;
+    property DBInfo:TAsDbConnectionInfo read FDBInfo write SetDBInfo;
     property Highlighter:TSynSQLSyn read FHighlighter write SetHighlighter;
     property QueryEditorPopUpMenu:TPopupMenu read FQueryEditorPopUpMenu write SetQueryEditorPopUpMenu;
     property DataGridPopUpMenu:TPopupMenu read FDataGridPopUpMenu write SetDataGridPopUpMenu;
@@ -236,7 +236,7 @@ begin
   end;
 end;
 
-function TLazSqlXTabSheet.GetDbInfo: TDbConnectionInfo;
+function TLazSqlXTabSheet.GetDbInfo: TAsDbConnectionInfo;
 begin
   Result := (FParent as TLazSqlXPageControl).DBInfo;
 end;
@@ -338,7 +338,7 @@ begin
     ds := (DataSet as TSQLQuery);
     I := ds.RecNo;
     ds.UpdateMode:=upWhereKeyOnly;
-    if (GetDbInfo.DatabaseType = dtOracle) and (GetDbInfo.DbEngine=deSqlDB) then
+    if (GetDbInfo.DbType = dtOracle) and (GetDbInfo.DbEngineType=deSqlDB) then
     begin
       //generate update or delete statement
     end;
@@ -635,9 +635,9 @@ end;
 
 procedure TLazSqlXTabSheet.CheckSyntax;
 var
-  error: TSqlSyntaxError;
+  error: TAsSqlSyntaxError;
 begin
-  if TDbUtils.CheckSqlSyntax(FQueryEditor.Text, error) then
+  if TAsDbUtils.CheckSqlSyntax(FQueryEditor.Text, error) then
   begin
     DisplayMessage('Syntax check completed', False);
   end
@@ -682,19 +682,19 @@ begin
     begin
       sqlCommand := FQueryEditor.Text;
     end;
-    if (FParent as TLazSqlXPageControl).DBInfo.DatabaseType = dtOracle then
+    if (FParent as TLazSqlXPageControl).DBInfo.DbType = dtOracle then
       sqlCommand := StringReplace(sqlCommand, ';', '', [rfReplaceAll]);
   end
   else
   begin
     sqlCommand := 'SELECT * FROM ' +Schema+'.'+ Table;
-    if (FParent as TLazSqlXPageControl).DBInfo.DatabaseType in [dtSQLite, dtFirebirdd] then
+    if (FParent as TLazSqlXPageControl).DBInfo.DbType in [dtSQLite, dtFirebirdd] then
       sqlCommand := 'SELECT * FROM ' + Table;
     Self.Caption := Table;
   end;
 
   try
-    case (FParent as TLazSqlXPageControl).DBInfo.DbEngine of
+    case (FParent as TLazSqlXPageControl).DBInfo.DbEngineType of
       deSqlDB:
       begin
         CommandExecutor :=
@@ -771,7 +771,7 @@ procedure TLazSqlXPageControl.OnCompletionExecute(Sender: TObject);
       if (typ = 'FIELD') then
       begin
         if TAsStringUtils.ContainsChar(S, ' ') then
-          case DbInfo.DatabaseType of
+          case DbInfo.DbType of
             dtMsSql: s := '[' + s + ']';
             dtOracle: s := '"' + s + '"';
           end;
@@ -807,7 +807,7 @@ begin
       t := FTables[I];
       if TAsStringUtils.ContainsChar(t, ' ') then
       begin
-        case DbInfo.DatabaseType of
+        case DbInfo.DbType of
           dtMsSql: t := '[' + t + ']';
           dtOracle: t := '"' + t + '"'
         end;
@@ -967,7 +967,7 @@ procedure TLazSqlXPageControl.OnCompletionSearchPos(var Posi: integer);
       if (typ = 'FIELD') then
       begin
         if TAsStringUtils.ContainsChar(S, ' ') then
-          case DbInfo.DatabaseType of
+          case DbInfo.DbType of
             dtMsSql: s := '[' + s + ']';
             dtOracle: s := '"' + s + '"';
           end;
@@ -1104,7 +1104,7 @@ begin
   FDataGridPopUpMenu:=AValue;
 end;
 
-procedure TLazSqlXPageControl.SetDBInfo(AValue: TDbConnectionInfo);
+procedure TLazSqlXPageControl.SetDBInfo(AValue: TAsDbConnectionInfo);
 begin
   if FDBInfo=AValue then Exit;
   FDBInfo:=AValue;
@@ -1140,7 +1140,7 @@ var
   expr: string;
 begin
   expr := '\B@\w*\b';
-  TRegExUtils.RunRegex(QueryText, expr, VarWords);
+  TAsRegExUtils.RunRegex(QueryText, expr, VarWords);
 end;
 
 procedure TLazSqlXPageControl.GetBracketWords(QueryText: string;
@@ -1149,7 +1149,7 @@ var
   expr: string;
 begin
   expr := '\[(.*?)\]';
-  TRegExUtils.RunRegex(QueryText, expr, BracketWords);
+  TAsRegExUtils.RunRegex(QueryText, expr, BracketWords);
 end;
 
 procedure TLazSqlXPageControl.GetFieldNames(table: string; fieldMask: string;
@@ -1160,15 +1160,20 @@ var
 begin
 
   try
-    lst := TStringList.Create;
 
-    case DbInfo.DatabaseType of
+
+    case DbInfo.DbType of
       dtMsSql, dtOracle, dtFirebirdd:
       begin
+        lst := TStringList.Create;
         FCon.GetFieldNames(table, lst);
       end;
-      dtMySql: FZCon.GetColumnNames(table, '', lst);
-      dtSQLite: TDbUtils.GetColumnNames(DbInfo, table, lst);
+      dtMySql:
+      begin
+       lst := TStringList.Create;
+       FZCon.GetColumnNames(table, '', lst);
+      end;
+      dtSQLite: lst := TAsDbUtils.GetColumnNames(DbInfo, table);
     end;
 
 

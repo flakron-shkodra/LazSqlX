@@ -12,7 +12,7 @@ interface
 
 uses
   Classes, SysUtils, FileUtil, Forms, Controls, Graphics, Dialogs, Buttons,
-  ExtCtrls, StdCtrls, Spin, DbType,LazSqlXResources;
+  ExtCtrls, StdCtrls, Spin, AsDbType,LazSqlXResources;
 
 type
 
@@ -37,7 +37,7 @@ type
     procedure cmbDataTypesChange(Sender: TObject);
     procedure FormShow(Sender: TObject);
   private
-    FDbType: TDatabaseType;
+    FDbType: TAsDatabaseType;
     FFillDataTypesOnShow: Boolean;
     FTablename: string;
     FValidate: Boolean;
@@ -48,7 +48,7 @@ type
     function GetIsPrimaryKey: Boolean;
     function GetLength: Integer;
     function GetPrecision: integer;
-    procedure SetDbType(AValue: TDatabaseType);
+    procedure SetDbType(AValue: TAsDatabaseType);
     procedure SetFillDataTypesOnShow(AValue: Boolean);
     procedure SetTablename(AValue: string);
     procedure SetValidate(AValue: Boolean);
@@ -56,14 +56,14 @@ type
     { private declarations }
   public
     { public declarations }
-    property DbType:TDatabaseType read FDbType write SetDbType;
+    property DbType:TAsDatabaseType read FDbType write SetDbType;
     property IsPrimaryKey:Boolean read GetIsPrimaryKey;
     property ColumnName:string read GetColumnName;
     property DataType:string read GetDataType;
     property Precision:integer read GetPrecision;
     property Length:Integer read GetLength;
     property AllowNull:Boolean read GetAllowNull;
-    function ShowModal(aDbtype:TDatabaseType):TModalResult;
+    function ShowModal(aDbtype:TAsDatabaseType):TModalResult;
     function Validate:Boolean;
     procedure ClearInputs;
     procedure FillDataTypes;
@@ -173,7 +173,7 @@ begin
   Result := txtPrecision.Value;
 end;
 
-procedure TEditColumnForm.SetDbType(AValue: TDatabaseType);
+procedure TEditColumnForm.SetDbType(AValue: TAsDatabaseType);
 begin
   if FDbType=AValue then Exit;
   FDbType:=AValue;
@@ -197,7 +197,7 @@ begin
   FValidate:=AValue;
 end;
 
-function TEditColumnForm.ShowModal(aDbtype: TDatabaseType): TModalResult;
+function TEditColumnForm.ShowModal(aDbtype: TAsDatabaseType): TModalResult;
 begin
   FDbType:=aDbtype;
   if FFillDataTypesOnShow then

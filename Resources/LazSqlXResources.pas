@@ -27,9 +27,9 @@ type
     SqliteDataTypes:TStringList;static;
     FirebirdDataTypes:TStringList;static;
     SqlReservedKeywords:TStringList;static;
-    TableInfoReservedKeywords:TStringList;static;
     FileTypeDetector:TStringList;static;
     LoadingGif:TMemoryStream;static;
+    ReportTemplatePath:string;static;
     class function IsReserved(Keyword:string):Boolean;
     class function IsAggregate(Keyword:string):Boolean;
     class function ContainsAggregate(Line:string):Boolean;
@@ -44,8 +44,8 @@ const
   ORACLE_TYPES_FILENAME = 'OracleDataTypes.dt';
   SQLITE_TYPES_FILENAME = 'SqliteDataTypes.dt';
   SQL_KEYWORDS_FILENAME = 'SqlReservedKeywords.dt';
-  TABLEINFO_KEYWORDS_FILENAME = 'TableInfoReserved.dt';
   FILETYPE_DETECTOR_FILENAME ='FileTypeDetector.ftd';
+  REPORT_TEMPLATE_FILENAME='ReportTemplate.lrf';
   LOADING_GIF = 'loading.gif';
 
 
@@ -115,7 +115,6 @@ initialization
    TLazSqlXResources.OracleDataTypes := TStringList.Create;
    TLazSqlXResources.SqliteDataTypes := TStringList.Create;
    TLazSqlXResources.FirebirdDataTypes := TStringList.Create;
-   TLazSqlXResources.TableInfoReservedKeywords := TStringList.Create;
    TLazSqlXResources.FileTypeDetector := TStringList.Create;
    TLazSqlXResources.LoadingGif := TMemoryStream.Create;
 
@@ -139,15 +138,16 @@ initialization
   if FileExists(DefPath+FIREBIRD_TYPES_FILENAME) then
   TLazSqlXResources.FirebirdDataTypes.LoadFromFile(DefPath+FIREBIRD_TYPES_FILENAME);
 
-  if FileExists(DefPath+TABLEINFO_KEYWORDS_FILENAME) then
-  TLazSqlXResources.TableInfoReservedKeywords.LoadFromFile(DefPath+TABLEINFO_KEYWORDS_FILENAME);
-
   if FileExists(DefPath+FILETYPE_DETECTOR_FILENAME) then
   TLazSqlXResources.FileTypeDetector.LoadFromFile(DefPath+FILETYPE_DETECTOR_FILENAME);
 
   if FileExists(DefPath+LOADING_GIF) then
   TLazSqlXResources.LoadingGif.LoadFromFile(DefPath+LOADING_GIF);
 
+  if FileExists(DefPath+REPORT_TEMPLATE_FILENAME) then
+    TLazSqlXResources.ReportTemplatePath:=DefPath+REPORT_TEMPLATE_FILENAME
+  else
+    TLazSqlXResources.ReportTemplatePath := EmptyStr;
 
 
 finalization
@@ -157,7 +157,6 @@ finalization
   TLazSqlXResources.MySqlDataTypes.Free;
   TLazSqlXResources.SqliteDataTypes.Free;
   TLazSqlXResources.FirebirdDataTypes.Free;
-  TLazSqlXResources.TableInfoReservedKeywords.Free;
   TLazSqlXResources.FileTypeDetector.Free;
   TLazSqlXResources.LoadingGif.Free;
 

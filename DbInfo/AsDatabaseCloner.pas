@@ -10,7 +10,7 @@ unit AsDatabaseCloner;
 
 interface
 
-uses SysUtils, Classes, TableInfo, DbType, ZConnection, ZDataset,SqlDb, DB, AsStringUtils,LCLType;
+uses SysUtils, Classes, AsTableInfo, AsDbType, DB, AsStringUtils,LCLType;
 
 type
 
@@ -18,15 +18,15 @@ type
 
   TAsDatabaseCloner = class
   private
-    FDbInfo:TDbConnectionInfo;
+    FDbInfo:TAsDbConnectionInfo;
     FDestDbName : string;
   public
-    constructor Create(DestDBInfo:TDbConnectionInfo; DestDbName:string);
+    constructor Create(DestDBInfo:TAsDbConnectionInfo; DestDbName:string);
     function GetCreateScript(Info:TTableInfo;CreateConstraints: boolean; OverrideDefaultTypes: boolean):string;
     procedure MakeTable(info: TTableInfo; CreateConstraints:boolean=true; OverrideDefaultTypes: boolean = False);
     procedure CreateConstraints(info:TTableInfo);
-    procedure CreateConstraintsForAll(infos:TTableInfos);
-    procedure MakeTables(infos: TTableInfos; OverrideDefaultTypes: boolean = False);
+    procedure CreateConstraintsForAll(infos:TAsTableInfos);
+    procedure MakeTables(infos: TAsTableInfos; OverrideDefaultTypes: boolean = False);
     procedure MakeDatabase;
     procedure UnmakeDatabase;
     destructor Destroy; override;
@@ -45,13 +45,13 @@ uses Utils;
 
 
 
-constructor TAsDatabaseCloner.Create(DestDBInfo: TDbConnectionInfo;
+constructor TAsDatabaseCloner.Create(DestDBInfo: TAsDbConnectionInfo;
  DestDbName: string);
 var
-  dbtyp:TDatabaseType;
+  dbtyp:TAsDatabaseType;
 begin
   FDbInfo:=DestDBInfo;
-  dbtyp:= FDbInfo.DatabaseType;
+  dbtyp:= FDbInfo.DbType;
   FDestDbName:= DestDbName;
 end;
 
@@ -72,8 +72,8 @@ begin
     if not OverrideDefaultTypes then
       sql := sql + info.AllFields[I].FieldName + ' ' + info.AllFields[I].FieldType
     else
-      sql := sql + info.AllFields[I].GetCompatibleFieldName(FDbInfo.DatabaseType)+ ' ' +
-        info.AllFields[I].GetFieldTypeAs(FDbInfo.DatabaseType);
+      sql := sql + info.AllFields[I].GetCompatibleFieldName(FDbInfo.DbType)+ ' ' +
+        info.AllFields[I].GetFieldTypeAs(FDbInfo.DbType);
 
     len := info.AllFields[I].Length;
 
@@ -83,10 +83,10 @@ begin
 
 
 
-    if (lowercase(info.AllFields[I].GetFieldTypeAs(FDbInfo.DatabaseType)) = 'varchar') or
-      (lowercase(info.AllFields[I].GetFieldTypeAs(FDbInfo.DatabaseType)) = 'nvarchar') or
-      (LowerCase(info.AllFields[I].GetFieldTypeAs(FDbInfo.DatabaseType)) = 'varchar2') or
-      (LowerCase(info.AllFields[I].GetFieldTypeAs(FDbInfo.DatabaseType)) = 'nvarchar2') then
+    if (lowercase(info.AllFields[I].GetFieldTypeAs(FDbInfo.DbType)) = 'varchar') or
+      (lowercase(info.AllFields[I].GetFieldTypeAs(FDbInfo.DbType)) = 'nvarchar') or
+      (LowerCase(info.AllFields[I].GetFieldTypeAs(FDbInfo.DbType)) = 'varchar2') or
+      (LowerCase(info.AllFields[I].GetFieldTypeAs(FDbInfo.DbType)) = 'nvarchar2') then
       begin
         if len>0 then
         sql := sql + '( ' + IntToStr(len) + ')'
@@ -96,8 +96,8 @@ begin
 
 
 
-    if (info.AllFields[I].GetFieldTypeAs(FDbInfo.DatabaseType) = 'decimal') or
-      (info.AllFields[I].GetFieldTypeAs(FDbInfo.DatabaseType) = 'float') then
+    if (info.AllFields[I].GetFieldTypeAs(FDbInfo.DbType) = 'decimal') or
+      (info.AllFields[I].GetFieldTypeAs(FDbInfo.DbType) = 'float') then
       begin
 
         if info.AllFields[I].Precision>1 then
@@ -110,11 +110,11 @@ begin
     if info.AllFields[I].IsIdentity then
     begin
 
-      case FDbInfo.DatabaseType of
+      case FDbInfo.DbType of
         dtMsSql: sql := sql + ' IDENTITY ';
         dtOracle:
         begin
-          TDbUtils.ExecuteQuery
+          TAsDbUtils.ExecuteQuery
           ('CREATE SEQUENCE ' + info.TableNameAsControlName + '_seq ' +
             ' START WITH     1 ' +
             ' INCREMENT BY   1 ' + '  NOCACHE ' +
@@ -146,13 +146,13 @@ begin
   if info.HasPrimaryKeys then
   begin
 
-    if FDbInfo.DatabaseType in [dtSQLite, dtOracle, dtMySql,dtFirebirdd] then
+    if FDbInfo.DbType in [dtSQLite, dtOracle, dtMySql,dtFirebirdd] then
     begin
       sql := sql + ',';
 
     end;
 
-    if FDbInfo.DatabaseType in [dtOracle, dtMySql,dtFirebirdd] then
+    if FDbInfo.DbType in [dtOracle, dtMySql,dtFirebirdd] then
       sql := sql + ' CONSTRAINT ' + info.Tablename + '_PK ';
 
     sql := sql + ' PRIMARY KEY (';
@@ -167,10 +167,10 @@ begin
         break;
       end;
 
-      sql := sql + info.PrimaryKeys[I].GetCompatibleFieldName(FDbInfo.DatabaseType) +
+      sql := sql + info.PrimaryKeys[I].GetCompatibleFieldName(FDbInfo.DbType) +
         LoopSeperator[integer(I < info.PrimaryKeys.Count - 1)];
 
-      if FDbInfo.DatabaseType = dtSQLite then
+      if FDbInfo.DbType = dtSQLite then
       begin
         if info.PrimaryKeys.Count > 1 then
         begin
@@ -186,28 +186,28 @@ begin
   end;
 
   if CreateConstraints then
-  if FDbInfo.DatabaseType <> dtSQLite then
+  if FDbInfo.DbType <> dtSQLite then
     for I := 0 to info.ImportedKeys.Count - 1 do
     begin
-      if FDbInfo.DatabaseType in [dtOracle, dtMySql,dtFirebirdd] then
+      if FDbInfo.DbType in [dtOracle, dtMySql,dtFirebirdd] then
       begin
         sql := sql + ',';
       end;
-      if FDbInfo.DatabaseType<>dtFirebirdd then
+      if FDbInfo.DbType<>dtFirebirdd then
       begin
       Sql := Sql + ' CONSTRAINT fk_' + info.ImportedKeys[I].ForeignTableName +
-        info.ImportedKeys[I].GetCompatibleForeignColumnName(FDbInfo.DatabaseType) +
-        ' FOREIGN KEY (' + info.ImportedKeys[I].GetCompatibleColumnName(FDbInfo.DatabaseType) + ') ' +
+        info.ImportedKeys[I].GetCompatibleForeignColumnName(FDbInfo.DbType) +
+        ' FOREIGN KEY (' + info.ImportedKeys[I].GetCompatibleColumnName(FDbInfo.DbType) + ') ' +
         ' REFERENCES ' + info.ImportedKeys[I].ForeignTableName +
-        '(' + info.ImportedKeys[I].GetCompatibleForeignColumnName(FDbInfo.DatabaseType) + ') ';
+        '(' + info.ImportedKeys[I].GetCompatibleForeignColumnName(FDbInfo.DbType) + ') ';
 
       end else
       begin
         Sql := Sql + ' CONSTRAINT fk_' + info.ImportedKeys[I].ForeignTableName +
-        info.ImportedKeys[I].GetCompatibleForeignColumnName(FDbInfo.DatabaseType) +
-        ' FOREIGN KEY (' + info.ImportedKeys[I].GetCompatibleColumnName(FDbInfo.DatabaseType) + ') ' +
+        info.ImportedKeys[I].GetCompatibleForeignColumnName(FDbInfo.DbType) +
+        ' FOREIGN KEY (' + info.ImportedKeys[I].GetCompatibleColumnName(FDbInfo.DbType) + ') ' +
         ' REFERENCES ' + info.ImportedKeys[I].ForeignTableName +
-        '(' + info.ImportedKeys[I].GetCompatibleForeignColumnName(FDbInfo.DatabaseType) + ') ';
+        '(' + info.ImportedKeys[I].GetCompatibleForeignColumnName(FDbInfo.DbType) + ') ';
       end;
 
     end;
@@ -215,7 +215,7 @@ begin
 
   sql := sql + ')';
 
-  if FDbInfo.DatabaseType = dtMySql then
+  if FDbInfo.DbType = dtMySql then
     sql := sql + ';';
 
   Result:=Sql;
@@ -227,7 +227,7 @@ var
   sql:String;
 begin
   sql := GetCreateScript(info,CreateConstraints,OverrideDefaultTypes);
-  TDbUtils.ExecuteQuery(sql,FDbInfo);
+  TAsDbUtils.ExecuteQuery(sql,FDbInfo);
 end;
 
 procedure TAsDatabaseCloner.CreateConstraints(info: TTableInfo);
@@ -242,11 +242,11 @@ begin
               ' ADD FOREIGN KEY ('+info.ImportedKeys[I].ColumnName+') ' +
               ' REFERENCES '+info.ImportedKeys[I].ForeignTableName+'('+info.ImportedKeys[I].ForeignColumnName+')';
 
-     TDbUtils.ExecuteQuery(sql,FDbInfo);
+     TAsDbUtils.ExecuteQuery(sql,FDbInfo);
   end;
 end;
 
-procedure TAsDatabaseCloner.CreateConstraintsForAll(infos: TTableInfos);
+procedure TAsDatabaseCloner.CreateConstraintsForAll(infos: TAsTableInfos);
 var
 I: integer;
 begin
@@ -256,7 +256,7 @@ begin
  end;
 end;
 
-procedure TAsDatabaseCloner.MakeTables(infos: TTableInfos;
+procedure TAsDatabaseCloner.MakeTables(infos: TAsTableInfos;
   OverrideDefaultTypes: boolean);
 var
   I: integer;
@@ -270,10 +270,10 @@ end;
 procedure TAsDatabaseCloner.MakeDatabase;
 var
   sql: string;
-  wt:TStringWrapType;
-  dbtyp:TDatabaseType;
+  wt:TAsStringWrapType;
+  dbtyp:TAsDatabaseType;
 begin
-  case FDbInfo.DatabaseType of
+  case FDbInfo.DbType of
     dtMsSql, dtSQLite: wt := swtBrackets;
     dtOracle: wt := swtQuotes;
   else
@@ -281,18 +281,18 @@ begin
   end;
 
 
-  if FDbInfo.DatabaseType in [dtMsSql,dtMySql] then
+  if FDbInfo.DbType in [dtMsSql,dtMySql] then
   begin
-    dbtyp := FDbInfo.DatabaseType;
+    dbtyp := FDbInfo.DbType;
     sql := 'CREATE DATABASE ' + TAsStringUtils.WrapString(FDestDbName,wt);
-    TDbUtils.ExecuteQuery(sql,FDbInfo,deZeos);
+    TAsDbUtils.ExecuteQuery(sql,FDbInfo,deZeos);
     FDbInfo.Database:=TAsStringUtils.WrapString(FDestDbName,wt);
   end;
 end;
 
 procedure TAsDatabaseCloner.UnmakeDatabase;
 begin
- TDbUtils.ExecuteQuery('DROP DATABASE '+FDestDbName,FDbInfo);
+ TAsDbUtils.ExecuteQuery('DROP DATABASE '+FDestDbName,FDbInfo);
 end;
 
 destructor TAsDatabaseCloner.Destroy;

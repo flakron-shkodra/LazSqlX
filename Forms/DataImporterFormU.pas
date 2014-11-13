@@ -13,7 +13,7 @@ interface
 uses
   Classes, SysUtils, DB, FileUtil, DividerBevel, Forms, Controls,
   Graphics, Dialogs, Buttons, StdCtrls, EditBtn, Spin, ComCtrls, DBGrids, Menus,
-  ExtCtrls, TableInfo, DbType, ZDataset, ZConnection, fileimport;
+  ExtCtrls, AsTableInfo, AsDbType, fileimport;
 
 type
 
@@ -61,21 +61,17 @@ type
     procedure txtFilenameAcceptFileName(Sender: TObject; var Value: string);
   private
     { private declarations }
-    FDestQuery: TZQuery;
     FImporter: TFileImport;
     // Number of lines in input file (0 or more or -1 for invalid).
     // Only valid after FCSVParser has loaded file
     FInputLineCount: integer;
     FSchema: string;
-    //todo: implement using sqldb sqlconnection instead of zeos depending on general connection settings
-    FConn: TZConnection;
     FDestTable: string;
-    FDBInfo: TDbConnectionInfo;
+    FDBInfo: TAsDbConnectionInfo;
     FErrors: TStringList;
     // Updates listbox with mappings
     procedure UpdateMappingListBox;
-    // Opens target/destination table in databse where data is to be written
-    procedure OpenDestinationTable(FirstRowOnly: boolean);
+
     // Loads input file; updates min/max lines spinedits etc
     procedure PrepareFile(Filename: string);
     // Fills comboboxes with database and source file fields
@@ -92,7 +88,7 @@ type
     procedure CleanUp;
   public
     { public declarations }
-    function ShowModal(DbInfo: TDbConnectionInfo;
+    function ShowModal(DbInfo: TAsDbConnectionInfo;
       Schema, DestinationTable: string): TModalResult;
   end;
 
@@ -157,8 +153,6 @@ end;
 
 procedure TDataImporterForm.FormCreate(Sender: TObject);
 begin
-  FConn := nil; //will be created in showmodal
-  FDestQuery := nil; //will be created in showmodal
   FErrors := TStringList.Create;
   FInputLineCount := -1;
 end;
@@ -167,10 +161,6 @@ procedure TDataImporterForm.FormDestroy(Sender: TObject);
 begin
   if assigned(FImporter) then
     FImporter.Free;
-  if assigned(FDestQuery) then
-    FreeAndNil(FDestQuery);
-  if assigned(FConn) then
-    FreeAndNil(FConn);
   FErrors.Free;
 end;
 
@@ -178,13 +168,10 @@ procedure TDataImporterForm.FormHide(Sender: TObject);
 begin
   if Assigned(FImporter) then
     FreeAndNil(FImporter);
-  if Assigned(FConn) then
-    FreeAndNil(FConn);
 end;
 
 procedure TDataImporterForm.FormShow(Sender: TObject);
 begin
-  OpenDestinationTable(True);
   UpdateGUI(True);
   CleanUp;
 end;
@@ -274,6 +261,7 @@ end;
 procedure TDataImporterForm.FillCombosAutoMap;
 var
   I: integer;
+  lstFieldNames:TStringList;
 begin
 
   cmbSourceColumns.Clear;
@@ -284,72 +272,23 @@ begin
   if cmbSourceColumns.Items.Count > -1 then
     cmbSourceColumns.ItemIndex := 0;
 
-  assert(assigned(FDestQuery));
-  if FDestQuery.Active then
-  begin
+  try
+    lstFieldNames := TAsDbUtils.GetColumnNames(FDBInfo,FDestTable);
     cmbDestColumns.Clear;
-    for I := 0 to FDestQuery.FieldCount - 1 do
+    for I := 0 to lstFieldNames.Count - 1 do
     begin
-      cmbDestColumns.Items.Add(FDestQuery.Fields[I].FieldName);
+      cmbDestColumns.Items.Add(lstFieldNames[I]);
     end;
-    if cmbDestColumns.Items.Count > -1 then
-      cmbDestColumns.ItemIndex := 0;
+
+  finally
+    lstFieldNames.Free;
   end;
+
+  if cmbDestColumns.Items.Count > -1 then
+    cmbDestColumns.ItemIndex := 0;
 
   // Add automapped data
   UpdateMappingListBox;
-end;
-
-procedure TDataImporterForm.OpenDestinationTable(FirstRowOnly: boolean);
-var
-  aDbType: TDatabaseType;
-  sqlParser: TAsSqlParser;
-begin
-  assert(assigned(FConn));
-  assert(assigned(FDestQuery));
-  aDbType := TDbUtils.DatabaseTypeFromString(FConn.Protocol);
-  FDestQuery.Close;
-  FDestQuery.SQL.Text := 'select * from ' + FDestTable;
-
-  if FirstRowOnly then
-  // Apparently select the first 5 rows?!?! Is this correct?
-  begin
-    // There is an SQL standard for specifying row x..y but not all dbs use it...
-    case aDbType of
-      dtMsSql:
-      begin
-        FDestQuery.SQL.Text :=
-          'SELECT TOP 1 * FROM [' + FSchema + '].[' + FDestTable + ']';
-
-        try
-          sqlParser := TAsSqlParser.Create(FSchema, FDBInfo);
-          if sqlParser.ParseCommand(FDestQuery.SQL.Text) then
-          begin
-            FDestQuery.SQL.Text := sqlParser.RegenerateSelect(True);
-          end;
-        finally
-          sqlParser.Free;
-        end;
-
-      end;
-      dtOracle:
-        FDestQuery.SQL.Text :=
-        'SELECT * FROM "' + FSchema + '"."' + FDestTable + '" WHERE ROWNUM < 6';
-      dtMySql:
-        FDestQuery.SQL.Text := 'SELECT * FROM ' + FDestTable + ' LIMIT 5';
-      dtSQLite:
-        FDestQuery.SQL.Text := 'SELECT * FROM ' + FDestTable + ' LIMIT 5';
-      dtFirebirdd:
-        // Firebird 2+ also accepts standard SQL (see below)
-        FDestQuery.SQL.Text := 'SELECT FIRST 1 * FROM ' + FDestTable;
-      else
-        // Use SQL standard and hope db supports it:
-        FDestQuery.SQL.Text := 'SELECT * FROM ' + FDestTable + ' ROWS 1 TO 5';
-    end;
-  end;
-  FDestQuery.Connection := FConn;
-  FDestQuery.Open;
-
 end;
 
 function TDataImporterForm.ImportData: boolean;
@@ -360,14 +299,21 @@ var
   SrcColumn: string;
   DestColumn: string;
   LastRow: integer;
+  FDestQuery : TAsQuery;
 begin
-  Result := False; //fail by default
+  Result := True; //success by default
   Screen.Cursor:=crHourglass;;
   try
     FErrors.Clear;
 
     pbProgress.Max := speEndPosition.MaxValue;
-    OpenDestinationTable(False);
+
+    FDestQuery := TAsQuery.Create(FDBInfo);
+
+
+    //FDestQuery.Open(TAsDbUtils.GetTopRecordsSelect(FDBInfo.DbType,FDestTable,1));
+    FDestQuery.Open('select * from '+ TAsDbUtils.SafeWrap(FDBInfo.DbType, FDestTable));
+
     // todo: check to make sure file is loaded?
     if speEndPosition.Value <= 0 then
       LastRow := FImporter.GetRowCount
@@ -426,15 +372,16 @@ begin
             FDestQuery.FieldByName(DestColumn).AsString := FImporter.GetData(i);
         end;
       end;
-      pbProgress.StepIt;
-      Result := True;
+
     except
       on E: Exception do
       begin
+        Result := False;
         FErrors.Add('Error on row [' + IntToStr(I) + '] with message: ' + E.Message);
       end;
     end;
   finally
+    FDestQuery.Free;
     Screen.Cursor:=crDefault;
   end;
 end;
@@ -446,7 +393,7 @@ begin
 
   FErrors.Clear;
   PrepareFile(FileName);
-  OpenDestinationTable(True);
+  //OpenDestinationTable(True);
   FillCombosAutoMap;
   UpdateGUI(True);
 end;
@@ -466,17 +413,24 @@ procedure TDataImporterForm.UpdateMappingListBox;
 var
   i: integer;
   MappingCount: integer;
+  lst:TStringList;
 begin
   lstColumnsMapping.Clear;
   // MappingCount will map fields if necessary so we need destination fields
   if FImporter.DestinationFields.Count=0 then
   begin
-    if not(assigned(FDestQuery)) then
-      raise Exception.Create('Cannot update mapping info without valid destination query.');
-    MappingCount := FDestQuery.Fields.Count;
-    for i := 0 to MappingCount - 1 do
-    begin
-      FImporter.DestinationFields.Add(FDestQuery.Fields[i].FieldName);
+
+    try
+      lst := TAsDbUtils.GetColumnNames(FDBInfo,FDestTable);
+
+      MappingCount := lst.Count;
+
+      for i := 0 to MappingCount - 1 do
+      begin
+        FImporter.DestinationFields.Add(lst[i]);
+      end;
+    finally
+      lst.Free;
     end;
   end;
 
@@ -498,21 +452,15 @@ begin
   FErrors.Clear;
 end;
 
-function TDataImporterForm.ShowModal(DbInfo: TDbConnectionInfo;
+function TDataImporterForm.ShowModal(DbInfo: TAsDbConnectionInfo;
   Schema, DestinationTable: string): TModalResult;
 begin
   FSchema := Schema;
   Assert(assigned(DbInfo));
   FImporter := TFileImport.Create;
-  FConn := DbInfo.ToZeosConnection;
   FDestTable := DestinationTable;
-  if not(assigned(FDestQuery)) then
-    FDestQuery := TZQuery.Create(nil);
-  assert(assigned(FDestQuery));
-  FDestQuery.Connection := FConn;
   FDBInfo := DbInfo;
   Result := inherited ShowModal;
-
 end;
 
 end.

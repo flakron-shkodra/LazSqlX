@@ -13,8 +13,8 @@ uses
   Forms, MainFormU, SqlConnBuilderFormU, EditMemoFormU, BlobFieldFormU,
   DesignTableFormU, AboutFormU, EditColumnFormU, EditConstraintsFormU,
   EditIndexFormU, QueryDesignerFormU, ProgressFormU, DatabaseClonerFormU,
-  DataImporterFormU, Utils, SqlGenerator, FtDetector, lazdbexport, zcomponent,
-  TableInfo, DbType, SqlExecThread, QueryDesignerDialogU, QueryDesignerTablesU,
+  DataImporterFormU, Utils, AsSqlGenerator, FtDetector, lazdbexport, zcomponent,
+  AsTableInfo, AsDbType, SqlExecThread, QueryDesignerDialogU, QueryDesignerTablesU,
   QueryDesignerPropertyGridU, DataImporterDialogU;
 
 

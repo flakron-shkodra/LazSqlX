@@ -1,7 +1,11 @@
-//*******************
-//Flakron Shkodra
-//Version 1 (23.10.2014)
-//*******************
+{*******************
+Flakron Shkodra
+  Version 1 (23.10.2014)
+
+  mod 1.1 (31.10.2014)
+    -added LazReport->FrPrintGrid
+    -fix edt.Name as controlName
+******************}
 
 unit AsDbFormUtils;
 
@@ -10,9 +14,10 @@ unit AsDbFormUtils;
 interface
 
 uses
- Classes, SysUtils,Forms,Graphics,Dialogs,Controls,StdCtrls,ExtCtrls,ComCtrls, DbCtrls,DBGrids,Grids, TableInfo,DbType,
+ Classes, SysUtils,Forms,Graphics,Dialogs,Controls,StdCtrls,ExtCtrls,ComCtrls, DbCtrls,DBGrids,Grids, AsTableInfo,AsDbType,
  DB, sqldb, fgl,Spin, EditBtn,Buttons,mssqlconn,{$ifndef win64}oracleconnection,{$endif} IBConnection,
- mysql55conn, mysql51conn, mysql50conn, mysql40conn, mysql41conn, sqlite3conn,ZConnection,ZDataset;
+ mysql55conn, mysql51conn, mysql50conn, mysql40conn, mysql41conn, sqlite3conn,ZConnection,ZDataset,LR_PGrid,
+ CheckLst,LazSqlXResources;
 
 type
 
@@ -28,7 +33,7 @@ type
     FZCon:TZConnection;
     FQuery: TSQLQuery;
     FZQuery:TZQuery;
-    FDBengine:TDatabaseEngine;
+    FDBengine:TAsDatabaseEngineType;
     function GetQueryComponent: TDataSet;
     procedure SetDataSource(AValue: TDataSource);
     procedure SetName(AValue: string);
@@ -46,7 +51,7 @@ type
     property Name:string read FName write SetName;
     property Query:TDataSet read GetQueryComponent;
     property DataSource:TDataSource read FDataSource write SetDataSource;
-    property DbEngine:TDatabaseEngine read FDBengine;
+    property DbEngine:TAsDatabaseEngineType read FDBengine;
     property SqlQuery:string read FSqlQuery write SetSqlQuery;
   end;
 
@@ -174,25 +179,30 @@ type
   TAsDbFormFilter = (dffNone,dffTopRecords,dffCustomFilter);
 
   TAsDbForm = class(TForm)
+   procedure OnFrPrintGridGetValue(const ParName: String; var ParValue: Variant
+    );
   private
    FControlWidth: Integer;
    FControlSpace:Integer;
    FDataGrid: TDBGrid;
    FDataNavigator: TDBNavigator;
    FDataObject: TAsUIDataAcessObject;
-   FDbInfo:TDbConnectionInfo;
+   FDbInfo:TAsDbConnectionInfo;
    FEditControlsBox: TScrollBox;
    FGridNavGroup:TGroupBox;
    FRefDataObjects: TAsUIDataAcessObjects;
    FTableInfo:TTableInfo;
    FCon:TSQLConnector;
    FZCon:TZConnection;
+   FFRPrintGrid:TfrPrintGrid;
    FSchema:string;//used only when AsDbLookupComboEdit (table reference field is clicked for edit '..')
    FSqlQuery:string;
    FEditRowCount:Integer;
    FQuickSearchToolbar:TToolbar;
    FQuickSearchFieldsCmb:TComboBox;//created from MakeQuickSearchToolbar (populated from OpenData)
    FQuickSearchEdit:TEdit;//created from MakeQuickSearchToolbar (used in OnQuickSearchChange)
+   FShowColumnsButton:TToolButton; //created from MakeQuickSearchToolbar (accessed also from OnGridColumnListExit)
+   FColumnsList:TCheckListBox;
    procedure SetControlWidth(AValue: Integer);
    procedure SetDataGrid(AValue: TDBGrid);
    procedure SetDataNavigator(AValue: TDBNavigator);
@@ -203,12 +213,16 @@ type
    procedure OnCleanTlbButton(Sender:Tobject);
    procedure OnQuickSearchChange(Sender:TObject);
    procedure OnDbLookupComboEditClick(Sender:TObject);//assigned when generating edit controls for reference fields
+   procedure OnPrintGridButtonClick(Sender:TObject);
+   procedure OnGridColumsListClick(Sender: TObject; Index: integer);
+   procedure OnGridColumnListExit(Sender: TObject);
+   procedure ShowColumnsButtonClick(Sender:TObject);
    procedure MakeEditControls;
    function MakeQuickSearchToolbar(aOwner:TComponent):TToolbar;
    procedure SetSqlQuery(AValue: string);
-   function GetTopRecordSelect(TopRecords:Integer):string;
+   procedure FillColumnList;
   public
-    constructor Create(aDbInfo:TDbConnectionInfo; aSchema:string; aTableInfo:TTableInfo);
+    constructor Create(aDbInfo:TAsDbConnectionInfo; aSchema:string; aTableInfo:TTableInfo);
     destructor Destroy;override;
     procedure OpenData;
     function ShowModal(FormFilter:TAsDbFormFilter=dffNone):TModalResult;
@@ -230,7 +244,7 @@ implementation
 procedure TAsQueryBuilderForm.OnAddClick(Sender: TObject);
 var
  s:string;
- fi:TFieldInfo;
+ fi:TAsFieldInfo;
 begin
  if Trim(FEdit.Text)<>EmptyStr then
  begin
@@ -697,6 +711,40 @@ begin
  FDataGrid:=AValue;
 end;
 
+procedure TAsDbForm.OnGridColumsListClick(Sender: TObject; Index: integer);
+begin
+ if FColumnsList.ItemIndex>-1 then
+ begin
+   FDataGrid.Columns.Items[FColumnsList.ItemIndex].Visible:= FColumnsList.Checked[FColumnsList.ItemIndex]
+ end;
+end;
+
+procedure TAsDbForm.ShowColumnsButtonClick(Sender: TObject);
+begin
+ FColumnsList.Left:=FDataGrid.Width-FColumnsList.Width-5;
+ FColumnsList.Top:=FGridNavGroup.Top+60;
+ FColumnsList.Height:=FDataGrid.Height;
+ FColumnsList.Visible:=not FColumnsList.Visible;
+
+ if (Sender is TToolButton) then
+ (Sender as TToolButton).Down:=FColumnsList.Visible;
+
+ if FColumnsList.Visible then
+ FColumnsList.SetFocus;
+end;
+
+procedure TAsDbForm.OnGridColumnListExit(Sender: TObject);
+begin
+ FShowColumnsButton.Down:=False;
+ FColumnsList.Visible:=False;
+end;
+
+procedure TAsDbForm.OnFrPrintGridGetValue(const ParName: String;
+ var ParValue: Variant);
+begin
+ if ParName='title' then ParValue:= FTableInfo.Tablename;
+end;
+
 procedure TAsDbForm.SetControlWidth(AValue: Integer);
 begin
  if FControlWidth=AValue then Exit;
@@ -824,7 +872,7 @@ end;
 
 procedure TAsDbForm.OnDbLookupComboEditClick(Sender: TObject);
 var
- tblInfos:TTableInfos;
+ tblInfos:TAsTableInfos;
  frm:TAsDbForm;
  tblName:string;
 begin
@@ -835,7 +883,7 @@ begin
   if tblName=EmptyStr then
   Exit;
 
-  tblInfos := TTableInfos.Create(Self,FDbInfo);
+  tblInfos := TAsTableInfos.Create(Self,FDbInfo);
   try
     tblInfos.AddTable(FSchema,tblName);
     frm := TAsDbForm.Create(FDbInfo,FSchema,tblInfos[0]);
@@ -851,6 +899,11 @@ begin
     tblInfos.Free;
   end;
   FRefDataObjects.Refresh;
+end;
+
+procedure TAsDbForm.OnPrintGridButtonClick(Sender: TObject);
+begin
+ FFRPrintGrid.PreviewReport;
 end;
 
 procedure TAsDbForm.MakeEditControls;
@@ -906,15 +959,15 @@ begin
      ftDate,ftDateTime:
         begin
          dt := TAsDbDateEdit.Create(FEditControlsBox);
+         dt.Name:= 'dt'+controlName;
          dt.DataField:= fieldName;
          dt.DataSource := FDataObject.DataSource;
-         dt.Name:= 'dt'+controlName;
          lastControl := dt;
         end;
      ftMemo,ftWideMemo:
         begin
         mem := TDBMemo.Create(FEditControlsBox);
-        mem.Name:='mem'+fieldName;
+        mem.Name:='mem'+controlName;
         mem.DataSource := FDataObject.DataSource;
         mem.DataField:= FTableInfo.AllFields[I].FieldName;
         mem.Height:=23;
@@ -923,16 +976,16 @@ begin
      ftBlob,ftOraBlob:
         begin
            be := TAsDbBlobEdit.Create(FEditControlsBox);
+           be.Name:='be'+controlName;
            be.DataField:=fieldName;
            be.DataSource:=FDataObject.DataSource;
-           be.Name:='be'+controlName;
            be.Caption:='';
            lastControl := be;
         end;
      else
        begin
         edt := TDBEdit.Create(FEditControlsBox);
-        edt.Name:='edt'+fieldName;
+        edt.Name:='edt'+controlName;
         edt.DataSource := FDataObject.DataSource;
         edt.DataField:= FTableInfo.AllFields[I].FieldName;
         lastControl := edt;
@@ -947,10 +1000,10 @@ begin
         cmbLookup.Name:='cmb'+controlName;
         cmbLookup.OnEditButtonClick:=@OnDbLookupComboEditClick;
         ik :=FTableInfo.ImportedKeys.GetByName(fieldName);
-        if FDbInfo.DbEngine=deSqlDB then
+        if FDbInfo.DbEngineType=deSqlDB then
           dao := TAsUIDataAcessObject.Create(FCon,'select * from '+ik.ForeignTableName)
         else
-         if  FDbInfo.DbEngine=deZeos then
+         if  FDbInfo.DbEngineType=deZeos then
           dao := TAsUIDataAcessObject.Create(FZCon,'select * from '+ik.ForeignTableName);
 
 
@@ -1001,11 +1054,12 @@ function TAsDbForm.MakeQuickSearchToolbar(aOwner: TComponent): TToolbar;
 var
  tlb:TToolBar;
  lbl:TLabel;
- btnClean:TToolButton;
+ btnClean,btnPrint:TToolButton;
  sep1:TToolButton;
 begin
  tlb := TToolBar.Create(aOwner);
  tlb.ShowCaptions:=True;
+ tlb.ShowHint:=True;
 
  lbl := TLabel.Create(tlb);
  lbl.AutoSize:=False;
@@ -1031,7 +1085,29 @@ begin
  btnClean := TToolButton.Create(tlb);
  btnClean.Parent := tlb;
  btnClean.Caption:='x';
+ btnClean.Hint:='Clear search box';
  btnClean.OnClick:=@OnCleanTlbButton;
+
+
+ sep1 := TToolButton.Create(tlb);
+ sep1.Style:=tbsSeparator;
+ sep1.Parent:=tlb;
+
+ btnPrint := TToolButton.Create(tlb);
+ btnPrint.Parent := tlb;
+ btnPrint.Caption:='Print';
+ btnPrint.Hint:='Prints data grid';
+ btnPrint.OnClick:=@OnPrintGridButtonClick;
+
+ sep1 := TToolButton.Create(tlb);
+ sep1.Style:=tbsSeparator;
+ sep1.Parent:=tlb;
+
+ FShowColumnsButton := TToolButton.Create(tlb);
+ FShowColumnsButton.Parent := tlb;
+ FShowColumnsButton.Caption:='Columns';
+ FShowColumnsButton.Hint:='Shows/Hides grid columns (for printing)';
+ FShowColumnsButton.OnClick:=@ShowColumnsButtonClick;
 
  Result := tlb;
 
@@ -1043,18 +1119,20 @@ begin
  FSqlQuery:=AValue;
 end;
 
-function TAsDbForm.GetTopRecordSelect(TopRecords: Integer): string;
+procedure TAsDbForm.FillColumnList;
+var
+ I: Integer;
 begin
- case FDbInfo.DatabaseType of
-  dtMsSql:Result :='SELECT TOP '+IntToStr(TopRecords)+' * FROM ['+FTableInfo.Tablename+']';
-  dtOracle:Result := 'SELECT * FROM "'+FTableInfo.Tablename+'" WHERE ROWNUM <= '+IntToStr(TopRecords);
-  dtMySql,dtSQLite: Result:='SELECT * FROM '+FTableInfo.Tablename+' LIMIT '+IntToStr(TopRecords);
-  dtFirebirdd: Result:='SELECT FIRST '+IntToStr(TopRecords)+' * FROM '+FTableInfo.Tablename;
+ FColumnsList.Clear;
+ for I:=0 to FTableInfo.AllFields.Count-1 do
+ begin
+   FColumnsList.Items.Add(FTableInfo.AllFields[I].FieldName);
  end;
+ FColumnsList.CheckAll(cbChecked);
 end;
 
 
-constructor TAsDbForm.Create(aDbInfo: TDbConnectionInfo; aSchema: string;
+constructor TAsDbForm.Create(aDbInfo: TAsDbConnectionInfo; aSchema: string;
  aTableInfo: TTableInfo);
 var
   grp:TGroupBox;
@@ -1077,12 +1155,12 @@ begin
  FTableInfo := aTableInfo;
  FSqlQuery:= 'Select * from '+FTableInfo.Tablename;
 
- if FDbInfo.DbEngine=deSqlDB then
+ if FDbInfo.DbEngineType=deSqlDB then
  begin
   FCon := FDbInfo.ToSqlConnector;
   FDataObject := TAsUIDataAcessObject.Create(FCon,FSqlQuery);
  end else
- if FDbInfo.DbEngine=deZeos then
+ if FDbInfo.DbEngineType=deZeos then
  begin
   FZCon := FDbInfo.ToZeosConnection;
   FDataObject := TAsUIDataAcessObject.Create(FZCon,FSqlQuery);
@@ -1126,6 +1204,26 @@ begin
  FDataGrid.Options:=FDataGrid.Options+[dgRowSelect];
  FDataGrid.TitleStyle:=tsNative;
  FDataGrid.OnDrawColumnCell:=@OnDBGridDrawColumnCell;
+
+ FFRPrintGrid := TfrPrintGrid.Create(Self);
+ FFRPrintGrid.DBGrid := FDataGrid;
+ FFRPrintGrid.Caption:= FTableInfo.Tablename;
+ FFRPrintGrid.ShowCaption:=True;
+ FFRPrintGrid.ShowProgress:=True;
+ FFRPrintGrid.OnGetValue:=@OnFrPrintGridGetValue;
+ FFRPrintGrid.Font.Size:=10;
+ FFRPrintGrid.TitleFont.Size:=10;
+ if TLazSqlXResources.ReportTemplatePath<>EmptyStr then
+ FFRPrintGrid.Template:= TLazSqlXResources.ReportTemplatePath;
+
+
+ FColumnsList := TCheckListBox.Create(Self);
+ FColumnsList.Parent := Self;
+ FColumnsList.Visible:= False;
+ FColumnsList.OnItemClick:=@OnGridColumsListClick;
+ FColumnsList.OnExit:=@OnGridColumnListExit;
+ FColumnsList.Width:=200;
+ FillColumnList;
 end;
 
 destructor TAsDbForm.Destroy;
@@ -1154,8 +1252,7 @@ begin
 
     if FQuickSearchFieldsCmb <> nil then
     try
-      lst := TStringList.Create;
-      TDbUtils.GetColumnNames(FDbInfo,FTableInfo.Tablename,lst);
+      lst := TAsDbUtils.GetColumnNames(FDbInfo,FTableInfo.Tablename);
       FQuickSearchFieldsCmb.Clear;
       FQuickSearchFieldsCmb.Items.AddStrings(lst);
       if FQuickSearchFieldsCmb.Items.Count>0 then
@@ -1228,7 +1325,7 @@ begin
         if f.ShowModal = mrOK then
         begin
           OpenForm:= True;
-          FSqlQuery:=GetTopRecordSelect(se.Value);
+          FSqlQuery:= TAsDbUtils.GetTopRecordsSelect(FDbInfo.DbType,FTableInfo.Tablename, se.Value);
         end;
        finally
          f.Free;

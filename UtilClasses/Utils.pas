@@ -11,7 +11,7 @@ unit Utils;
 interface
 
 uses SysUtils, Classes, Forms, Controls, StdCtrls, ExtCtrls, ComCtrls,
-  Dialogs, DbType, StrUtils, DB, ZDataset, RegExpr;
+  Dialogs, StrUtils, DB, ZDataset;
 
 type
 
@@ -34,13 +34,6 @@ type
   end;
 
 
-  { TRegExUtils }
-
-  TRegExUtils = class
-  public
-    {Exectues a regex in the given string and returns matches in stringList, if output var is NIL, the method initializes it}
-    class procedure RunRegex(InputStr: string; RegEx: string; var Output: TStringList);
-  end;
 
 procedure SetStringFieldSizes(DS: TDataSet);
 
@@ -71,33 +64,8 @@ begin
 
 end;
 
-{ TRegExUtils }
+{ TAsRegExUtils }
 
-class procedure TRegExUtils.RunRegex(InputStr: string; RegEx: string;
-  var Output: TStringList);
-var
-  r: TRegExpr;
-begin
-
-  if Output = nil then
-    Output := TStringList.Create;
-
-  try
-
-    r := TRegExpr.Create;
-    r.InputString := InputStr;
-    r.Expression := RegEx;
-    r.Compile;
-    if r.Exec(InputStr) then
-      repeat
-        Output.Add(r.Match[0]);
-      until not r.ExecNext;
-
-  finally
-    r.Free;
-  end;
-
-end;
 
 class procedure TControlUtils.EnableControls(control: TWinControl; Enable: boolean);
 var

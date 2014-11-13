@@ -11,8 +11,8 @@ interface
 
 uses
   SysUtils, Variants, Classes, Graphics, Controls, Forms, Dialogs, ComCtrls,
-  StdCtrls, TableInfo, SqlGenerator, ExtCtrls, Buttons, ActnList,
-  Menus, ZConnection, ZDataset, DB, strutils, DbType;
+  StdCtrls, AsTableInfo, AsSqlGenerator, ExtCtrls, Buttons, ActnList,
+  Menus, DB, strutils, AsDbType;
 
 type
 
@@ -82,15 +82,15 @@ type
     FSchema: string;
     FTablename: string;
     FWorkingTableInfo: TTableInfo;
-    FDbInfo:TDbConnectionInfo;
-    FTableInfos:TTableInfos;
+    FDbInfo:TAsDbConnectionInfo;
+    FTableInfos:TAsTableInfos;
     function GetCreateTableSQL: string;
     procedure SetCreateNew(AValue: boolean);
     procedure ExecuteQuery(Query: string);
   public
 
     procedure PopulateInfo;
-    function Showmodal(DbInfo:TDbConnectionInfo; Schema: string; Tablename: string): integer;
+    function Showmodal(DbInfo:TAsDbConnectionInfo; Schema: string; Tablename: string): integer;
   end;
 
 const
@@ -126,8 +126,8 @@ var
   cn: string;
   dt: string;
   i: Integer;
-  fi:TFieldInfo;
-  pk: TFieldInfo;
+  fi:TAsFieldInfo;
+  pk: TAsFieldInfo;
 
 begin
 
@@ -138,7 +138,7 @@ begin
     EditColumnForm.txtLength.Value:= StrToint(lsvFields.Selected.SubItems[1]);
     EditColumnForm.txtPrecision.Value:=0;
     dt := lsvFields.Selected.SubItems[0];
-    EditColumnForm.DbType:=FDbInfo.DatabaseType;
+    EditColumnForm.DbType:=FDbInfo.DbType;
     EditColumnForm.FillDataTypes;
     i:=EditColumnForm.cmbDataTypes.Items.IndexOf(dt);
     EditColumnForm.cmbDataTypes.ItemIndex:=i;
@@ -151,11 +151,11 @@ begin
     end;
 
 
-    if (EditColumnForm.ShowModal(FDbInfo.DatabaseType) =
+    if (EditColumnForm.ShowModal(FDbInfo.DbType) =
       mrOk) and (EditColumnForm.Validate) then
     begin
       cn := EditColumnForm.ColumnName;
-      case FDbInfo.DatabaseType of
+      case FDbInfo.DbType of
         dtMsSql: cn := ' ALTER COLUMN ' + cn;
         dtOracle: cn := ' MODIFY ' + cn;
         dtMySql: cn := ' MODIFY ' + cn;
@@ -224,7 +224,7 @@ var
   I: integer;
   commaFields: string;
   backTable: string;
-  fi: TFieldInfo;
+  fi: TAsFieldInfo;
   sql1: String;
   sql2: String;
   sql3: String;
@@ -255,7 +255,7 @@ begin
        FWorkingTableInfo.AllFields.Delete(fi.Index);
 
 
-      if FDbInfo.DatabaseType = dtSQLite then
+      if FDbInfo.DbType = dtSQLite then
       begin
         backTable := FTablename + '_backup';
         commaFields := '';
@@ -284,7 +284,7 @@ begin
           sql6:= ' DROP TABLE ' +backTable + ';';
 
       end
-      else if FDbInfo.DatabaseType=dtFirebirdd then
+      else if FDbInfo.DbType=dtFirebirdd then
       begin
         sql := 'ALTER TABLE ' + FTablename + ' DROP  ' + cn;
       end else
@@ -295,7 +295,7 @@ begin
       try
         if not FCreateNew then
         begin
-          if FDbInfo.DatabaseType<>dtSQLite then
+          if FDbInfo.DbType<>dtSQLite then
           begin
           ExecuteQuery(sql);
           end
@@ -338,7 +338,7 @@ begin
   if lsvDependencies.Selected = nil then
   Exit;
 
-  if FDbInfo.DatabaseType = dtMySql then
+  if FDbInfo.DbType = dtMySql then
   begin
     sql := ' ALTER TABLE '+FTablename +
           ' DROP FOREIGN KEY '+lsvDependencies.Selected.Caption;
@@ -371,7 +371,7 @@ end;
 procedure TDesignTableForm.actDropIndexExecute(Sender: TObject);
 var
   sql:string;
-  ii:TIndexInfo;
+  ii:TAsIndexInfo;
 begin
   if lsvIndexes.Selected=nil then
   exit;
@@ -379,7 +379,7 @@ begin
   if MessageDlg('Are you sure you want to drop this index?',mtConfirmation,mbYesNo,0)=mrNo then
   Exit;
 
-  case FDbInfo.DatabaseType of
+  case FDbInfo.DbType of
     dtMsSql:
       begin
         sql := 'DROP INDEX '+FTablename+'.'+lsvIndexes.Selected.Caption;
@@ -438,7 +438,7 @@ end;
 procedure TDesignTableForm.actCreateIndexExecute(Sender: TObject);
 var
   sql:string;
-  ii:TIndexInfo;
+  ii:TAsIndexInfo;
 begin
   if EditIndexForm.ShowModal(FWorkingTableInfo)=mrOK then
   begin
@@ -453,7 +453,7 @@ begin
       sql := 'CREATE ';
     end;
 
-    if FDbInfo.DatabaseType<>dtFirebirdd then
+    if FDbInfo.DbType<>dtFirebirdd then
     begin
       sql :=sql+' INDEX '+EditIndexForm.IndexName + ' ON '+FTablename +' ('+EditIndexForm.Column+' '+EditIndexForm.SortOrder+')';
     end else
@@ -474,7 +474,6 @@ begin
       ii.Column_Name:=EditIndexForm.Column;
       ii.ASC_OR_DESC:=EditIndexForm.SortOrder;
       ii.INDEX_Name:= EditIndexForm.IndexName;
-      ii.Is_Unique:= EditIndexForm.Unique;
     end;
 
     PopulateInfo;
@@ -488,30 +487,30 @@ var
   sql: string;
   dt: string;
   I: integer;
-  fi,pk:TFieldInfo;
+  fi,pk:TAsFieldInfo;
 begin
 
   EditColumnForm.ClearInputs;
-  EditColumnForm.DbType := FDbInfo.DatabaseType;
+  EditColumnForm.DbType := FDbInfo.DbType;
   EditColumnForm.FillDataTypesOnShow:=True;
 
   //sqlte only on primary key, so check if there's already one
-  if FDbInfo.DatabaseType = dtSQLite then
+  if FDbInfo.DbType = dtSQLite then
   begin
     EditColumnForm.chkPrimaryKey.Visible := not FWorkingTableInfo.HasPrimaryKeys;
   end;
 
-  if (EditColumnForm.ShowModal(FDbInfo.DatabaseType) =
+  if (EditColumnForm.ShowModal(FDbInfo.DbType) =
     mrOk) and (EditColumnForm.Validate) then
   begin
     cname := EditColumnForm.ColumnName;
 
-    if FDbInfo.DatabaseType=dtSQLite then
+    if FDbInfo.DbType=dtSQLite then
       cname := ' COLUMN ' + cname;
 
     sql := ' ALTER TABLE ' + FTablename + ' ' + ' ADD ';
 
-    if FDbInfo.DatabaseType=dtOracle then
+    if FDbInfo.DbType=dtOracle then
     sql := sql +' ( ';
 
     sql := sql + cname +' ' + EditColumnForm.DataType;
@@ -533,7 +532,7 @@ begin
         IntToStr(EditColumnForm.Precision) + ')';
     end;
 
-    if FDbInfo.DatabaseType=dtOracle then
+    if FDbInfo.DbType=dtOracle then
     sql := sql +' ) ';
 
 
@@ -588,7 +587,7 @@ begin
   using desc index ix_people_country
 
  }
-  if EditConstraintForm.ShowModal(MainForm.ZCon,FSchema,FWorkingTableInfo) = mrOK then
+  if EditConstraintForm.ShowModal(FDbInfo,FSchema,FWorkingTableInfo) = mrOK then
   begin
 
     if trim(EditConstraintForm.LocalColumn) = EmptyStr then
@@ -596,11 +595,9 @@ begin
 
     sql := ' ALTER TABLE ' +FTablename;
 
-
-
     sql := sql + ' ADD ';
 
-    if FDbInfo.DatabaseType=dtFirebirdd then
+    if FDbInfo.DbType=dtFirebirdd then
     sql := sql +' CONSTRAINT ' +' fk_'+EditConstraintForm.LocalColumn + '_'+ EditConstraintForm.ReferencedTable;
 
     sql := sql +
@@ -635,9 +632,9 @@ begin
   btnApply.Visible := FCreateNew;
   pgcMain.ActivePageIndex := 0;
 
-  tabDependencies.Visible:= not (FDbInfo.DatabaseType = dtSQLite);
-  tabIndexes.Visible:= not (FDbInfo.DatabaseType = dtSQLite);
-  tabTriggers.Visible:= not (FDbInfo.DatabaseType = dtSQLite);
+  tabDependencies.Visible:= not (FDbInfo.DbType = dtSQLite);
+  tabIndexes.Visible:= not (FDbInfo.DbType = dtSQLite);
+  tabTriggers.Visible:= not (FDbInfo.DbType = dtSQLite);
 
   tabIndexes.Visible:=not FCreateNew;
 
@@ -671,7 +668,7 @@ begin
       if FWorkingTableInfo.AllFields[I].IsIdentity then
       begin
 
-        case FDbInfo.DatabaseType of
+        case FDbInfo.DbType of
           dtMsSql:sql := sql + ' IDENTITY ';
           dtOracle:
             begin
@@ -696,13 +693,13 @@ begin
 
     if FWorkingTableInfo.HasPrimaryKeys then
     begin
-      if FDbInfo.DatabaseType in [dtSQLite,dtOracle,dtMySql] then
+      if FDbInfo.DbType in [dtSQLite,dtOracle,dtMySql] then
       begin
         sql := sql + ',';
 
       end;
 
-      if FDbInfo.DatabaseType in [dtOracle,dtMySql] then
+      if FDbInfo.DbType in [dtOracle,dtMySql] then
       sql := sql +' CONSTRAINT '+FTablename+'_PK ';
 
       sql := sql + ' PRIMARY KEY (';
@@ -712,7 +709,7 @@ begin
       begin
         sql := sql + FWorkingTableInfo.PrimaryKeys[I].FieldName + LoopSeperator[integer(I < FWorkingTableInfo.PrimaryKeys.Count - 1)];
 
-        if FDbInfo.DatabaseType = dtSQLite then
+        if FDbInfo.DbType = dtSQLite then
         begin
           sql := sql + ' ASC';
           break;
@@ -725,7 +722,7 @@ begin
 
     for I:=0 to FWorkingTableInfo.ImportedKeys.Count-1 do
       begin
-         if FDbInfo.DatabaseType in [dtSQLite,dtOracle,dtMySql] then
+         if FDbInfo.DbType in [dtSQLite,dtOracle,dtMySql] then
          begin
            sql := sql + ',';
          end;
@@ -737,7 +734,7 @@ begin
 
     sql := sql + ')';
 
-    if FDbInfo.DatabaseType = dtMySql then
+    if FDbInfo.DbType = dtMySql then
     sql := sql +';';
 
     Result := sql;
@@ -754,7 +751,7 @@ end;
 
 procedure TDesignTableForm.ExecuteQuery(Query: string);
 begin
-  TDbUtils.ExecuteQuery(Query,FDbInfo);
+  TAsDbUtils.ExecuteQuery(Query,FDbInfo);
 end;
 
 procedure TDesignTableForm.PopulateInfo;
@@ -766,7 +763,6 @@ begin
     if not FCreateNew then
     begin
       FTableInfos.Clear;
-      FTableInfos.Reconnect;
       FWorkingTableInfo := FTableInfos.Add(FSchema, FTablename);
     end;
 
@@ -827,8 +823,7 @@ begin
       with lsvDependencies.Items.Add do
       begin
         ImageIndex := 1;
-        Caption := FWorkingTableInfo.ImportedKeys[I].ConstraintName;
-        SubItems.Add(FWorkingTableInfo.ImportedKeys[I].ColumnName);
+        Caption := FWorkingTableInfo.ImportedKeys[I].ColumnName;
         SubItems.Add(FWorkingTableInfo.ImportedKeys[I].ForeignTableName);
         SubItems.Add(FWorkingTableInfo.ImportedKeys[I].ForeignColumnName);
 
@@ -841,11 +836,12 @@ begin
     begin
       with lsvTriggers.Items.Add do
       begin
+        ImageIndex:=12;
         Caption:=FWorkingTableInfo.Triggers[I].Name;
-        SubItems.Add(FWorkingTableInfo.Triggers[I].Relation);
-        SubItems.Add(IntToStr(FWorkingTableInfo.Triggers[I].TriggerType));
-        SubItems.Add(BoolToStr(FWorkingTableInfo.Triggers[I].Inactive));
-        SubItems.Add(FWorkingTableInfo.Triggers[I].TriggerSource);
+        SubItems.Add(FWorkingTableInfo.Triggers[I].Owner);
+        SubItems.Add(FWorkingTableInfo.Triggers[I].Event);
+        SubItems.Add(FWorkingTableInfo.Triggers[I].Body);
+        SubItems.Add(FWorkingTableInfo.Triggers[I].Status);
       end;
     end;
 
@@ -859,11 +855,8 @@ begin
       begin
         ImageIndex:=13;
         Caption:=FWorkingTableInfo.Indexes[I].INDEX_Name;
-        SubItems.Add(FWorkingTableInfo.Indexes[I].INDEX_Qualifier);
         SubItems.Add(FWorkingTableInfo.Indexes[I].Column_Name);
         SubItems.Add(FWorkingTableInfo.Indexes[I].ASC_OR_DESC);
-        SubItems.Add(IntToStr(FWorkingTableInfo.Indexes[I].Ordinal_Position));
-        SubItems.Add(FWorkingTableInfo.Indexes[I].Filter_Condition);
       end;
     end;
 
@@ -882,11 +875,11 @@ begin
 
 end;
 
-function TDesignTableForm.Showmodal(DbInfo: TDbConnectionInfo; Schema: string;
+function TDesignTableForm.Showmodal(DbInfo: TAsDbConnectionInfo; Schema: string;
  Tablename: string): integer;
 begin
   FDbInfo := DbInfo;
-  FTableInfos := TTableInfos.Create(nil,FDbInfo);
+  FTableInfos := TAsTableInfos.Create(nil,FDbInfo);
 
   if Tablename = EmptyStr then
   begin
@@ -908,7 +901,7 @@ begin
   end;
 
   FSchema := Schema;
-  actEditColumn.Visible := FDbInfo.DatabaseType<> dtSQLite;
+  actEditColumn.Visible := FDbInfo.DbType<> dtSQLite;
 
   if not FCreateNew then
     PopulateInfo;

@@ -11,7 +11,7 @@ unit SqlExecThread;
 interface
 
 uses
-  Classes, SysUtils, DB, sqldb, mssqlconn, SQLDBLaz, DbType, strutils,ZDataset;
+  Classes, SysUtils, DB, sqldb, mssqlconn, SQLDBLaz, AsDbType, strutils,ZDataset;
 
 type
 
@@ -183,7 +183,9 @@ begin
       (AnsiContainsText(Lowercase(FCommand), 'delete from ')) or
       (AnsiContainsText(LowerCase(FCommand), 'alter ')) or
       (AnsiContainsText(LowerCase(FCommand), 'drop ')) or
-      (AnsiContainsText(LowerCase(FCommand), 'create ')) ) then FIsSelect:=False;
+      (AnsiContainsText(LowerCase(FCommand), 'create '))
+      ) then FIsSelect:=False;
+
 
     t1 := Time;
 

@@ -12,8 +12,7 @@ interface
 
 uses
   Classes, SysUtils, FileUtil, Forms, Controls, Graphics, Dialogs, StdCtrls,
-  ExtCtrls, Buttons, Spin, types, LCLType, ComCtrls, TableInfo, DbType,
-  ZConnection,strutils;
+  ExtCtrls, Buttons, Spin, types, LCLType, ComCtrls,AsTableInfo, AsDbType,strutils;
 
 type
 
@@ -64,13 +63,13 @@ type
     procedure FormDestroy(Sender: TObject);
     procedure FormShow(Sender: TObject);
   private
-    FTableInfos: TTableInfos;
-    FDbType: TDatabaseType;
+    FTableInfos: TAsTableInfos;
+    FDBInfo: TAsDbConnectionInfo;
     procedure WriteLog(Msg:string; LogType:TLogType);
     { private declarations }
   public
     { public declarations }
-    function ShowModal(Infos: TTableInfos): TModalResult;
+    function ShowModal(dbInfo:TAsDbConnectionInfo; Infos: TAsTableInfos): TModalResult;
   end;
 
 var
@@ -193,8 +192,6 @@ begin
     end;
   end;
 
-  FDbType :=TDbUtils.DatabaseTypeFromString(cmbDatabaseType.Text);
-
 end;
 
 procedure TDatabaseClonerForm.btnCancelClick(Sender: TObject);
@@ -212,57 +209,27 @@ end;
 
 procedure TDatabaseClonerForm.cmbDatabaseEnter(Sender: TObject);
 var
-  DbConnection: TZConnection;
+  lst:TStringList;
 begin
   try
     try
-      FDbType:=TDatabaseType(cmbDatabaseType.ItemIndex);
-      DbConnection := TZConnection.Create(nil);
-      DbConnection.HostName := cmbServerName.Text;
-      DbConnection.User := txtUserName.Text;
-      DbConnection.Password := txtPassword.Text;
-      DbConnection.Catalog := cmbDatabase.Text;
-      DBConnection.LoginPrompt := False;
-      DbConnection.Port := txtPort.Value;
-      DbConnection.Protocol :=
-       TDbUtils.DatabaseTypeAsString(TDatabaseType(cmbDatabaseType.ItemIndex), True);
-
-
-      case FDbType of
-        dtMsSql:
-        begin
-          DbConnection.Connect;
-          DbConnection.GetCatalogNames(cmbDatabase.Items);
-        end;
-
-        dtMySql:
-        begin
-          DbConnection.Connect;
-          DbConnection.GetCatalogNames(cmbDatabase.Items);
-        end;
-
-      end
-    except
-      on e: Exception do
-      begin
-        ShowMessage(e.Message);
-      end;
-
+      lst :=TAsDbUtils.GetCatalogNames(FDBInfo);
+      cmbDatabase.Items.AddStrings(lst);
+    finally
+      lst.Free;
     end;
-  finally
-    DbConnection.Free;
+  except
   end;
-
 end;
 
 procedure TDatabaseClonerForm.btnAcceptClick(Sender: TObject);
 var
   dbc: TAsDatabaseCloner;
   I: integer;
-  wt: TStringWrapType;
+  wt: TAsStringWrapType;
   destDb:string;
   connDb:string;
-  dbi:TDbConnectionInfo;
+  dbi:TAsDbConnectionInfo;
 begin
   try
     pnlMain.Enabled:=False;
@@ -280,7 +247,7 @@ begin
     WriteLog('Starting...',ltInfo);
     WriteLog('',ltInfo);
 
-    if FDbType in [dtSQLite,dtFirebirdd] then
+    if FDBInfo.DbType in [dtSQLite,dtFirebirdd] then
     begin
       connDb:=destDb;
     end else
@@ -294,7 +261,7 @@ begin
       connDb:= cmbDatabase.Items[0];
     end;
 
-    case FDbType of
+    case FDBInfo.DbType of
       dtMsSql: wt := swtBrackets;
       dtOracle: wt := swtQuotes;
       else
@@ -310,12 +277,12 @@ begin
         Exit;
       end;
 
-    dbi:=TDbConnectionInfo.Create;
+    dbi:=TAsDbConnectionInfo.Create;
     dbi.Server:=cmbServerName.Text;
     dbi.Database:=connDb;
     dbi.Username := txtUserName.Text;
     dbi.Password := txtPassword.Text;
-    dbi.DatabaseType := TDatabaseType(cmbDatabaseType.ItemIndex);
+    dbi.DbType := TAsDatabaseType(cmbDatabaseType.ItemIndex);
     dbi.Port := StrToInt(txtPort.Text);
 
     dbc := TAsDatabaseCloner.Create(dbi,txtDestinationDbName.Text);
@@ -449,8 +416,10 @@ begin
   lstLog.ItemIndex:=lstLog.Count-1;
 end;
 
-function TDatabaseClonerForm.ShowModal(Infos: TTableInfos): TModalResult;
+function TDatabaseClonerForm.ShowModal(dbInfo: TAsDbConnectionInfo;
+ Infos: TAsTableInfos): TModalResult;
 begin
+  FDBInfo := dbInfo;
   FTableInfos := Infos;
   Result := inherited ShowModal;
 end;

@@ -13,8 +13,9 @@ interface
 
 uses
   SysUtils, Variants, Classes, Graphics, Controls, Forms, Dialogs, StdCtrls,
-  Buttons, ExtCtrls, Utils, ZConnection, TableInfo, DbType, IBConnection,
-  strutils, types, LCLType, Spin, EditBtn, Menus, IniFiles;
+  Buttons, ExtCtrls, Utils, ZConnection, AsTableInfo, AsDbType,sqldb,mssqlconn,mysql40conn,
+  mysql41conn,mysql50conn,mysql51conn,mysql55conn,mysql56conn, IBConnection,sqlite3conn,
+  {$ifndef win64}oracleconnection,{$endif}  strutils, types, LCLType, Spin, EditBtn, Menus, IniFiles;
 
 type
 
@@ -77,7 +78,7 @@ type
     procedure txtPasswordChange(Sender: TObject);
   private
     conStr: string;
-    FDBInfo: TDbConnectionInfo;
+    FDBInfo: TAsDbConnectionInfo;
     udlFilename: string;
 
     bmpSqlType: TBitmap;
@@ -88,20 +89,21 @@ type
     bmpSqlDBEngine: TBitmap;
     bmpZeosEngine : TBitmap;
 
+    procedure AssignDbInfo;
     procedure FillRecentConnectionListBox;
-    function GetConDatabaseType: TDatabaseType;
+    function GetConDatabaseType: TAsDatabaseType;
     procedure PerformConnection;
     { Private declarations }
   public
     sqlConStr: string;
     OracleDatabaseDescriptor: string;
     RecentConnectionsFilename:string;
-    RecentConnections:TDbConnectionInfos;
-    property ConDatabaseType: TDatabaseType read GetConDatabaseType;
+    RecentConnections:TAsDbConnectionInfos;
+    property ConDatabaseType: TAsDatabaseType read GetConDatabaseType;
     function GetFriendlyConnStr: string;
     procedure SaveRecentConnToFile;
     procedure LoadRecentConnFromFile;
-    property DbInfo:TDbConnectionInfo read FDBInfo;
+    property DbInfo:TAsDbConnectionInfo read FDBInfo;
   end;
 
 type
@@ -232,46 +234,18 @@ end;
 
 procedure TSqlConnBuilderForm.cmbDatabaseEnter(Sender: TObject);
 var
-   DbConnection:TZConnection;
+  lst:TStringList;
 begin
- try
+  try
+    AssignDbInfo;
     try
-        DbConnection := TZConnection.Create(nil);
-        DbConnection.HostName := cmbServerName.Text;
-        DbConnection.User := txtUserName.Text;
-        DbConnection.Password := txtPassword.Text;
-        DbConnection.Catalog := cmbDatabase.Text;
-        DBConnection.LoginPrompt := False;
-        DbConnection.Port := txtPort.Value;
-        DbConnection.Protocol:= TDbUtils.DatabaseTypeAsString(TDatabaseType(cmbDatabaseType.ItemIndex),True);
-
-
-       case ConDatabaseType of
-         dtMsSql:
-         begin
-              //DataBasesOnServer(cmbDatabase.Items, cmbServerName.Text, txtUserName.Text,
-              //txtPassword.Text);
-            DbConnection.Connect;
-            DbConnection.GetCatalogNames(cmbDatabase.Items);
-         end;
-
-         dtMySql:
-         begin
-           DbConnection.Connect;
-           DbConnection.GetCatalogNames(cmbDatabase.Items);
-         end;
-
-       end
-    except on e:Exception do
-      begin
-        ShowMessage(e.Message);
-      end;
-
+      lst := TAsDbUtils.GetCatalogNames(FDBInfo);
+      cmbDatabase.Items.AddStrings(lst);
+    finally
+      lst.Free;
     end;
-  finally
-    DbConnection.Free;
+  except
   end;
-
 end;
 
 procedure TSqlConnBuilderForm.lblExpanderClick(Sender: TObject);
@@ -298,13 +272,13 @@ end;
 
 procedure TSqlConnBuilderForm.lstRecentConnectionsClick(Sender: TObject);
 var
-  c: TDbConnectionInfo;
+  c: TAsDbConnectionInfo;
 begin
   if lstRecentConnections.ItemIndex>-1 then
   begin
     try
       c:=RecentConnections[lstRecentConnections.ItemIndex];
-      cmbDatabaseType.ItemIndex:=Integer(c.DatabaseType);
+      cmbDatabaseType.ItemIndex:=Integer(c.DbType);
       cmbDatabaseTypeChange(nil);
       cmbServerName.Text:=c.Server;
       cmbDatabase.Text:=c.Database;
@@ -327,7 +301,7 @@ procedure TSqlConnBuilderForm.lstRecentConnectionsDrawItem(
 var
   c: TListBox;
   strDbType: string;
-  aDbtype: TDatabaseType;
+  aDbtype: TAsDatabaseType;
 begin
   c := (Control as TListBox);
 
@@ -362,7 +336,7 @@ begin
 
     strDbType := TAsStringUtils.SplitString(c.Items[Index],':')[0];
 
-    aDbType := TDbUtils.DatabaseTypeFromString(strDbType);
+    aDbType := TAsDbUtils.DatabaseTypeFromString(strDbType);
 
     case aDbtype of
       dtMsSql: Draw(ARect.Left, ARect.Top,bmpSqlType);
@@ -399,90 +373,78 @@ begin
   end;
 end;
 
-function TSqlConnBuilderForm.GetConDatabaseType: TDatabaseType;
+function TSqlConnBuilderForm.GetConDatabaseType: TAsDatabaseType;
 begin
-  Result := TDatabaseType(cmbDatabaseType.ItemIndex);
+  Result := TAsDatabaseType(cmbDatabaseType.ItemIndex);
 end;
 
 procedure TSqlConnBuilderForm.PerformConnection;
 var
-  DbConnection: TZConnection;
+  zcon: TZConnection;
+  sqlcon:TSqlConnector;
   i: integer;
-  wt:TStringWrapType;
+  wt:TAsStringWrapType;
   s: TCaption;
+  LastError:string;
 begin
   if (txtPort.Visible) and
     (not TryStrToInt(txtPort.Text, i)) then
   begin
     ShowMessage('Port must be a number');
   end;
+  LastError := EmptyStr;
+  AssignDbInfo;
 
-  DbInfo.DatabaseType:=TDatabaseType(cmbDatabaseType.ItemIndex);
-  DbInfo.Server:=cmbServerName.Text;
-  DbInfo.Database:=cmbDatabase.Text;
-  DbInfo.Username:=txtUserName.Text;
-  DbInfo.Password:=txtPassword.Text;
-  DbInfo.Port:=txtPort.Value;
-  DbInfo.DbEngine:=TDatabaseEngine(cmbDbEngine.ItemIndex);
-
-  DbConnection := TZConnection.Create(nil);
-  try
-    try
-      DbConnection.Protocol := LowerCase(cmbDatabaseType.Text);
-
-      if LowerCase(cmbDatabaseType.Text) <> 'sqlite' then
-      begin
-        DbConnection.HostName := cmbServerName.Text;
-        DbConnection.User := txtUserName.Text;
-        DbConnection.Password := txtPassword.Text;
-
-        case DbInfo.DatabaseType of
-          dtMsSql:wt:=swtBrackets;
-          dtOracle:wt:=swtQuotes;
-          else
-          wt := swtNone;
+  case FDBInfo.DbEngineType of
+    deSqlDB:
+    begin
+      try
+        sqlcon := FDBInfo.ToSqlConnector;
+        try
+        sqlcon.Open;
+        except on E:Exception do
+          begin
+           LastError:=E.Message;
+          end;
         end;
 
-        DbConnection.Catalog := TAsStringUtils.WrapString(cmbDatabase.Text,wt);
-
-        DBConnection.LoginPrompt := False;
-        DbConnection.Port := i;
+      finally
+        sqlcon.Free;
       end;
-      if (LowerCase(cmbDatabaseType.Text) = 'oracle') or
-        (LowerCase(cmbDatabaseType.Text) = 'oracle-9i') then
-      begin
-        OracleDatabaseDescriptor := TDbUtils.GetOracleDescriptor(DbInfo);
-        DbConnection.Database := OracleDatabaseDescriptor;
-      end
-      else
-      begin
-        if (LowerCase(cmbDatabaseType.Items[cmbDatabaseType.ItemIndex])='mssql') then
-          DbConnection.Database := TAsStringUtils.WrapString(cmbDatabase.Text,TStringWrapType.swtBrackets)
-        else
-          DbConnection.Database :=cmbDatabase.Text;
-      end;
-      DBConnection.Connect;
-      DbConnection.Disconnect;
-
-      if not RecentConnections.Exists(dbInfo) then
-        RecentConnections.Add(dbInfo);
-
-      if RecentConnections.Count>9 then
-        RecentConnections.Delete(0);
-
-      SaveRecentConnToFile;
-      // Close form and pass on success:
-      Self.ModalResult := mrOK;
-    except
-      on e: Exception do
-      begin
-        // Close form and pass on failure
-        Self.ModalResult := mrCancel;
-        ShowMessage('Invalid ConnectionString' + LineEnding + e.Message);
-      end
     end;
-  finally
-    DbConnection.Free;
+    deZeos:
+    begin
+     try
+      zcon := FDBInfo.ToZeosConnection;
+      try
+      zcon.Connect;
+      except on E:Exception do
+        begin
+          LastError:=E.Message;
+        end;
+      end;
+     finally
+       zcon.Free;
+     end;
+    end;
+  end;
+
+  if not RecentConnections.Exists(FDBInfo) then
+    RecentConnections.Add(FDBInfo);
+
+  if RecentConnections.Count>9 then
+    RecentConnections.Delete(0);
+
+  SaveRecentConnToFile;
+  // Close form and pass on success:
+  if LastError=EmptyStr then
+  begin
+   Self.ModalResult := mrOK;
+  end else
+  begin
+     // Close form and pass on failure
+     Self.ModalResult := mrCancel;
+     ShowMessage('Invalid ConnectionString' + LineEnding + LastError);
   end;
 end;
 
@@ -495,16 +457,26 @@ begin
   begin
     lstRecentConnections.Items.Add
       (
-      TDbUtils.DatabaseTypeAsString(RecentConnections[I].DatabaseType, true)+':'+
+      TAsDbUtils.DatabaseTypeAsString(RecentConnections[I].DbType, true)+':'+
       RecentConnections[I].Server+'\'+
       RecentConnections[I].Database
       );
   end;
 end;
 
+procedure TSqlConnBuilderForm.AssignDbInfo;
+begin
+  FDBInfo.DbType:=TAsDatabaseType(cmbDatabaseType.ItemIndex);
+   FDBInfo.Server:=cmbServerName.Text;
+   FDBInfo.Database:=cmbDatabase.Text;
+   FDBInfo.Username:=txtUserName.Text;
+   FDBInfo.Password:=txtPassword.Text;
+   FDBInfo.Port:=txtPort.Value;
+   FDBInfo.DbEngineType:=TAsDatabaseEngineType(cmbDbEngine.ItemIndex);
+end;
+
 procedure TSqlConnBuilderForm.FormShow(Sender: TObject);
 begin
-  TControlUtils.EnableControls(pnlMain, True);
   udlFilename := '';
   LoadRecentConnFromFile;
   FillRecentConnectionListBox;
@@ -671,9 +643,9 @@ begin
   imgDbEngines.GetBitmap(0,bmpSqlDBEngine);
   imgDbEngines.GetBitmap(1,bmpZeosEngine);
 
-  FDBInfo := TDbConnectionInfo.Create;
+  FDBInfo := TAsDbConnectionInfo.Create;
 
-  RecentConnections:=TDbConnectionInfos.Create;
+  RecentConnections:=TAsDbConnectionInfos.Create;
   RecentConnectionsFilename := GetTempDir+ ExtractFileName(ChangeFileExt(Application.ExeName,'.ini'))
 end;
 
