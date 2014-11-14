@@ -20,7 +20,6 @@ type
    ArrowRightImage: TImage;
    ArrowLeftImage: TImage;
    mitEditVirtualRelations: TMenuItem;
-   PopupMenu1: TPopupMenu;
    RectangleImage: TImage;
     // GUI CONTROLS DECLARE
     scbDesigner: TScrollBox;
@@ -29,6 +28,7 @@ type
     btnGenerateQuery: TToolButton;
     ilToolboxImages: TImageList;
     btnAddTable: TToolButton;
+    btnProperties: TToolButton;
     txtSqlQuery: TMemo;
     ToolButton1: TToolButton;
     btnDeleteTable: TToolButton;
@@ -38,6 +38,7 @@ type
     // CONTROLS END
 
     procedure btnAddTableClick(Sender: TObject);
+    procedure btnPropertiesClick(Sender: TObject);
     procedure FrameClick(Sender: TObject);
     procedure mitEditVirtualRelationsClick(Sender: TObject);
     procedure Splitter1Paint(Sender: TObject);
@@ -109,7 +110,7 @@ type
 
     function FindTableControl(Tablename: string): TPanel;
     function FindFieldControl(tableControl: TPanel; fieldName: string): TPanel;
-    function GetSqlQuery: string;
+    function GetSqlQuery: TStrings;
 
     procedure UpdateToolbar;
 
@@ -128,7 +129,7 @@ type
       write SetTableInfoList;
     property Schema:String read FSchema write SetSchema;
 
-    property SqlQuery: string read GetSqlQuery;
+    property SqlQuery: TStrings read GetSqlQuery;
     property DbInfo:TAsDbConnectionInfo read FDbInfo write SetDbInfo;
 
 
@@ -403,7 +404,7 @@ begin
       begin
         s := TAsSqlGenerator.Create(FDbInfo,p);
         outPut := s.GenerateQuery(0, ti, qtSelect);
-        txtSqlQuery.Lines := outPut;
+        txtSqlQuery.Lines.AddStrings(outPut);
       end;
     except
       on e: Exception do
@@ -535,7 +536,6 @@ begin
 
       FCurrentNodeControl := pnlTable;
       PositionNodes(FCurrentNodeControl);
-      pnlTable.PopupMenu:=PopupMenu1;
       Result := True;
     end;
 
@@ -546,9 +546,9 @@ begin
 
 end;
 
-function TQueryDesigner.GetSqlQuery: string;
+function TQueryDesigner.GetSqlQuery: TStrings;
 begin
-  Result := txtSqlQuery.Text;
+  Result := txtSqlQuery.Lines;
 end;
 
 procedure TQueryDesigner.NodeMouseDown(Sender: TObject; Button: TMouseButton;
@@ -1218,6 +1218,21 @@ begin
   end;
 end;
 
+procedure TQueryDesigner.btnPropertiesClick(Sender: TObject);
+var
+  ti:TTableInfo;
+begin
+  ti := TableInfoList.TableByName(FCurrentNodeControl.Hint);
+  if ti <>nil then
+  begin
+    QueryDesignerPropertyGrid.pnlTop.Caption:=ti.Tablename;
+    QueryDesignerPropertyGrid.TIPropertyGrid1.TIObject:=ti;
+    QueryDesignerPropertyGrid.ShowModal;
+    QueryDesignerPropertyGrid.TIPropertyGrid1.TIObject:=nil;
+  end;
+
+end;
+
 procedure TQueryDesigner.FrameClick(Sender: TObject);
 begin
 
@@ -1227,15 +1242,15 @@ procedure TQueryDesigner.mitEditVirtualRelationsClick(Sender: TObject);
 var
   ti:TTableInfo;
 begin
-  //ti := TableInfoList.TableByName(FCurrentNodeControl.Hint);
-  //if ti <>nil then
-  //begin
-  //  QueryDesignerPropertyGrid.pnlTop.Caption:=ti.Tablename;
-  //  QueryDesignerPropertyGrid.TIPropertyGrid1.TIObject:=ti;
-  //  QueryDesignerPropertyGrid.ShowModal;
-  //  QueryDesignerPropertyGrid.TIPropertyGrid1.TIObject:=nil;
-  //end;
-  //
+  ti := TableInfoList.TableByName(FCurrentNodeControl.Hint);
+  if ti <>nil then
+  begin
+    QueryDesignerPropertyGrid.pnlTop.Caption:=ti.Tablename;
+    QueryDesignerPropertyGrid.TIPropertyGrid1.TIObject:=ti;
+    QueryDesignerPropertyGrid.ShowModal;
+    QueryDesignerPropertyGrid.TIPropertyGrid1.TIObject:=nil;
+  end;
+
 end;
 
 procedure TQueryDesigner.UpdateToolbar;

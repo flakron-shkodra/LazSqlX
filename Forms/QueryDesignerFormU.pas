@@ -44,10 +44,10 @@ type
 
     procedure SetSchema(AValue: string);
     procedure SetSQLQuery(const Value: string);
-    function GetSqlQuery: string;
+    function GetSqlQuery: Tstrings;
   public
     { Public declarations }
-    property SQLQuery:string read GetSqlQuery;
+    property SQLQuery:TStrings read GetSqlQuery;
     property Schema:string read FSchema write SetSchema;
 
     function ShowModal(aDBInfo: TAsDbConnectionInfo): TModalResult;
@@ -112,7 +112,7 @@ begin
 
 end;
 
-function TQueryDesignerForm.GetSqlQuery: string;
+function TQueryDesignerForm.GetSqlQuery: Tstrings;
 begin
   Result := FQueryDesigner.SqlQuery;
 end;

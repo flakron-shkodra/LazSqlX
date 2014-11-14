@@ -39,7 +39,7 @@ object QueryDesigner: TQueryDesigner
       OnClick = btnGenerateQueryClick
     end
     object ToolButton1: TToolButton
-      Left = 106
+      Left = 214
       Top = 2
       Width = 10
       Caption = 'ToolButton1'
@@ -47,25 +47,34 @@ object QueryDesigner: TQueryDesigner
       Style = tbsSeparator
     end
     object btnDeleteTable: TToolButton
-      Left = 221
+      Left = 329
       Top = 2
       Caption = 'Delete Table'
       ImageIndex = 2
       OnClick = btnDeleteTableClick
     end
     object btnClear: TToolButton
-      Left = 326
+      Left = 434
       Top = 2
       Caption = 'Clear '
       ImageIndex = 3
       OnClick = btnClearClick
     end
     object btnAddTable: TToolButton
-      Left = 116
+      Left = 224
       Top = 2
       Caption = 'Add Table'
       ImageIndex = 1
       OnClick = btnAddTableClick
+    end
+    object btnProperties: TToolButton
+      Left = 109
+      Top = 2
+      Caption = 'Properties'
+      Enabled = False
+      ImageIndex = 6
+      OnClick = btnPropertiesClick
+      Style = tbsCheck
     end
   end
   object txtSqlQuery: TMemo
@@ -418,14 +427,5 @@ object QueryDesigner: TQueryDesigner
       0000000000000000000000000000000000000000000000000000000000000000
       0000000000000000000000000000
     }
-  end
-  object PopupMenu1: TPopupMenu
-    left = 171
-    top = 214
-    object mitEditVirtualRelations: TMenuItem
-      Caption = 'Edit virtual relations'
-      Visible = False
-      OnClick = mitEditVirtualRelationsClick
-    end
   end
 end

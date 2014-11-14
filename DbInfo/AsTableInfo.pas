@@ -138,7 +138,6 @@ type
  protected
   function GetDisplayName: string; override;
  public
-  procedure CopyFrom(FieldInfo:TAsFieldInfo);
   function WebControlName:string;
   function WebControlNameWithProp:string;
   function IsNumeric:Boolean;
@@ -1032,29 +1031,6 @@ begin
    ctDateTimePicker: s:='dtp';
  end;
  Result := s;
-end;
-
-procedure TAsFieldInfo.CopyFrom(FieldInfo: TAsFieldInfo);
-begin
-  if Self<>nil then
-  begin
-   FieldName := FieldInfo.FieldName;
-   FieldType := FieldInfo.FieldType;
-   Length := FieldInfo.Length;
-   Precision:= FieldInfo.Precision;
-   DataType := FieldInfo.DataType;
-   CSharpType := FieldInfo.CSharpType;
-   CSharpName := FieldInfo.CSharpName;
-   IsPrimaryKey := FieldInfo.IsPrimaryKey;
-   IsIdentity := FieldInfo.IsIdentity;
-   IsReference := FieldInfo.IsReference;
-   Validate := FieldInfo.Validate;
-   AllowNull := FieldInfo.AllowNull;
-   ControlType := FieldInfo.ControlType;
-   Reserved := FieldInfo.Reserved;
-   FieldRef := FieldInfo.FieldRef;
-   FieldDbType:= FieldInfo.FieldDbType;
-  end;
 end;
 
 {$ENDREGION}
@@ -2192,4 +2168,5 @@ end;
 {$ENDREGION}
 
 end.
+
 

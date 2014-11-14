@@ -1061,6 +1061,9 @@ begin
   actConnect.Enabled:= not aIsConnected;
   actDisconnect.Enabled := aIsConnected;
   actNewTab.Enabled:=aIsConnected;
+  actFind.Enabled:=aIsConnected ;
+  actFindReplace.Enabled:=aIsConnected;
+  actOpen.Enabled:=aIsConnected;
 
   Invalidate;
 
@@ -1647,7 +1650,7 @@ begin
     if QueryDesignerForm.ShowModal(DbInfo) = mrOk then
     begin
       actNewTab.Execute;
-      FPageControl.ActiveTab.QueryEditor.Text := QueryDesignerForm.SQLQuery;
+      FPageControl.ActiveTab.QueryEditor.Lines.AddStrings(QueryDesignerForm.SQLQuery);
     end;
   end;
 end;

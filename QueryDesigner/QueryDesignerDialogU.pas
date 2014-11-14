@@ -225,8 +225,6 @@ begin
   cmbDisplayMember.Color := clWindow;
   Height := 211;
 
-  try
-
     lst := TAsDbUtils.GetTableNames(FDBInfo, FDBSchema);
     try
       cmbForeignTable.Items.AddStrings(lst);
@@ -264,10 +262,6 @@ begin
     begin
       AddSelectFieldControl(SelectFields[I]);
     end;
-
-  finally
-    lst.Free;
-  end;
 
 end;
 

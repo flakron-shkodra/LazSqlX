@@ -1,3 +1,7 @@
+v4.6.1.1488
+-Fix QueryDesigner: drag&drop from field of one table to a field in another table was causing app to hang
+-Fix Find&Replace Dialogs were accessible even after disconnect thus 'causing access violation when used because of no activetab was available
+
 v4.6.0.1483
 
 GUI:

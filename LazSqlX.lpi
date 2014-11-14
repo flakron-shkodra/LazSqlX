@@ -28,7 +28,8 @@
       <AutoIncrementBuild Value="True"/>
       <MajorVersionNr Value="4"/>
       <MinorVersionNr Value="6"/>
-      <BuildNr Value="1483"/>
+      <RevisionNr Value="1"/>
+      <BuildNr Value="1489"/>
       <StringTable ProductVersion=""/>
     </VersionInfo>
     <BuildModes Count="2">
@@ -327,6 +328,7 @@
         <ComponentName Value="QueryDesignerPropertyGrid"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
+        <UnitName Value="QueryDesignerPropertyGridU"/>
       </Unit34>
       <Unit35>
         <Filename Value="Resources\LazSqlXResources.pas"/>

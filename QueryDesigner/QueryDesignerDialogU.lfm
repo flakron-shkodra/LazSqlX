@@ -9,7 +9,7 @@ object QueryDesignerDialog: TQueryDesignerDialog
   OnCreate = FormCreate
   OnDestroy = FormDestroy
   OnShow = FormShow
-  LCLVersion = '1.2.4.0'
+  LCLVersion = '1.2.6.0'
   object grbConfigure: TGroupBox
     Left = 0
     Height = 132
