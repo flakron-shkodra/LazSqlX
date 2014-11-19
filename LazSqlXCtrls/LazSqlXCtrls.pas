@@ -113,6 +113,7 @@ type
     FlstAlias: TStringList;
     FLastWord:string;
     function GetActiveTabSheet: TLazSqlXTabSheet;
+    function GetLazSqlXTab(Index: Integer): TLazSqlXTabSheet;
     procedure OnCompletionExecute(Sender: TObject); // Complete Execute
     function OnCompletionPaintItem(const AKey: string; ACanvas: TCanvas; X, Y: integer; Selected: boolean; Index: integer): boolean;
     procedure OnCompletionSearchPos(var Posi: integer); //Complete SearchPos
@@ -123,6 +124,7 @@ type
     procedure SetFunctionIcon(AValue: TBitmap);
     procedure SetHighlighter(AValue: TSynSQLSyn);
     procedure SetKeywords(AValue: TStringList);
+    procedure SetLazSqlXTab(Index: Integer; AValue: TLazSqlXTabSheet);
     procedure SetOnDataGridDblClick(AValue: TNotifyEvent);
     procedure SetOnExecutionFinished(AValue: TOnSqlExecThreadFinish);
     procedure SetProcedureIcon(AValue: TBitmap);
@@ -169,6 +171,8 @@ type
     // Tells control to call autocompletion
     procedure PopupAutoComplete;
     procedure ScanNeeded;
+
+    property Pages[Index:Integer]:TLazSqlXTabSheet read GetLazSqlXTab write SetLazSqlXTab;
   end;
 
 
@@ -735,6 +739,12 @@ begin
   FKeywords:=AValue;
 end;
 
+procedure TLazSqlXPageControl.SetLazSqlXTab(Index: Integer;
+ AValue: TLazSqlXTabSheet);
+begin
+
+end;
+
 procedure TLazSqlXPageControl.SetOnDataGridDblClick(AValue: TNotifyEvent);
 begin
   if FOnDataGridDblClick=AValue then Exit;
@@ -906,6 +916,11 @@ end;
 function TLazSqlXPageControl.GetActiveTabSheet: TLazSqlXTabSheet;
 begin
   Result := ActivePage as TLazSqlXTabSheet;
+end;
+
+function TLazSqlXPageControl.GetLazSqlXTab(Index: Integer): TLazSqlXTabSheet;
+begin
+ Result := inherited Page[Index] as TLazSqlXTabSheet;
 end;
 
 function TLazSqlXPageControl.OnCompletionPaintItem(const AKey: string;

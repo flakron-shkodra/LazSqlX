@@ -1,3 +1,9 @@
+v.4.6.2.1493
+-Added Load/Save Session [or Query History] 
+ -Saves queries of tabs when disconnecting from server or closing app and reloads them on connect
+ -Added Clean Session History on main menu under File
+
+
 v4.6.1.1488
 -Fix QueryDesigner: drag&drop from field of one table to a field in another table was causing app to hang
 -Fix Find&Replace Dialogs were accessible even after disconnect thus 'causing access violation when used because of no activetab was available

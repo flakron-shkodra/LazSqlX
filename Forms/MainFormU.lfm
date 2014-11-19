@@ -9,6 +9,7 @@ object MainForm: TMainForm
   ClientWidth = 1089
   KeyPreview = True
   Menu = ApplicationMainMenu
+  OnClose = FormClose
   OnCreate = FormCreate
   OnDestroy = FormDestroy
   OnKeyDown = FormKeyDown
@@ -22,7 +23,6 @@ object MainForm: TMainForm
     Width = 1089
     Caption = 'tlbMain'
     Color = clMenuBar
-    Flat = False
     Images = ApplicationImages
     ParentColor = False
     ParentShowHint = False
@@ -2260,7 +2260,19 @@ object MainForm: TMainForm
           FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
         }
       end
+      object Sep13: TMenuItem
+        Caption = '-'
+      end
+      object mitPrint: TMenuItem
+        Action = actPrint
+      end
       object mitSep1: TMenuItem
+        Caption = '-'
+      end
+      object mitClearSession: TMenuItem
+        Action = actClearSessionHistory
+      end
+      object sp14: TMenuItem
         Caption = '-'
       end
       object mitClose: TMenuItem
@@ -3322,14 +3334,14 @@ object MainForm: TMainForm
       OnExecute = actGridCopyRowsAsInsertExecute
     end
     object actShowStoredProcedureText: TAction
-      Category = 'SP'
+      Category = 'StoredProcedures'
       Caption = 'Show SP Text'
       Hint = 'Show stored procedure''s body'
       ImageIndex = 44
       OnExecute = actShowStoredProcedureTextExecute
     end
     object actRunStoredProcedure: TAction
-      Category = 'SP'
+      Category = 'StoredProcedures'
       Caption = 'Run SP'
       Hint = 'Show dialog for filling procedure params and execute in new tab'
       ImageIndex = 22
@@ -3480,14 +3492,14 @@ object MainForm: TMainForm
       OnExecute = actCloseExecute
     end
     object actRefreshProcedures: TAction
-      Category = 'SP'
+      Category = 'StoredProcedures'
       Caption = 'Refresh'
       Hint = 'Refresh procedure list'
       ImageIndex = 38
       OnExecute = actRefreshProceduresExecute
     end
     object actCopyRunProcedureText: TAction
-      Category = 'SP'
+      Category = 'StoredProcedures'
       Caption = 'Copy'
       Hint = 'Copy selected procedure''s body'
       ImageIndex = 32
@@ -3501,6 +3513,13 @@ object MainForm: TMainForm
       ImageIndex = 58
       OnExecute = actFindReplaceExecute
       ShortCut = 16456
+    end
+    object actClearSessionHistory: TAction
+      Category = 'File'
+      Caption = 'Clear Session History'
+      Hint = 'Clears session history'
+      ImageIndex = 11
+      OnExecute = actClearSessionHistoryExecute
     end
   end
   object OpenDialog: TOpenDialog

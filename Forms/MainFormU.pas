@@ -17,7 +17,7 @@ uses
   LazSqlXResources, RegExpr, Regex, versionresource,
   UnitGetSetText, QueryDesignerFormU, LoadingIndicator,
   SynEditMarkupSpecialLine, SynEditTypes, SynEditKeyCmds, fpsqlparser,LazSqlXCtrls,
-  fpsqltree,LR_PGrid,AsDbFormUtils, LR_Class;
+  fpsqltree,LR_PGrid,AsDbFormUtils, LR_Class,DOM,XMLRead,XMLWrite;
 
 var
   AppVersion: string = '';
@@ -69,6 +69,7 @@ type
     actEditFormCustomFilter: TAction;
     actCopyRunProcedureText: TAction;
     actFindReplace: TAction;
+    actClearSessionHistory: TAction;
     actRefreshProcedures: TAction;
     actOpen: TAction;
     actPrint: TAction;
@@ -91,6 +92,9 @@ type
     GridPrinter: TFrPrintGrid;
     imgLogo: TImage;
     itmDataIporter: TMenuItem;
+    MenuItem4: TMenuItem;
+    mitPrint: TMenuItem;
+    Sep13: TMenuItem;
     mitReplace: TMenuItem;
     mitSearch: TMenuItem;
     mitMSearch: TMenuItem;
@@ -236,6 +240,7 @@ type
     SqlSyntax: TSynSQLSyn;
     ZCon: TZConnection;
     procedure actCheckSyntaxExecute(Sender: TObject);
+    procedure actClearSessionHistoryExecute(Sender: TObject);
     procedure actCopyRunProcedureTextExecute(Sender: TObject);
     procedure actDatabaseClonerExecute(Sender: TObject);
     procedure actCloseAllButThisExecute(Sender: TObject);
@@ -292,12 +297,13 @@ type
     procedure actShowStoredProcedureTextExecute(Sender: TObject);
     procedure ApplicationPropertiesException(Sender: TObject; E: Exception);
     procedure ApplicationPropertiesIdle(Sender: TObject; var Done: boolean);
+    procedure Button1Click(Sender: TObject);
     procedure cmbSchemaChange(Sender: TObject);
 
     procedure EditSelectAll1Execute(Sender: TObject);
-    procedure EditSpecialField(Sender: TObject);   {*****Edit Special Fields*****}
     procedure EditUndo1Execute(Sender: TObject);
     procedure FindDialog1Find(Sender: TObject);
+    procedure FormClose(Sender: TObject; var CloseAction: TCloseAction);
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure FormKeyDown(Sender: TObject; var Key: word; Shift: TShiftState);
@@ -331,74 +337,129 @@ type
 
   private
 
+    {Used in FPageControl for Autocomplete usage}
     FtableIcon: TBitmap;
+    {Used in FPageControl for Autocomplete usage}
     FfunctionIcon: TBitmap;
+    {Used in FPageControl for Autocomplete usage}
     FfieldIcon: TBitmap;
+    {Used in FPageControl for Autocomplete usage}
     FvarIcon: TBitmap;
+    {Used in FPageControl for Autocomplete usage}
     FprocedureIcon: TBitmap;
 
+    {MainControl to hold all Tabs with Queries/returned results}
     FPageControl:TLazSqlXPageControl;
 
+    {Loading indicator appears on statusbar if the executing query is in progress}
     FLoadingIndicator: TLoadingIndicator;
 
-
+    {this is used for FindText/FindDialog }
     FFound: boolean;
+
+    {this is used for FindText/FindDialog }
     FPos: integer;
 
+    {This is used for QuickSearch for Tables and procedures}
     FQuickSearchLastWord: string;
-    FExecutionInProgress: boolean;
-    FCurrentExecutor: TSqlExecThread;
 
+    {disconnectes sqldb/zeos}
     procedure DoDisconnect;
+
+    {Connects sqldb or zeos}
     procedure DoSelectiveConnect;
+
+    {Returns true if zeos/sqldb is connected}
     function GetIsConnected: Boolean;
+
+    {Updates GUI controls based on status connected/disconnected}
     procedure UpdateGUI(aIsConnected: boolean);
+
     // Show connection form to user and connect to database
     procedure Connect;
+    {Exports active tab's grid data}
     procedure DoExport(exporter: TCustomDatasetExporter; FileExt: string);
+
+    {Enables exporters actions/items}
     procedure EnableExporters;
+
+    {Shows AsDbForm for the selected table in tableList}
     procedure ShowEditForm(FormFilter:TAsDbFormFilter);
 
+    {fills schemas}
     procedure FillSchemas;
+
+    {Fills table list}
     procedure FillTables;
+
+    {Fills procedure list}
     procedure FillProcedures;
 
+    {Executes a StoredProcedure Dialog,puts the execution command in active tab and runs it}
     procedure RunProcedure(procname: string);
+
+    {Gets Stored Procedures's body}
     function GetProcedureText(procname: string): string;
 
-    function getCurrentType: TAsDatabaseType;
-    procedure OnFieldGetText(Sender: TField; var aText: string; DisplayText: boolean);
-    procedure OnFieldSetText(Sender: TField; const aText: string);
-
+    {Executes ActiveTab's query}
     procedure ExecuteQuery(IsTableData: boolean);
 
+    {Generates sql query for given table based on given queryType qrSelect,qtSelectItem,qtInsert,qtUpdate,qtDelete}
     procedure GenerateSqlQuery(table: string; queryType: TQueryType;
       IsStoredProcedure: boolean);
 
+    {Copy selected rows of activeTab's grid to Clipboard as TabDelimited text}
     procedure CopySelectedRows(IncludeHeaders: boolean);
+
+    {Copy selected rows of activeTab's grid to Clipboard as SQL Insert Script}
     procedure CopySelectedRowsAsSqlInsert(tblName: string);
+
+    {Copy rows of activeTab's grid to Clipboard as TabDelimited text}
     procedure CopyAllRows(IncludeHeaders: boolean);
 
+    {Used in FindDialog }
     procedure FindText(aText: string);
+
+    {QuickSearch table list}
     procedure QuickSearchTables;
+
+    {QuickSearch Procedures}
     procedure QuickSearchProcedure;
 
+    {Resizes active tab's gridColumns to the specified width}
     procedure ResizeGridColumns(ColumnWidth: integer = 100);
-    function ParseSql(Sql: string; out ResultStr: string): boolean;
+
+    {Event fired When query finished executing }
     procedure OnExecutionFinished(Sender: TObject; IsTableData: boolean);
-    procedure OnDBGridDrawColumnCell(Sender: TObject; const Rect: TRect;
-      DataCol: integer; Column: TColumn; State: TGridDrawState);
-    procedure OnQueryAfterPost(DataSet: TDataSet);
+
+    {Event fired when Grid draws cells; this event is assigned to a LazSqlXTab property}
+    procedure OnDBGridDrawColumnCell(Sender: TObject; const Rect: TRect; DataCol: integer; Column: TColumn; State: TGridDrawState);
+
+    {Event fired when ActiveTab's Grid Cell is clicked and the type is of Blob or Memo; this event is assigned to a LazSqlXTab property}
+    procedure EditSpecialField(Sender: TObject);   {*****Edit Special Fields*****}
+
+    {Loads queries to tabs; Called after connnect}
+    procedure LoadSession;
+    {Saves queries in tabs to file called before disconnect, MainForm.OnClose, ApplicationProperties.OnException}
+    procedure SaveSession;
 
   public
 
+    {Local reference for DBInfo which is created and freed in SqlConnBuilderForm}
     DbInfo: TAsDbConnectionInfo;
+    {Image used for QueryDesigner}
     ArrowImageLeft: TBitmap;
+    {Image used for QueryDesigner}
     ArrowImageRight: TBitmap;
+    {Image used for QueryDesigner}
     RectImage: TBitmap;
+    {Connection status for sqldb or zeos}
     property IsConnected:Boolean read GetIsConnected;
 
   end;
+
+const
+  LazSqlXSessionFile = 'LazSqlX.sess';
 
 
 
@@ -485,23 +546,110 @@ begin
   end;
 end;
 
-procedure TMainForm.OnQueryAfterPost(DataSet: TDataSet);
+procedure TMainForm.LoadSession;
 var
-  ds: TSQLQuery;
-  I: integer;
+  xmldoc:TXMLDocument;
+  ServerNode:TDOMNode;
+  I: Integer;
+  Filename:string;
+  s: DOMString;
 begin
-  if (DataSet is TSQLQuery) then
+  if (FPageControl<>nil) then
   begin
-    ds := (DataSet as TSQLQuery);
-    I := ds.RecNo;
-    ds.ApplyUpdates;
-    Transaction.Commit;
+    Filename := GetTempDir+LazSqlXSessionFile;
 
-    if not ds.Active then
+    if FileExists(Filename) then
     begin
-      ds.Open;
-      ds.RecNo := I;
-      ResizeGridColumns(100);
+      FPageControl.RemoveAllTabs;
+      ReadXMLFile(xmldoc,Filename);
+      try
+       ServerNode := xmldoc.DocumentElement.FindNode(DbInfo.Identifier);
+       if ServerNode<>nil then
+       for I:=0 to ServerNode.ChildNodes.Count-1 do
+       begin
+         s := ServerNode.ChildNodes[I].TextContent;
+         if Trim(s)<>EmptyStr then
+         begin
+          actNewTab.Execute;
+          if FPageControl.ActiveTab<>nil then
+          FPageControl.ActiveTab.QueryEditor.Text :=s;
+         end;
+       end;
+       if FPageControl.PageCount=0 then
+       actNewTab.Execute;
+      finally
+        if xmldoc<>nil then
+        xmldoc.Free;
+      end;
+    end;
+  end;
+end;
+
+procedure TMainForm.SaveSession;
+var
+  xmldoc:TXMLDocument;
+  RootElement:TDOMElement;
+  QueryElement:TDOMElement;
+  ServerNode:TDOMNode;
+  I: Integer;
+  Filename:string;
+  ServerIdentifier:string;
+begin
+  if (DbInfo=nil) then exit;
+  if (FPageControl<>nil) then
+  begin
+    Filename := GetTempDir+LazSqlXSessionFile;
+    ServerNode := nil;
+    if FileExists(Filename) then
+      ReadXMLFile(xmldoc,Filename)
+    else
+      xmldoc := TXMLDocument.Create;
+    try
+
+     if FPageControl<>nil then
+     begin
+       ServerIdentifier := DbInfo.Identifier;
+
+       if xmldoc.DocumentElement=nil then
+       begin
+        RootElement := xmldoc.CreateElement('Tabs');
+        xmldoc.AppendChild(RootElement);
+       end else
+       begin
+         RootElement := xmldoc.DocumentElement;
+       end;
+
+        if RootElement <> nil then
+        begin
+
+         if RootElement.ChildNodes.Count > 0 then
+         ServerNode := RootElement.FindNode(ServerIdentifier);
+
+         if ServerNode<>nil then
+         begin
+           if ServerNode.ChildNodes <> nil then
+           for I:=0 to ServerNode.ChildNodes.Count-1 do
+           begin
+            ServerNode.RemoveChild(ServerNode.ChildNodes[0]);
+           end;
+         end else
+         begin
+          ServerNode := xmldoc.CreateElement(ServerIdentifier);
+          xmldoc.DocumentElement.AppendChild(ServerNode);
+         end;
+
+         for I:=0 to FPageControl.PageCount-1 do
+         begin
+           QueryElement := xmldoc.CreateElement(FPageControl.Pages[I].Name);
+           QueryElement.TextContent:= FPageControl.Pages[I].QueryEditor.Text;
+           ServerNode.AppendChild(QueryElement);
+         end;
+        end;
+
+      WriteXMLFile(xmldoc,Filename);
+     end;
+    finally
+      xmldoc.Free;
     end;
   end;
 end;
@@ -831,37 +979,6 @@ begin
   end;
 end;
 
-function TMainForm.ParseSql(Sql: string; out ResultStr: string): boolean;
-var
-  parser: TSQLParser;
-  m: TMemoryStream;
-  script: TStringList;
-  ResultList: TSQLElementList;
-  I: integer;
-  output: TStringList;
-begin
-  m := TMemoryStream.Create;
-  script := TStringList.Create;
-  output := TStringList.Create;
-  script.Text := Sql;
-  script.SaveToStream(m);
-  parser := TSQLParser.Create(m);
-  try
-    ResultList := parser.ParseScript(False);
-    for I := 0 to ResultList.Count - 1 do
-    begin
-      output.Add(ResultList[i].GetAsSQL([sfoDoubleQuoteIdentifier]));
-    end;
-    ResultStr := Output.Text;
-  finally
-    script.Free;
-    output.Free;
-    parser.Free;
-    m.Free;
-  end;
-
-end;
-
 procedure TMainForm.OnExecutionFinished(Sender: TObject; IsTableData: boolean);
 begin
   FLoadingIndicator.StopAnimation;
@@ -1046,7 +1163,6 @@ begin
       FillTables;
       FillProcedures;
       pgcLeft.ActivePageIndex := 0;
-
     except
       on e: Exception do
         ShowMessage(e.Message);
@@ -1365,37 +1481,11 @@ begin
 
 end;
 
-function TMainForm.getCurrentType: TAsDatabaseType;
-begin
-  Result := SqlConnBuilderForm.ConDatabaseType;
-end;
-
-procedure TMainForm.OnFieldGetText(Sender: TField; var aText: string;
-  DisplayText: boolean);
-begin
-  aText := AnsiToUtf8(Sender.AsString);
-  if Sender.IsBlob then
-  begin
-    aText := TAsStringUtils.BlobToString(Sender);
-  end;
-end;
-
-procedure TMainForm.OnFieldSetText(Sender: TField; const aText: string);
-begin
-  if Sender <> nil then
-  begin
-    Sender.Value := Utf8ToAnsi(aText);
-  end;
-
-end;
-
 procedure TMainForm.ExecuteQuery(IsTableData: boolean);
 begin
  FLoadingIndicator.StartAnimation;
  FPageControl.ActiveTab.RunQuery(IsTableData,cmbSchema.Text,lstTables.Items[lstTables.ItemIndex] );
 end;
-
-
 
 procedure TMainForm.EditSpecialField(Sender: TObject);
 var
@@ -1548,6 +1638,11 @@ begin
   FindDialog1.CloseDialog;
 end;
 
+procedure TMainForm.FormClose(Sender: TObject; var CloseAction: TCloseAction);
+begin
+ SaveSession;
+end;
+
 procedure TMainForm.FormCreate(Sender: TObject);
 var
   I: integer;
@@ -1595,19 +1690,15 @@ begin
   FLoadingIndicator.Parent := pnlIndicator;
   FLoadingIndicator.Align := alClient;
 
-
 end;
 
 procedure TMainForm.FormDestroy(Sender: TObject);
 begin
-
-
   FvarIcon.Free;
   FtableIcon.Free;
   FfunctionIcon.Free;
   FfieldIcon.Free;
   FprocedureIcon.Free;
-
   FPageControl.Free;
   ArrowImageRight.Free;
   ArrowImageLeft.Free;
@@ -1681,11 +1772,13 @@ end;
 procedure TMainForm.actConnectExecute(Sender: TObject);
 begin
   Connect;
+  LoadSession;
   UpdateGUI(GetIsConnected);
 end;
 
 procedure TMainForm.actDisconnectExecute(Sender: TObject);
 begin
+  SaveSession;
   DoDisconnect;
   FPageControl.RemoveAllTabs;
   UpdateGUI(GetIsConnected);
@@ -1828,6 +1921,11 @@ end;
 procedure TMainForm.actCheckSyntaxExecute(Sender: TObject);
 begin
   FPageControl.ActiveTab.CheckSyntax;
+end;
+
+procedure TMainForm.actClearSessionHistoryExecute(Sender: TObject);
+begin
+ DeleteFile(GetTempDir+LazSqlXSessionFile);
 end;
 
 procedure TMainForm.actCopyRunProcedureTextExecute(Sender: TObject);
@@ -2155,7 +2253,8 @@ end;
 
 procedure TMainForm.ApplicationPropertiesException(Sender: TObject; E: Exception);
 begin
- MessageDlg('Error',E.Message,mtError,[mbOk],0);
+  SaveSession;
+  MessageDlg('Error',E.Message,mtError,[mbOk],0);
 end;
 
 procedure TMainForm.ApplicationPropertiesIdle(Sender: TObject; var Done: boolean);
@@ -2197,6 +2296,11 @@ begin
   actDatabaseCloner.Enabled := False;
   actDataImporter.Enabled := False;
  end;
+end;
+
+procedure TMainForm.Button1Click(Sender: TObject);
+begin
+ ShowMessage( TAsStringUtils.GetSafeName('asasd12312a-a&*@&^#*&!@#^( -- ]]') );
 end;
 
 procedure TMainForm.cmbSchemaChange(Sender: TObject);

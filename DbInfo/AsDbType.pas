@@ -69,6 +69,7 @@ type
    FPort: Integer;
    FServer: string;
    FUsername: string;
+   function GetIdentifier: string;
    procedure SetDatabase(AValue: string);
    procedure SetDbEngine(AValue: TAsDatabaseEngineType);
    procedure SetDbType(AValue: TAsDatabaseType);
@@ -77,18 +78,30 @@ type
    procedure SetServer(AValue: string);
    procedure SetUsername(AValue: string);
   public
+    {returns a string made up of all properties, could be used for easy compare}
     function ToFullString:string;
+    {creates a Zeos connection according to properties of this class}
     function ToZeosConnection:TZConnection;
+    {creates a SqlDbConnector according to properties of this class}
     function ToSqlConnector:TSQLConnector;
+
     procedure Assign(Source: TPersistent); override;
   published
-    //constructor Create;
+    {returns Server+Database+DbType as string processed by AsDbUtils.GetSafeName meaning no symbols or spaces included}
+    property Identifier:string read GetIdentifier;
+    {Database type dtMsSql,dtOracle,dtMySql,dtFirebird,dtSqlite}
     property DbType:TAsDatabaseType read FDbType write SetDbType;
+    {Server name or host}
     property Server:string read FServer write SetServer;
+    {Database name}
     property Database:string read FDatabase write SetDatabase;
+    {Server Login Username}
     property Username:string read FUsername write SetUsername;
+    {Server Login Password}
     property Password:string read FPassword write SetPassword;
+    {Server Port}
     property Port:Integer read FPort write SetPort;
+    {DatabaseEngine [deSqlDB or deZeos]}
     property DbEngineType:TAsDatabaseEngineType read FDbEngine write SetDbEngine;
   end;
 
@@ -96,8 +109,11 @@ type
 
   TAsDbConnectionInfos = class (specialize TFPGObjectList<TAsDbConnectionInfo>)
   public
+   {Loads connection info from file}
     procedure LoadFromFile(Filename:string);
+    {saves connection info to file}
     procedure SaveToFile(Filename:string);
+    {compares given connection to other items in the list and returns true if found}
     function Exists(aDbInfo:TAsDbConnectionInfo):Boolean;
   end;
 
@@ -140,7 +156,7 @@ type
    property Active:Boolean read GetIsActive;
    property State:TDataSetState read GetState;
 
-   {errr Idk..}
+   {Creates instance for itself executes query and returns that object}
    class function GetData(SqlQuery:string;DbInfo:TAsDbConnectionInfo):TAsQuery;
   end;
 
@@ -1011,6 +1027,11 @@ procedure TAsDbConnectionInfo.SetDatabase(AValue: string);
 begin
  if FDatabase=AValue then Exit;
  FDatabase:=AValue;
+end;
+
+function TAsDbConnectionInfo.GetIdentifier: string;
+begin
+ Result := TAsStringUtils.GetSafeName(FServer+FDatabase+ IntToStr(Integer(FDbType)));
 end;
 
 procedure TAsDbConnectionInfo.SetDbEngine(AValue: TAsDatabaseEngineType);

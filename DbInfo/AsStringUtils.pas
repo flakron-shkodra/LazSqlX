@@ -76,6 +76,9 @@ type
     {Splits the string with spaces accordinf to capitalized letters, ie 'IAmNewBee' should return 'I am new bee"}
     class function SplitByUppercaseLetter(aInput:string):string;
 
+    {returns a string excluding symbols and spaces}
+    class function GetSafeName(aInput:string):string;
+
 
     class function GetFriendlyAlias(Tablename:string):string;
 
@@ -474,6 +477,18 @@ begin
   Result:=Result+space+inChar;
  end;
 
+end;
+
+class function TAsStringUtils.GetSafeName(aInput: string): string;
+var
+ I: Integer;
+begin
+ Result := EmptyStr;
+ for I:=1 to Length(aInput) do
+ begin
+  if (aInput[I] in ['a'..'z']) or (aInput[I] in ['a'..'z']) or (aInput[I] in ['0'..'9']) then
+  Result := Result+aInput[I];
+ end;
 end;
 
 class function TAsStringUtils.GetFriendlyAlias(Tablename: string): string;
