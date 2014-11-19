@@ -1030,8 +1030,14 @@ begin
 end;
 
 function TAsDbConnectionInfo.GetIdentifier: string;
+var
+ s:string;
 begin
- Result := TAsStringUtils.GetSafeName(FServer+FDatabase+ IntToStr(Integer(FDbType)));
+ if FDbType=dtSQLite then
+  s := TAsStringUtils.GetSafeName(ExtractFileName(FDatabase)+ IntToStr(Integer(FDbType)))
+ else
+  s := TAsStringUtils.GetSafeName(FServer+FDatabase+ IntToStr(Integer(FDbType)));
+ Result :='ID'+s;
 end;
 
 procedure TAsDbConnectionInfo.SetDbEngine(AValue: TAsDatabaseEngineType);

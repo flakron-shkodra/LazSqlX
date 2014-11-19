@@ -1,3 +1,6 @@
+v.4.6.2.1494
+-Bugfix Load/Save Session (when DBInfo.Identifier started with numbers saving failed)
+
 v.4.6.2.1493
 -Added Load/Save Session [or Query History] 
  -Saves queries of tabs when disconnecting from server or closing app and reloads them on connect

@@ -486,7 +486,7 @@ begin
  Result := EmptyStr;
  for I:=1 to Length(aInput) do
  begin
-  if (aInput[I] in ['a'..'z']) or (aInput[I] in ['a'..'z']) or (aInput[I] in ['0'..'9']) then
+  if (aInput[I] in ['a'..'z']) or (aInput[I] in ['A'..'Z']) or (aInput[I] in ['0'..'9']) then
   Result := Result+aInput[I];
  end;
 end;
