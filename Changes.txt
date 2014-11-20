@@ -1,3 +1,8 @@
+v.4.6.3.1515
+-Refactorings, one connection used everywhere
+-Performance tuning
+-Bugfixes
+
 v.4.6.2.1494
 -Bugfix Load/Save Session (when DBInfo.Identifier started with numbers saving failed)
 
