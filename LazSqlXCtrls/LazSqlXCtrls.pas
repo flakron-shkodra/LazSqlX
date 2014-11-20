@@ -142,7 +142,7 @@ type
     procedure OnTextScanNeeded(ScanText:String);
     procedure OnLastWordChanged(var LastWord:string);
   public
-    constructor Create(AOwner:TComponent; Con:TSQLConnector; ZCon:TZConnection);overload;
+    constructor Create(AOwner:TComponent; DbInfo:TAsDbConnectionInfo);overload;
     destructor Destroy;override;
 
     property ActiveTab:TLazSqlXTabSheet read GetActiveTabSheet;
@@ -151,7 +151,7 @@ type
     procedure RemoveAllTabsButActive;
     procedure RemoveAllTabs;
 
-    property DBInfo:TAsDbConnectionInfo read FDBInfo write SetDBInfo;
+    property DBInfo:TAsDbConnectionInfo read FDBInfo;
     property Highlighter:TSynSQLSyn read FHighlighter write SetHighlighter;
     property QueryEditorPopUpMenu:TPopupMenu read FQueryEditorPopUpMenu write SetQueryEditorPopUpMenu;
     property DataGridPopUpMenu:TPopupMenu read FDataGridPopUpMenu write SetDataGridPopUpMenu;
@@ -1391,13 +1391,14 @@ begin
   end;
 end;
 
-constructor TLazSqlXPageControl.Create(AOwner: TComponent; Con: TSQLConnector;
-  ZCon: TZConnection);
+constructor TLazSqlXPageControl.Create(AOwner: TComponent;
+ DbInfo: TAsDbConnectionInfo);
 begin
 
   inherited Create(Owner);
-  FCon := Con;
-  FZCon := ZCon;
+  FDBInfo:=DbInfo;
+  FCon := DbInfo.SqlConnection;
+  FZCon := DbInfo.ZeosConnection;
   //OnChange:=@OnPageChange;
   FSynComplete := TSynCompletion.Create(nil);
   // Basically do not allow a key to directly call the shortcut.

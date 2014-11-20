@@ -213,7 +213,7 @@ procedure TQueryDesigner.Clear;
 var
   I: integer;
   c: TControl;
-  ti: TTableInfo;
+  ti: TAsTableInfo;
   a: TPanel;
 begin
 
@@ -393,7 +393,7 @@ procedure TQueryDesigner.GenerateQuery;
 var
   p: TAsProcedureNames;
   s: TAsSqlGenerator;
-  ti: TTableInfo;
+  ti: TAsTableInfo;
   outPut: TStringList;
 begin
 
@@ -422,7 +422,7 @@ function TQueryDesigner.GenerateTableControl(CursorPos: TPoint;
  aParent: TWinControl; Schema, Tablename: string): Boolean;
 
 var
-  ti: TTableInfo;
+  ti: TAsTableInfo;
   outPut: TStringList;
   pnlTable: TPanel;
   tlbToolbar: TToolBar;
@@ -707,7 +707,7 @@ procedure TQueryDesigner.OnFieldMouseDown(Sender: TObject; Button: TMouseButton;
 var
   fi: TAsFieldInfo;
   ik: TImportedKeyInfo;
-  ti :TTableInfo;
+  ti :TAsTableInfo;
   fieldName: string;
   Tablename: string;
   index:integer;
@@ -777,8 +777,8 @@ procedure TQueryDesigner.AddVirtualRelation(sourceTable,sourceField,foreignTable
 var
   foreignSchema: string;
   selectFields:TStringList;
-  ti: TTableInfo;
-  foreignTi: TTableInfo;
+  ti: TAsTableInfo;
+  foreignTi: TAsTableInfo;
   ik: TImportedKeyInfo;
   fi: TAsFieldInfo;
   I:Integer;
@@ -858,7 +858,7 @@ end;
 
 procedure TQueryDesigner.pbAreaPaint(Sender: TObject);
 var
-  ti: TTableInfo;
+  ti: TAsTableInfo;
   ik: TImportedKeyInfo;
 
   pnlSourceTable: TPanel;
@@ -1064,7 +1064,7 @@ end;
 procedure TQueryDesigner.RemoveTable(Tablename: string);
 var
   I: integer;
-  ti: TTableInfo;
+  ti: TAsTableInfo;
   c: TControl;
 begin
   I := -1;
@@ -1220,7 +1220,7 @@ end;
 
 procedure TQueryDesigner.btnPropertiesClick(Sender: TObject);
 var
-  ti:TTableInfo;
+  ti:TAsTableInfo;
 begin
   ti := TableInfoList.TableByName(FCurrentNodeControl.Hint);
   if ti <>nil then
@@ -1240,7 +1240,7 @@ end;
 
 procedure TQueryDesigner.mitEditVirtualRelationsClick(Sender: TObject);
 var
-  ti:TTableInfo;
+  ti:TAsTableInfo;
 begin
   ti := TableInfoList.TableByName(FCurrentNodeControl.Hint);
   if ti <>nil then

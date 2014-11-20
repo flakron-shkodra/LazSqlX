@@ -16,7 +16,6 @@ type
     FDBInfo:TAsDbConnectionInfo;
   public
     constructor Create(DbInfo:TAsDbConnectionInfo);
-    destructor Destroy;
     function GetSchemas: TStringList;
     function GetTablenames(schema: string): TStringList;
     function GetPrimaryKeys(Schema, TableName: string): TStringList;
@@ -37,14 +36,8 @@ implementation
 
 constructor TAsFirebirdMetadata.Create(DbInfo: TAsDbConnectionInfo);
 begin
- FDBInfo:=TAsDbConnectionInfo.Create;
- FDBInfo.Assign(DbInfo);
+ FDBInfo:=DbInfo;
  FDBInfo.DbType:=dtFirebirdd;
-end;
-
-destructor TAsFirebirdMetadata.Destroy;
-begin
- FDBInfo.Destroy;
 end;
 
 function TAsFirebirdMetadata.GetSchemas: TStringList;
@@ -70,8 +63,9 @@ begin
                 ' from rdb$relations '+
                 ' where rdb$view_blr is null and (rdb$system_flag is null or rdb$system_flag = 0)';
 
-    ds :=  TAsQuery.GetData(sql,FDBInfo);
+    ds :=  TAsQuery.Create(FDBInfo);
    try
+    ds.Open(sql);
      while not ds.EOF do
      begin
       Result.Add(Trim(ds.Fields[0].AsString));
@@ -102,8 +96,9 @@ begin
               ' where rc.rdb$constraint_type = ''PRIMARY KEY'''+
               ' AND rc.rdb$relation_name='''+TableName+'''';
  try
-    ds := TAsQuery.GetData(sql,FDBInfo);
+    ds := TAsQuery.Create(FDBInfo);
     try
+     ds.Open(sql);
      while not ds.EOF do
       begin
         Result.Add(Trim(ds.Fields[0].AsString));
@@ -144,9 +139,10 @@ begin
 
  try
 
- ds := TAsQuery.GetData(sql,FDBInfo);
+ ds := TAsQuery.Create(FDBInfo);
 
   try
+    ds.Open(sql);
     while not ds.EOF do
      begin
        fk := TAsForeignKey.Create;
@@ -207,9 +203,9 @@ begin
   ' ORDER BY r.RDB$FIELD_POSITION';
 
   try
-    ds := TAsQuery.GetData(sql,FDBInfo);
+    ds := TAsQuery.Create(FDBInfo);
     try
-
+     ds.Open(sql);
       while not ds.EOF do
        begin
 
@@ -265,8 +261,9 @@ begin
               ' LEFT JOIN RDB$RELATION_CONSTRAINTS ON RDB$RELATION_CONSTRAINTS.RDB$INDEX_NAME = RDB$INDEX_SEGMENTS.RDB$INDEX_NAME '+
               ' WHERE UPPER(RDB$INDICES.RDB$RELATION_NAME)='''+TableName+''' AND RDB$RELATION_CONSTRAINTS.RDB$CONSTRAINT_TYPE IS NULL; ';
  try
-    ds := TAsQuery.GetData(sql,FDBInfo);
+    ds := TAsQuery.Create(FDBInfo);
    try
+     ds.Open(sql);
      while not ds.EOF do
       begin
         c := TAsIndex.Create;
@@ -323,8 +320,9 @@ begin
 ' WHERE RDB$SYSTEM_FLAG=0 and RDB$RELATION_NAME='''+TableName+'''';
 
  try
-   ds := TAsQuery.GetData(sql,FDBInfo);
+   ds := TAsQuery.Create(FDBInfo);
    try
+    ds.Open(sql);
     while not ds.EOF do
      begin
        c := TAsTrigger.Create;
@@ -361,8 +359,9 @@ begin
  Result := TStringList.Create;
 
  try
-  ds := TAsQuery.GetData(sql,FDbInfo);
+  ds := TAsQuery.Create(FDbInfo);
   try
+   ds.Open(sql);
     while not ds.EOF do
     begin
       s := Trim(ds.Fields[0].AsString);
@@ -411,8 +410,9 @@ begin
 ' INNER JOIN rdb$fields rf on rf.rdb$field_name = p.rdb$field_source '+
 ' WHERE p.rdb$procedure_name='''+ProcedureName+'''';
  try
-   ds := TAsQuery.GetData(sql,FDbInfo);
+   ds := TAsQuery.Create(FDbInfo);
    try
+    ds.Open(sql);
     while not ds.EOF do
     begin
       p := TAsProcedureParam.Create;

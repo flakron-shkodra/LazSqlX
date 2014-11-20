@@ -16,7 +16,6 @@ type
     FDBInfo:TAsDbConnectionInfo;
   public
     constructor Create(DbInfo:TAsDbConnectionInfo);
-    destructor Destroy;
     function GetSchemas: TStringList;
     function GetTablenames(schema: string): TStringList;
     function GetPrimaryKeys(Schema, TableName: string): TStringList;
@@ -37,14 +36,8 @@ implementation
 
 constructor TAsMySqlMetadata.Create(DbInfo: TAsDbConnectionInfo);
 begin
- FDBInfo:=TAsDbConnectionInfo.Create;
- FDBInfo.Assign(DbInfo);
+ FDBInfo:=DbInfo;
  FDBInfo.DbType:=dtMySql;
-end;
-
-destructor TAsMySqlMetadata.Destroy;
-begin
- FDBInfo.Destroy;
 end;
 
 function TAsMySqlMetadata.GetSchemas: TStringList;
@@ -73,8 +66,9 @@ begin
    sql:='select t.TABLE_NAME from information_schema.tables t '+
               ' where t.table_schema='''+schema+''' order by TABLE_NAME';
 
-   ds :=  TAsQuery.GetData(sql,FDbInfo);
+   ds :=  TAsQuery.Create(FDbInfo);
    try
+    ds.Open(sql);
      while not ds.EOF do
      begin
       Result.Add(Trim(ds.Fields[0].AsString));
@@ -105,8 +99,9 @@ begin
             ' WHERE t.table_name='''+TableName+''' and t.table_schema='''+Schema+''''+
             ' ORDER BY ORDINAL_POSITION ASC;';
  try
-    ds := TAsQuery.GetData(sql,FDbInfo);
+    ds := TAsQuery.Create(FDbInfo);
     try
+     ds.Open(sql);
      while not ds.EOF do
       begin
         Result.Add(Trim(ds.Fields[0].AsString));
@@ -145,9 +140,10 @@ begin
 ' AND t.TABLE_SCHEMA='''+Schema+'''';
 
  try
- ds := TAsQuery.GetData(sql,FDbInfo);
+ ds := TAsQuery.Create(FDbInfo);
 
   try
+    ds.Open(sql);
     while not ds.EOF do
      begin
        fk := TAsForeignKey.Create;
@@ -191,9 +187,9 @@ begin
 ' and c.TABLE_SCHEMA='''+Schema+''' order by ordinal_position';
 
   try
-    ds := TAsQuery.GetData(sql,FDBInfo);
+    ds := TAsQuery.Create(FDBInfo);
     try
-
+     ds.Open(sql);
       while not ds.EOF do
        begin
          c := TAsColumn.Create;
@@ -248,9 +244,10 @@ begin
            ' FROM INFORMATION_SCHEMA.STATISTICS c '+
            ' WHERE TABLE_NAME='''+TableName+''' and TABLE_SCHEMA='''+Schema+'''';
 
- try
-    ds := TAsQuery.GetData(sql,FDbInfo);
+  try
+   ds := TAsQuery.Create(FDbInfo);
    try
+     ds.Open(sql);
      while not ds.EOF do
       begin
         c := TAsIndex.Create;
@@ -286,8 +283,9 @@ begin
             ' where event_object_table='''+TableName+''' and event_object_schema='''+Schema+'''';
 
  try
-   ds := TAsQuery.GetData(sql,FDbInfo);
+   ds := TAsQuery.Create(FDbInfo);
    try
+    ds.Open(sql);
     while not ds.EOF do
      begin
        c := TAsTrigger.Create;
@@ -323,8 +321,9 @@ begin
 
  Result := TStringList.Create;
  try
-  ds := TAsQuery.GetData(sql,FDbInfo);
+  ds := TAsQuery.Create(FDbInfo);
   try
+   ds.Open(sql);
     while not ds.EOF do
     begin
       s := ds.Fields[0].AsString;
@@ -354,8 +353,9 @@ begin
               ' FROM   INFORMATION_SCHEMA.PARAMETERS '+
               ' WHERE SPECIFIC_NAME='''+ProcedureName+''' AND SPECIFIC_SCHEMA='''+FDbInfo.Database+'''';
  try
-   ds := TAsQuery.GetData(sql,FDbInfo);
+   ds := TAsQuery.Create(FDbInfo);
    try
+    ds.Open(sql);
     while not ds.EOF do
     begin
       p := TAsProcedureParam.Create;
@@ -388,8 +388,9 @@ begin
     dbi.Assign(FDBInfo);
     dbi.Database:='INFORMATION_SCHEMA';
     sql := 'SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA';
-    ds := TAsQuery.GetData(sql,FDBInfo);
+    ds := TAsQuery.Create(FDBInfo);
     try
+     ds.Open(sql);
      while not ds.EOF do
       begin
         Result.Add(ds.Fields[0].AsString);

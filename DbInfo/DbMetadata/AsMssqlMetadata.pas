@@ -16,7 +16,6 @@ type
     FDBInfo:TAsDbConnectionInfo;
   public
     constructor Create(DbInfo:TAsDbConnectionInfo);
-    destructor Destroy;
     function GetSchemas: TStringList;
     function GetTablenames(schema: string): TStringList;
     function GetPrimaryKeys(Schema, TableName: string): TStringList;
@@ -35,14 +34,8 @@ implementation
 
 constructor TAsMssqlMetadata.Create(DbInfo: TAsDbConnectionInfo);
 begin
- FDBInfo :=TAsDbConnectionInfo.Create;
- FDBInfo.Assign(DbInfo);
+ FDBInfo :=DbInfo;
  FDBInfo.DbType:= dtMsSql;
-end;
-
-destructor TAsMssqlMetadata.Destroy;
-begin
- FDBInfo.Destroy;
 end;
 
 function TAsMssqlMetadata.GetSchemas: TStringList;
@@ -51,8 +44,9 @@ var
 begin
   Result := TStringList.Create;
   try
-    qr := TAsQuery.GetData('SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA', FDBInfo);
+    qr := TAsQuery.Create(FDBInfo);
     try
+      qr.Open('SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA');
       while not qr.EOF do
       begin
         Result.Add(qr.Fields[0].AsString);
@@ -82,8 +76,9 @@ Result := TStringList.Create;
               ' where t.TABLE_CATALOG='''+FDBInfo.Database+''' and t.TABLE_SCHEMA='''+schema+''' order by TABLE_NAME';
 
 
-   ds :=  TAsQuery.GetData(sql,FDBInfo);
+   ds :=  TAsQuery.Create(FDBInfo);
    try
+    ds.Open(sql);
      while not ds.EOF do
      begin
       Result.Add(Trim(ds.Fields[0].AsString));
@@ -113,8 +108,9 @@ begin
  ' INNER JOIN INFORMATION_SCHEMA.TABLES s on s.TABLE_NAME=c.TABLE_NAME '+
  ' WHERE tc.Constraint_Type = ''PRIMARY KEY'' AND c.Table_Name = '''+TableName+''' and s.TABLE_SCHEMA='''+Schema+'''';
  try
-    ds := TAsQuery.GetData(sql,FDBInfo);
+    ds := TAsQuery.Create(FDBInfo);
     try
+     ds.Open(sql);
      while not ds.EOF do
       begin
         Result.Add(Trim(ds.Fields[0].AsString));
@@ -153,8 +149,9 @@ begin
 ' WHERE   t.TABLE_NAME = '''+TableName+''''+
 ' AND t.TABLE_SCHEMA='''+Schema+'''';
  try
-  ds := TAsQuery.GetData(sql,FDBInfo);
+  ds := TAsQuery.Create(FDBInfo);
   try
+   ds.Open(sql);
     while not ds.EOF do
      begin
        fk := TAsForeignKey.Create;
@@ -198,8 +195,10 @@ begin
 ' and c.TABLE_SCHEMA='''+Schema+''' order by ordinal_position';
 
   try
-    ds := TAsQuery.GetData(sql,FDBInfo);
+    ds := TAsQuery.Create(FDBInfo);
+
     try
+     ds.Open(sql);
 
       while not ds.EOF do
        begin
@@ -259,8 +258,9 @@ begin
         ' inner join sys.columns c on c.object_id = t.object_id and ic.column_id = c.column_id '+
         ' where i.is_primary_key=0 and t.name='''+TableName+''' and s.name='''+Schema+'''';
  try
-    ds := TAsQuery.GetData(sql,FDBInfo);
+    ds := TAsQuery.Create(FDBInfo);
    try
+     ds.Open(sql);
      while not ds.EOF do
       begin
         c := TAsIndex.Create;
@@ -311,8 +311,9 @@ begin
            ' WHERE sysobjects.type = ''TR'' and t.name ='''+TableName+''' and s.name='''+Schema+'''';
 
  try
-   ds := TAsQuery.GetData(sql,FDBInfo);
+   ds := TAsQuery.Create(FDBInfo);
    try
+    ds.Open(sql);
     while not ds.EOF do
      begin
        c := TAsTrigger.Create;
@@ -323,8 +324,9 @@ begin
        c.Trigger_Status:=Trim(ds.FieldByName('TRIGGER_STATUS').AsString);
 
        try
-         dsMsSql := TAsQuery.GetData('sp_helptext  @objname='''+c.Trigger_Name+'''',FDBInfo);
+         dsMsSql := TAsQuery.Create(FDBInfo);
          try
+          dsMsSql.Open('sp_helptext  @objname='''+c.Trigger_Name+'''');
            while not dsMsSql.EOF do
             begin
               c.Trigger_Body:=c.Trigger_Body+dsMsSql.Fields[0].AsString;
@@ -365,8 +367,9 @@ begin
 
  Result := TStringList.Create;
  try
-  ds := TAsQuery.GetData(sql,FDbInfo);
+  ds := TAsQuery.Create(FDbInfo);
   try
+   ds.Open(sql);
     while not ds.EOF do
     begin
       s := ds.Fields[0].AsString;
@@ -396,8 +399,9 @@ Result := TAsProcedureParams.Create;
              '  FROM   INFORMATION_SCHEMA.PARAMETERS ' +
              ' WHERE SPECIFIC_NAME='''+ProcedureName+'''  and SPECIFIC_CATALOG='''+FDBInfo.Database+'''';
  try
-   ds := TAsQuery.GetData(sql,FDBInfo);
+   ds := TAsQuery.Create(FDBInfo);
    try
+    ds.Open(sql);
     while not ds.EOF do
     begin
       p := TAsProcedureParam.Create;
@@ -430,8 +434,9 @@ begin
   try
    dbi.Database:='master';
    sql :='SELECT name from sys.databases';
-   ds := TAsQuery.GetData(sql,dbi);
+   ds := TAsQuery.Create(dbi);
     try
+     ds.Open(sql);
      while not ds.EOF do
       begin
         Result.Add(ds.Fields[0].AsString);

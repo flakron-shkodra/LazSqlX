@@ -63,22 +63,22 @@ TAsProcedureNames = object
 
     function GetDbParamPrefix: string;
 
-    function GetSql(Ident: integer; AsTableInfo: TTableInfo;
+    function GetSql(Ident: integer; AsTableInfo: TAsTableInfo;
       QueryType: TQueryType): TStringList;
   public
     constructor Create(DbConInfo:TAsDbConnectionInfo;ProcedureNames: TAsProcedureNames); overload;
     destructor Destroy;
     procedure Generate(Tables: TAsTableInfos; QueryTypes: TQueryTypes;
       Prefix: string = 'usp'); overload;
-    procedure Generate(AsTableInfo: TTableInfo; QueryTypes: TQueryTypes;
+    procedure Generate(AsTableInfo: TAsTableInfo; QueryTypes: TQueryTypes;
       Prefix: string = 'usp'); overload;
-    function GenerateStoredProcedure(AsTableInfo: TTableInfo;
+    function GenerateStoredProcedure(AsTableInfo: TAsTableInfo;
       QueryType: TQueryType; Prefix: string = 'usp'): string;
     {Used in Generate procedures and functions}
-    function GetCreateSql(AsTableInfo: TTableInfo; QueryType: TQueryType;
+    function GetCreateSql(AsTableInfo: TAsTableInfo; QueryType: TQueryType;
       SqlSpKeyword: string = 'CREATE '): TStringList;
 
-    function GenerateQuery(Ident: integer; AsTableInfo: TTableInfo;
+    function GenerateQuery(Ident: integer; AsTableInfo: TAsTableInfo;
       QueryType: TQueryType): TStringList;
   end;
 
@@ -139,7 +139,7 @@ end;
 {$REGION 'Public Methods'}
 
 
-procedure TAsSqlGenerator.Generate(AsTableInfo: TTableInfo; QueryTypes: TQueryTypes;
+procedure TAsSqlGenerator.Generate(AsTableInfo: TAsTableInfo; QueryTypes: TQueryTypes;
   Prefix: string);
 var
   tmpLst: TStringList;
@@ -244,7 +244,7 @@ begin
   WriteLog('===========STORED PROCEDURE GENERATION END===========');
 end;
 
-function TAsSqlGenerator.GenerateStoredProcedure(AsTableInfo: TTableInfo;
+function TAsSqlGenerator.GenerateStoredProcedure(AsTableInfo: TAsTableInfo;
   QueryType: TQueryType; Prefix: string): string;
 var
   lstAll: TStringList;
@@ -280,7 +280,7 @@ begin
   end;
 end;
 
-function TAsSqlGenerator.GetSql(Ident: integer; AsTableInfo: TTableInfo;
+function TAsSqlGenerator.GetSql(Ident: integer; AsTableInfo: TAsTableInfo;
   QueryType: TQueryType): TStringList;
 var
   seperator, tmpFTablename, tmpTablename: string;
@@ -670,7 +670,7 @@ begin
   WriteLog('===============STORED PROCEDURE GENERATION END===============');
 end;
 
-function TAsSqlGenerator.GenerateQuery(Ident: integer; AsTableInfo: TTableInfo;
+function TAsSqlGenerator.GenerateQuery(Ident: integer; AsTableInfo: TAsTableInfo;
   QueryType: TQueryType): TStringList;
 var
   lst: TStringList;
@@ -860,7 +860,7 @@ begin
 end;
 
 {Used in Generate procedures and functions}
-function TAsSqlGenerator.GetCreateSql(AsTableInfo: TTableInfo; QueryType: TQueryType;
+function TAsSqlGenerator.GetCreateSql(AsTableInfo: TAsTableInfo; QueryType: TQueryType;
   SqlSpKeyword: string = 'CREATE '): TStringList;
 var
   dtype, seperator, tmpFTablename, tmpTablename: string;

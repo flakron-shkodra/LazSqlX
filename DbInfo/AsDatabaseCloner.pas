@@ -22,9 +22,9 @@ type
     FDestDbName : string;
   public
     constructor Create(DestDBInfo:TAsDbConnectionInfo; DestDbName:string);
-    function GetCreateScript(Info:TTableInfo;CreateConstraints: boolean; OverrideDefaultTypes: boolean):string;
-    procedure MakeTable(info: TTableInfo; CreateConstraints:boolean=true; OverrideDefaultTypes: boolean = False);
-    procedure CreateConstraints(info:TTableInfo);
+    function GetCreateScript(Info:TAsTableInfo;CreateConstraints: boolean; OverrideDefaultTypes: boolean):string;
+    procedure MakeTable(info: TAsTableInfo; CreateConstraints:boolean=true; OverrideDefaultTypes: boolean = False);
+    procedure CreateConstraints(info:TAsTableInfo);
     procedure CreateConstraintsForAll(infos:TAsTableInfos);
     procedure MakeTables(infos: TAsTableInfos; OverrideDefaultTypes: boolean = False);
     procedure MakeDatabase;
@@ -55,7 +55,7 @@ begin
   FDestDbName:= DestDbName;
 end;
 
-function TAsDatabaseCloner.GetCreateScript(Info: TTableInfo;
+function TAsDatabaseCloner.GetCreateScript(Info: TAsTableInfo;
  CreateConstraints: boolean; OverrideDefaultTypes: boolean): string;
 var
   sql: string;
@@ -221,7 +221,7 @@ begin
   Result:=Sql;
 end;
 
-procedure TAsDatabaseCloner.MakeTable(info: TTableInfo;
+procedure TAsDatabaseCloner.MakeTable(info: TAsTableInfo;
  CreateConstraints: boolean; OverrideDefaultTypes: boolean);
 var
   sql:String;
@@ -230,7 +230,7 @@ begin
   TAsDbUtils.ExecuteQuery(sql,FDbInfo);
 end;
 
-procedure TAsDatabaseCloner.CreateConstraints(info: TTableInfo);
+procedure TAsDatabaseCloner.CreateConstraints(info: TAsTableInfo);
 var
   sql:string;
   I: Integer;
@@ -285,7 +285,7 @@ begin
   begin
     dbtyp := FDbInfo.DbType;
     sql := 'CREATE DATABASE ' + TAsStringUtils.WrapString(FDestDbName,wt);
-    TAsDbUtils.ExecuteQuery(sql,FDbInfo,deZeos);
+    TAsDbUtils.ExecuteQuery(sql,FDbInfo);
     FDbInfo.Database:=TAsStringUtils.WrapString(FDestDbName,wt);
   end;
 end;

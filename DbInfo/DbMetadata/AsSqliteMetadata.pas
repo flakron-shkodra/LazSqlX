@@ -16,7 +16,6 @@ type
     FDBInfo:TAsDbConnectionInfo;
   public
     constructor Create(DbInfo:TAsDbConnectionInfo);
-    destructor Destroy;
     function GetSchemas: TStringList;
     function GetTablenames(schema: string): TStringList;
     function GetPrimaryKeys(Schema, TableName: string): TStringList;
@@ -35,14 +34,8 @@ implementation
 
 constructor TAsSqliteMetadata.Create(DbInfo: TAsDbConnectionInfo);
 begin
- FDBInfo := TAsDbConnectionInfo.Create;
- FDBInfo.Assign(DbInfo);
+ FDBInfo := DbInfo;
  FDBInfo.DbType:=dtSQLite;
-end;
-
-destructor TAsSqliteMetadata.Destroy;
-begin
- FDBInfo.Destroy;
 end;
 
 function TAsSqliteMetadata.GetSchemas: TStringList;
@@ -64,8 +57,9 @@ begin
   Result := TStringList.Create;
   try
    sql:='SELECT name from sqlite_master where type=''table''';
-   ds :=  TAsQuery.GetData(sql,FDbInfo);
+   ds :=  TAsQuery.Create(FDbInfo);
    try
+    ds.Open(sql);
      while not ds.EOF do
      begin
       Result.Add(Trim(ds.Fields[0].AsString));
@@ -90,8 +84,9 @@ begin
  Result := TStringList.Create;
  sql:='PRAGMA table_info('+TableName+')';
  try
-    ds := TAsQuery.GetData(sql,FDbInfo);
+    ds := TAsQuery.Create(FDbInfo);
     try
+     ds.Open(sql);
      while not ds.EOF do
       begin
         if ds.FieldByName('pk').AsInteger=1 then
@@ -129,9 +124,9 @@ begin
  sql:='pragma table_info('+TableName+')';
 
   try
-    ds := TAsQuery.GetData(sql,FDbInfo);
+    ds := TAsQuery.Create(FDbInfo);
     try
-
+     ds.Open(sql);
       while not ds.EOF do
        begin
          c := TAsColumn.Create;
@@ -167,8 +162,9 @@ begin
             ' from sqlite_master where type = ''index'' and tbl_name='''+TableName+'''';
 
  try
-    ds := TAsQuery.GetData(sql,FDbInfo);
+    ds := TAsQuery.Create(FDbInfo);
    try
+     ds.Open(sql);
      while not ds.EOF do
       begin
         c := TAsIndex.Create;
@@ -220,8 +216,9 @@ begin
 
  try
 
-   ds := TAsQuery.GetData(sql,FDBInfo);
+   ds := TAsQuery.Create(FDBInfo);
    try
+    ds.Open(sql);
     while not ds.EOF do
      begin
        c := TAsTrigger.Create;

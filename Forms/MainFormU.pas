@@ -93,6 +93,7 @@ type
     imgLogo: TImage;
     itmDataIporter: TMenuItem;
     MenuItem4: TMenuItem;
+    mitClearSession: TMenuItem;
     mitPrint: TMenuItem;
     Sep13: TMenuItem;
     mitReplace: TMenuItem;
@@ -137,6 +138,7 @@ type
     mitSep5: TMenuItem;
     GridPopupMenu: TPopupMenu;
     pnlIndicator: TPanel;
+    sp14: TMenuItem;
     StoredProcedurePopUp: TPopupMenu;
     btnQueryDesigner: TToolButton;
     btnDatabseCloner: TToolButton;
@@ -147,8 +149,6 @@ type
     btnOpen: TToolButton;
     sep4: TToolButton;
     sep22: TToolButton;
-    SqlCon: TSQLConnector;
-    Transaction: TSQLTransaction;
     txtSearchTable: TEdit;
     EditCopy1: TEditCopy;
     EditCut1: TEditCut;
@@ -238,7 +238,6 @@ type
     PageControlPopupMenu: TPopupMenu;
     SaveDialog: TSaveDialog;
     SqlSyntax: TSynSQLSyn;
-    ZCon: TZConnection;
     procedure actCheckSyntaxExecute(Sender: TObject);
     procedure actClearSessionHistoryExecute(Sender: TObject);
     procedure actCopyRunProcedureTextExecute(Sender: TObject);
@@ -323,6 +322,7 @@ type
     procedure ReplaceDialog1Replace(Sender: TObject);
     procedure sbMainDrawPanel(StatusBar: TStatusBar; Panel: TStatusPanel;
       const Rect: TRect);
+    procedure ToolButton1Click(Sender: TObject);
     procedure ToolButton2Click(Sender: TObject);
     procedure txtSearchprocChange(Sender: TObject);
     procedure txtSearchprocEnter(Sender: TObject);
@@ -348,6 +348,9 @@ type
     {Used in FPageControl for Autocomplete usage}
     FprocedureIcon: TBitmap;
 
+    {Main db connection }
+    FDBInfo: TAsDbConnectionInfo;
+
     {MainControl to hold all Tabs with Queries/returned results}
     FPageControl:TLazSqlXPageControl;
 
@@ -369,9 +372,6 @@ type
     {Connects sqldb or zeos}
     procedure DoSelectiveConnect;
 
-    {Returns true if zeos/sqldb is connected}
-    function GetIsConnected: Boolean;
-
     {Updates GUI controls based on status connected/disconnected}
     procedure UpdateGUI(aIsConnected: boolean);
 
@@ -379,9 +379,6 @@ type
     procedure Connect;
     {Exports active tab's grid data}
     procedure DoExport(exporter: TCustomDatasetExporter; FileExt: string);
-
-    {Enables exporters actions/items}
-    procedure EnableExporters;
 
     {Shows AsDbForm for the selected table in tableList}
     procedure ShowEditForm(FormFilter:TAsDbFormFilter);
@@ -445,16 +442,15 @@ type
 
   public
 
-    {Local reference for DBInfo which is created and freed in SqlConnBuilderForm}
-    DbInfo: TAsDbConnectionInfo;
+
     {Image used for QueryDesigner}
     ArrowImageLeft: TBitmap;
     {Image used for QueryDesigner}
     ArrowImageRight: TBitmap;
     {Image used for QueryDesigner}
     RectImage: TBitmap;
-    {Connection status for sqldb or zeos}
-    property IsConnected:Boolean read GetIsConnected;
+
+    property DbInfo:TAsDbConnectionInfo read FDBInfo;
 
   end;
 
@@ -563,7 +559,7 @@ begin
       FPageControl.RemoveAllTabs;
       ReadXMLFile(xmldoc,Filename);
       try
-       ServerNode := xmldoc.DocumentElement.FindNode(DbInfo.Identifier);
+       ServerNode := xmldoc.DocumentElement.FindNode(FDBInfo.Identifier);
        if ServerNode<>nil then
        for I:=0 to ServerNode.ChildNodes.Count-1 do
        begin
@@ -595,7 +591,7 @@ var
   Filename:string;
   ServerIdentifier:string;
 begin
-  if (DbInfo=nil) then exit;
+  if (FDBInfo=nil) then exit;
   if (FPageControl<>nil) then
   begin
     Filename := GetTempDir+LazSqlXSessionFile;
@@ -608,7 +604,7 @@ begin
 
      if FPageControl<>nil then
      begin
-       ServerIdentifier := DbInfo.Identifier;
+       ServerIdentifier := FDBInfo.Identifier;
 
        if xmldoc.DocumentElement=nil then
        begin
@@ -660,7 +656,7 @@ var
   p: TAsProcedureNames;
   s: TAsSqlGenerator;
   tis: TAsTableInfos;
-  ti: TTableInfo;
+  ti: TAsTableInfo;
   outPut: TStringList;
   tab:TLazSqlXTabSheet;
 begin
@@ -683,9 +679,9 @@ begin
     actExecute.Enabled := True;
 
     try
-      s := TAsSqlGenerator.Create(DbInfo,p);
-      tis := TAsTableInfos.Create(nil,DbInfo);
-      ti := tis.Add(cmbSchema.Text, table);
+      s := TAsSqlGenerator.Create(FDBInfo,p);
+      tis := TAsTableInfos.Create(nil,FDBInfo);
+      ti := tis.Add(cmbSchema.Text, table,False);
 
       if not IsStoredProcedure then
         Output := s.GenerateQuery(0, ti, queryType)
@@ -983,7 +979,6 @@ procedure TMainForm.OnExecutionFinished(Sender: TObject; IsTableData: boolean);
 begin
   FLoadingIndicator.StopAnimation;
   sbMain.Panels[1].Text:=FPageControl.ActiveTab.Message;
-  EnableExporters;
 end;
 
 
@@ -1038,12 +1033,30 @@ begin
   end;
 end;
 
+procedure TMainForm.ToolButton1Click(Sender: TObject);
+var
+ frm:TAsDbForm;
+ ti:TAsTableInfos;
+begin
+ ti := TAsTableInfos.Create(nil,FDBInfo);
+
+ try
+  frm := TAsDbForm.Create(FDBInfo,cmbSchema.Text,ti.Add(cmbSchema.Text,lstTables.Items[lstTables.ItemIndex]));
+  frm.OpenData;
+  frm.CloseData;
+ finally
+   ti.Free;
+   frm.Free;
+ end;
+
+end;
+
 procedure TMainForm.ToolButton2Click(Sender: TObject);
 var
   cs:TAsColumns;
 begin
   try
-    cs := TAsDbUtils.GetColumns(DbInfo,cmbSchema.Text, lstTables.Items[lstTables.ItemIndex]);
+    cs := TAsDbUtils.GetColumns(FDBInfo,cmbSchema.Text, lstTables.Items[lstTables.ItemIndex]);
   finally
     cs.Free;
   end;
@@ -1105,56 +1118,34 @@ var
 begin
 
   DoDisconnect;
-
+  {assign this reference and SqlConnBuilderForm will fill it}
+  SqlConnBuilderForm.DbInfo := FDBInfo;
   if SqlConnBuilderForm.ShowModal = mrOk then
   begin
-    DbInfo := SqlConnBuilderForm.DbInfo;
-    FPageControl.DBInfo:=DbInfo;
+
     lstTables.Clear;
     QueryDesignerForm.Clear;
 
-
-    try
-    z := DbInfo.ToZeosConnection;
-    ZCon.Protocol:=z.Protocol;
-    ZCon.Database:=z.Database;
-    ZCon.Catalog:=z.Catalog;
-    ZCon.User:=z.User;
-    ZCon.Password:=z.Password;
-    ZCon.HostName:=z.HostName;
-
-    s := DbInfo.ToSqlConnector;
-    SqlCon.HostName:=s.HostName;
-    SqlCon.DatabaseName:=s.DatabaseName;
-    SqlCon.Password:=s.Password;
-    SqlCon.UserName:=s.UserName;
-    SqlCon.ConnectorType:=s.ConnectorType;
-
-    finally
-      z.Free;
-      s.Free;
-    end;
-
-    ZCon.Properties.Text := SqlConnBuilderForm.txtAdvancedProperties.Text;
+    FDBInfo.ZeosConnection.Properties.Text := SqlConnBuilderForm.txtAdvancedProperties.Text;
     if SqlConnBuilderForm.chkAlternateLibLocation.Checked then
     begin
-      ZCon.LibraryLocation := SqlConnBuilderForm.txtLibraryFilename.Text;
+      FDBInfo.ZeosConnection.LibraryLocation := SqlConnBuilderForm.txtLibraryFilename.Text;
       LibraryLoader.LibraryName := SqlConnBuilderForm.txtLibraryFilename.Text;
       LibraryLoader.ConnectionType :=
-        TAsDbUtils.DatabaseTypeAsConnectorType(DbInfo.DbType);
+        TAsDbUtils.DatabaseTypeAsConnectorType(FDBInfo.DbType);
       LibraryLoader.Enabled := True;
     end
     else
     begin
       LibraryLoader.Enabled := False;
-      ZCon.LibraryLocation := EmptyStr;
+      FDBInfo.ZeosConnection.LibraryLocation := EmptyStr;
       LibraryLoader.LibraryName := '';
     end;
 
 
     try
       DoSelectiveConnect;
-      FPageControl.DBInfo:=DbInfo;
+
       if FPageControl.PageCount = 0 then
       begin
         actNewTabExecute(nil);
@@ -1180,8 +1171,13 @@ begin
   actFind.Enabled:=aIsConnected ;
   actFindReplace.Enabled:=aIsConnected;
   actOpen.Enabled:=aIsConnected;
-
-  Invalidate;
+  actExportCSV.Enabled:=aIsConnected;
+  actExportRTF.Enabled:=aIsConnected;
+  actExportSQL.Enabled:= aIsConnected;
+  actExportRTF.Enabled:= aIsConnected;
+  actExportJSON.Enabled:=aIsConnected;
+  actExportXML.Enabled:=aIsConnected;
+  actPrint.Enabled:= aIsConnected;
 
   if aIsConnected then
   begin
@@ -1191,7 +1187,7 @@ begin
     lstTables.PopupMenu := TablesPopupMenu;
     lstProcedures.PopupMenu := StoredProcedurePopUp;
     actNewTab.Enabled := True;
-    tabProcedures.TabVisible := DbInfo.DbType <> dtSQLite;
+    tabProcedures.TabVisible := FDBInfo.DbType <> dtSQLite;
     mitGenerateSP.Visible := tabProcedures.TabVisible;
     actGenerateAllproc.Visible := tabProcedures.TabVisible;
     actGenerateSelectItemProc.Visible := tabProcedures.TabVisible;
@@ -1199,7 +1195,7 @@ begin
     actGenerateUpdateProc.Visible := tabProcedures.TabVisible;
     actGenerateDeleteProc.Visible := tabProcedures.TabVisible;
     actGenerateSelectProc.Visible := tabProcedures.TabVisible;
-    sbMain.Panels[0].Text := DbInfo.Server + '/' + DbInfo.Database;
+    sbMain.Panels[0].Text := FDBInfo.Server + '/' + FDBInfo.Database;
     btnConnect.Action:=actDisconnect;
     mitConnect.Action:=actDisconnect;
   end
@@ -1216,29 +1212,12 @@ end;
 
 procedure TMainForm.DoSelectiveConnect;
 begin
-
-    case DbInfo.DbEngineType of
-      deSqlDB:
-      begin
-        SqlCon.Open;
-      end;
-      deZeos:
-      begin
-        ZCon.Connect;
-      end;
-    end;
-
-end;
-
-function TMainForm.GetIsConnected: Boolean;
-begin
- Result := SqlCon.Connected or ZCon.Connected;
+  FDBInfo.Open;
 end;
 
 procedure TMainForm.DoDisconnect;
 begin
-  ZCon.Disconnect;
-  SqlCon.Close(True);
+  FDBInfo.Close;
 end;
 
 
@@ -1308,24 +1287,6 @@ begin
   end;
 end;
 
-procedure TMainForm.EnableExporters;
-begin
-  try
-    actExportCSV.Enabled := (FPageControl.ActiveTab.Query.Active or FPageControl.ActiveTab.ZQuery.Active);
-
-    actExportXML.Enabled := actExportCSV.Enabled;
-    actExportRTF.Enabled := actExportCSV.Enabled;
-
-    actExportSQL.Enabled := actExportCSV.Enabled;
-
-
-    actExportJSON.Enabled := actExportCSV.Enabled;
-
-
-  except
-  end;
-end;
-
 procedure TMainForm.ShowEditForm(FormFilter: TAsDbFormFilter);
 var
   frm:TAsDbForm;
@@ -1333,11 +1294,12 @@ var
 begin
  if lstTables.ItemIndex>-1 then
  begin
-  ti := TAsTableInfos.Create(nil,DbInfo);
+  ti := TAsTableInfos.Create(nil,FDBInfo);
   try
-    ti.AddTable(cmbSchema.Text,lstTables.Items[lstTables.ItemIndex]);
-    frm := TAsDbForm.Create(Self.DbInfo,cmbSchema.Text,ti[0]);
+    ti.AddTable(cmbSchema.Text,lstTables.Items[lstTables.ItemIndex],False);
+    frm := TAsDbForm.Create(FDBInfo,cmbSchema.Text,ti[0]);
     frm.ShowModal(FormFilter);
+    frm.CloseData;
   finally
     ti.Free;
     frm.Free;
@@ -1351,15 +1313,15 @@ var
 begin
   try
     cmbSchema.Clear;
-    list := TAsDbUtils.GetSchemas(DbInfo);
+    list := TAsDbUtils.GetSchemas(FDBInfo);
     cmbSchema.Items.AddStrings(list);
   finally
     list.Free;
   end;
 
 
-  if DbInfo.DbType = dtOracle then
-    cmbSchema.ItemIndex := cmbSchema.Items.IndexOf(SqlCon.UserName)
+  if FDBInfo.DbType = dtOracle then
+    cmbSchema.ItemIndex := cmbSchema.Items.IndexOf(FDBInfo.UserName)
   else
     cmbSchema.ItemIndex := 0;
 end;
@@ -1371,7 +1333,7 @@ begin
 
   try
     lstTables.Clear;
-    list := TAsDbUtils.GetTablenames(DbInfo, cmbSchema.Items[cmbSchema.ItemIndex]);
+    list := TAsDbUtils.GetTablenames(FDBInfo, cmbSchema.Items[cmbSchema.ItemIndex]);
     lstTables.Items.AddStrings(list);
 
     FPageControl.Tables.Clear;
@@ -1392,10 +1354,10 @@ procedure TMainForm.FillProcedures;
 var
   lst: TStringList;
 begin
-  if DbInfo.DbType=dtSQLite then exit;
+  if FDBInfo.DbType=dtSQLite then exit;
   lstProcedures.Clear;
   try
-    lst := TAsDbUtils.GetProcedureNames(DbInfo,cmbSchema.Text);
+    lst := TAsDbUtils.GetProcedureNames(FDBInfo,cmbSchema.Text);
     lstProcedures.Items.AddStrings(lst);
     if lstProcedures.Count > 0 then
       lstProcedures.ItemIndex := 0;
@@ -1415,7 +1377,7 @@ var
 begin
 
   try
-  ProcInfo := TAsProcedureInfo.Create(DbInfo);
+  ProcInfo := TAsProcedureInfo.Create(FDBInfo);
     s := ProcInfo.GetRunProcedureText(procname);
     if s <> EmptyStr then
     begin
@@ -1435,11 +1397,11 @@ var
   qr: TAsQuery;
 begin
 
-  qr := TAsQuery.Create(DbInfo);
+  qr := TAsQuery.Create(FDBInfo);
 
   try
 
-    case DbInfo.DbType of
+    case FDBInfo.DbType of
       dtMsSql:
       begin
         qr.SQL.Text := 'sp_helptext ''' + procname + '''';
@@ -1452,7 +1414,7 @@ begin
       dtMySql:
       begin
         qr.SQL.Text := 'SELECT ROUTINE_DEFINITION FROM INFORMATION_SCHEMA.ROUTINES ' +
-          ' WHERE ROUTINE_SCHEMA = ''' + DbInfo.Database +
+          ' WHERE ROUTINE_SCHEMA = ''' + FDBInfo.Database +
           ''' AND ROUTINE_TYPE = ''PROCEDURE'' AND ROUTINE_NAME = "' + procname + '";';
       end;
       dtFirebirdd:
@@ -1463,7 +1425,7 @@ begin
       end;
     end;
 
-    if DbInfo.DbType <> dtSQLite then
+    if FDBInfo.DbType <> dtSQLite then
     begin
       qr.Open;
 
@@ -1647,6 +1609,8 @@ procedure TMainForm.FormCreate(Sender: TObject);
 var
   I: integer;
 begin
+  FDBInfo := TAsDbConnectionInfo.Create;
+
   AppVersion := TFileUtils.GetApplicationVersion;
 
   FtableIcon := TBitmap.Create;
@@ -1665,7 +1629,7 @@ begin
   ApplicationImages.GetBitmap(47, ArrowImageRight);
   ApplicationImages.GetBitmap(48, RectImage);
 
-  FPageControl := TLazSqlXPageControl.Create(Self,SqlCon,ZCon);
+  FPageControl := TLazSqlXPageControl.Create(Self,FDBInfo);
   FPageControl.Highlighter := SqlSyntax;
   FPageControl.Keywords.AddStrings(TLazSqlXResources.SqlReservedKeywords);
   FPageControl.OnExecutionFinished := @OnExecutionFinished;
@@ -1704,6 +1668,7 @@ begin
   ArrowImageLeft.Free;
   RectImage.Free;
   FLoadingIndicator.Free;
+  FDBInfo.Free;
 
 end;
 
@@ -1735,10 +1700,10 @@ end;
 
 procedure TMainForm.actQueryDesignerExecute(Sender: TObject);
 begin
-  if GetIsConnected then
+  if FDBInfo.Connected then
   begin
     QueryDesignerForm.Schema := cmbSchema.Text;
-    if QueryDesignerForm.ShowModal(DbInfo) = mrOk then
+    if QueryDesignerForm.ShowModal(FDBInfo) = mrOk then
     begin
       actNewTab.Execute;
       FPageControl.ActiveTab.QueryEditor.Lines.AddStrings(QueryDesignerForm.SQLQuery);
@@ -1773,7 +1738,7 @@ procedure TMainForm.actConnectExecute(Sender: TObject);
 begin
   Connect;
   LoadSession;
-  UpdateGUI(GetIsConnected);
+  UpdateGUI(FDBInfo.Connected);
 end;
 
 procedure TMainForm.actDisconnectExecute(Sender: TObject);
@@ -1781,7 +1746,7 @@ begin
   SaveSession;
   DoDisconnect;
   FPageControl.RemoveAllTabs;
-  UpdateGUI(GetIsConnected);
+  UpdateGUI(FDBInfo.Connected);
 end;
 
 procedure TMainForm.actDropDatabaseExecute(Sender: TObject);
@@ -1793,7 +1758,7 @@ begin
       actDisconnect.Execute;
       Application.ProcessMessages;
       Sleep(3000);
-      TAsDbUtils.ExecuteQuery('DROP DATABASE ' + DbInfo.Database, DbInfo, deZeos);
+      TAsDbUtils.ExecuteQuery('DROP DATABASE ' + FDBInfo.Database, FDBInfo);
     end;
   except
     on e: Exception do
@@ -1809,8 +1774,7 @@ begin
     try
       DoDisconnect;
       try
-        TAsDbUtils.ExecuteQuery('DROP TABLE ' +
-          lstTables.Items[lstTables.ItemIndex], DbInfo,DbInfo.DbEngineType);
+        TAsDbUtils.ExecuteQuery('DROP TABLE ' + lstTables.Items[lstTables.ItemIndex],FDBInfo);
       finally
         DoSelectiveConnect;
         FillTables;
@@ -1836,9 +1800,7 @@ procedure TMainForm.actDesignTableExecute(Sender: TObject);
 begin
   if lstTables.ItemIndex > -1 then
     begin
-      DoDisconnect;
-      DesignTableForm.Showmodal(DbInfo, cmbSchema.Text, lstTables.Items[lstTables.ItemIndex]);
-      DoSelectiveConnect;
+      DesignTableForm.Showmodal(FDBInfo, cmbSchema.Text, lstTables.Items[lstTables.ItemIndex]);
     end;
 end;
 
@@ -1866,7 +1828,7 @@ begin
       ProgressForm.Show;
       Application.ProcessMessages;
 
-      infos := TAsTableInfos.Create(nil,DbInfo);
+      infos := TAsTableInfos.Create(nil,FDBInfo);
 
 
       ProgressForm.MaxProgress := lstTables.Count;
@@ -1876,7 +1838,7 @@ begin
 
         try
           //skip sequential tables for ORA
-          if DbInfo.DbType = dtOracle then
+          if FDBInfo.DbType = dtOracle then
             if AnsiContainsStr(lstTables.Items[I], '_SEQ') then
               Continue;
 
@@ -1898,7 +1860,7 @@ begin
 
     end;
 
-    if DbInfo.DbType <> dtSQLite then
+    if FDBInfo.DbType <> dtSQLite then
       DatabaseClonerForm.txtDestinationDbName.Text := SqlConnBuilderForm.cmbDatabase.Text
     else
       DatabaseClonerForm.txtDestinationDbName.Text :=
@@ -1911,7 +1873,7 @@ begin
         #13#10 + lstErrors.Text, mtWarning, [mbOK], 0);
     end;
 
-    DatabaseClonerForm.ShowModal(DbInfo, infos);
+    DatabaseClonerForm.ShowModal(FDBInfo, infos);
   finally
     lstErrors.Free;
     infos.Free;
@@ -1932,7 +1894,7 @@ procedure TMainForm.actCopyRunProcedureTextExecute(Sender: TObject);
 var
   pi:TAsProcedureInfo;
 begin
-  pi := TAsProcedureInfo.Create(DbInfo);
+  pi := TAsProcedureInfo.Create(FDBInfo);
   try
     Clipboard.AsText:=pi.GetRunProcedureText(lstProcedures.Items[lstProcedures.ItemIndex],false);
   finally
@@ -2005,11 +1967,11 @@ procedure TMainForm.actGenerateCreateScriptExecute(Sender: TObject);
 var
   dbC: TAsDatabaseCloner;
   ti: TAsTableInfos;
-  t: TTableInfo;
+  t: TAsTableInfo;
 begin
 
-  dbc := TAsDatabaseCloner.Create(DbInfo, ZCon.Database);
-  ti := TAsTableInfos.Create(nil,DbInfo);
+  dbc := TAsDatabaseCloner.Create(FDBInfo, FDBInfo.Database);
+  ti := TAsTableInfos.Create(nil,FDBInfo);
   t := ti.Add(cmbSchema.Text, lstTables.Items[lstTables.ItemIndex]);
   try
     if actNewTab.Execute then
@@ -2186,7 +2148,7 @@ end;
 
 procedure TMainForm.actNewTabExecute(Sender: TObject);
 begin
-  if GetIsConnected then
+  if FDBInfo.Connected then
   begin
     FPageControl.AddTab;
     UpdateGUI(True);
@@ -2208,7 +2170,7 @@ end;
 procedure TMainForm.actNewTableExecute(Sender: TObject);
 begin
   DoDisconnect;
-  DesignTableForm.Showmodal(DbInfo,cmbSchema.Text, '');
+  DesignTableForm.Showmodal(FDBInfo,cmbSchema.Text, '');
   DoSelectiveConnect;
   FillTables;
 end;
@@ -2260,10 +2222,10 @@ end;
 procedure TMainForm.ApplicationPropertiesIdle(Sender: TObject; var Done: boolean);
 begin
 
- if Assigned(DbInfo) then
+ if Assigned(FDBInfo) then
  begin
-   mitGenerateSP.Visible := DbInfo.DbType <> dtFirebirdd;
-   actDropDatabase.Enabled := DbInfo.DbType in [dtMsSql, dtMySql, dtOracle];
+   mitGenerateSP.Visible := FDBInfo.DbType <> dtFirebirdd;
+   actDropDatabase.Enabled := FDBInfo.DbType in [dtMsSql, dtMySql, dtOracle];
  end;
 
  if FPageControl.PageCount>0 then
@@ -2277,12 +2239,12 @@ begin
   actGridCopyAll.Enabled := actGridCopyAll.Enabled;
 
   actCheckSyntax.Enabled := actExecute.Enabled;
-  actQueryDesigner.Enabled := GetIsConnected;
-  actDatabaseCloner.Enabled := GetIsConnected;
-  actDataImporter.Enabled := GetIsConnected;
-  actOpen.Enabled:=GetIsConnected;
-  actFind.Enabled:=GetIsConnected;
-  actFindReplace.Enabled:=GetIsConnected;
+  actQueryDesigner.Enabled := FDBInfo.Connected;
+  actDatabaseCloner.Enabled := FDBInfo.Connected;
+  actDataImporter.Enabled := FDBInfo.Connected;
+  actOpen.Enabled:=FDBInfo.Connected;
+  actFind.Enabled:=FDBInfo.Connected;
+  actFindReplace.Enabled:=FDBInfo.Connected;
 
  end else
  begin
@@ -2350,7 +2312,7 @@ begin
   t := lstTables.Items[lstTables.ItemIndex];
   if TAsStringUtils.ContainsChar(t, ' ') then
   begin
-    case DbInfo.DbType of
+    case FDBInfo.DbType of
       dtMsSql: t := '[' + t + ']';
       dtOracle: t := '"' + t + '"';
     end;

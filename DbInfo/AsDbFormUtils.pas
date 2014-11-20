@@ -5,6 +5,9 @@ Flakron Shkodra
   mod 1.1 (31.10.2014)
     -added LazReport->FrPrintGrid
     -fix edt.Name as controlName
+  mod 1.2 (20.11.2014)
+   -Set to use TAsQuery a
+   -other tweaks
 ******************}
 
 unit AsDbFormUtils;
@@ -25,31 +28,26 @@ type
 
   TAsUIDataAcessObject = class(TComponent)
   private
+   FDBengine: TAsDatabaseEngineType;
     FOwner:TComponent;
     FDataSource: TDataSource;
     FName: string;
     FSqlQuery:string;
-    FSqlCon:TSQLConnector;
-    FZCon:TZConnection;
-    FQuery: TSQLQuery;
-    FZQuery:TZQuery;
-    FDBengine:TAsDatabaseEngineType;
+    FQuery:TAsQuery;
+    FDBInfo:TAsDbConnectionInfo;
     function GetQueryComponent: TDataSet;
     procedure SetDataSource(AValue: TDataSource);
     procedure SetName(AValue: string);
-    procedure SetQuery(AValue: TSQLQuery);
-    procedure AfterPost(DataSet:TDataSet);
-    procedure AfterDelete(DataSet:TDataSet);
+    procedure SetQuery(AValue: TAsQuery);
     procedure SetSqlQuery(AValue: string);
   public
-    constructor Create(SqlCon:TSQLConnector; aSqlQuery:string);overload;
-    constructor Create(ZCon:TZConnection; aSqlQuery:string);overload;
+    constructor Create(DbInfo:TAsDbConnectionInfo; aSqlQuery:string);
     destructor Destroy;override;
     procedure Open;
     procedure Close;
   published
     property Name:string read FName write SetName;
-    property Query:TDataSet read GetQueryComponent;
+    property Query:TAsQuery read FQuery;
     property DataSource:TDataSource read FDataSource write SetDataSource;
     property DbEngine:TAsDatabaseEngineType read FDBengine;
     property SqlQuery:string read FSqlQuery write SetSqlQuery;
@@ -158,7 +156,7 @@ type
   TAsQueryBuilderForm = class(TForm)
   private
    FSqlQuery: string;
-    FTableInfo:TTableInfo;
+    FTableInfo:TAsTableInfo;
     FPanel:TPanel;
     FEdit:TEdit;
     FCombo:TComboBox;
@@ -170,7 +168,7 @@ type
     procedure OnAddClick(Sender: TObject);
    procedure OnBtnOkClick(Sender: TObject);
   public
-    constructor Create(aTableInfo:TTableInfo);
+    constructor Create(aTableInfo:TAsTableInfo);
     property SqlQuery:string read FSqlQuery write SetSqlQuery;
   end;
 
@@ -179,8 +177,6 @@ type
   TAsDbFormFilter = (dffNone,dffTopRecords,dffCustomFilter);
 
   TAsDbForm = class(TForm)
-   procedure OnFrPrintGridGetValue(const ParName: String; var ParValue: Variant
-    );
   private
    FControlWidth: Integer;
    FControlSpace:Integer;
@@ -191,9 +187,7 @@ type
    FEditControlsBox: TScrollBox;
    FGridNavGroup:TGroupBox;
    FRefDataObjects: TAsUIDataAcessObjects;
-   FTableInfo:TTableInfo;
-   FCon:TSQLConnector;
-   FZCon:TZConnection;
+   FTableInfo:TAsTableInfo;
    FFRPrintGrid:TfrPrintGrid;
    FSchema:string;//used only when AsDbLookupComboEdit (table reference field is clicked for edit '..')
    FSqlQuery:string;
@@ -203,6 +197,11 @@ type
    FQuickSearchEdit:TEdit;//created from MakeQuickSearchToolbar (used in OnQuickSearchChange)
    FShowColumnsButton:TToolButton; //created from MakeQuickSearchToolbar (accessed also from OnGridColumnListExit)
    FColumnsList:TCheckListBox;
+   procedure AfterEdit(DataSet:TDataSet);
+   procedure AfterInsert(DataSet:TDataSet);
+   procedure AfterPost(DataSet:TDataSet);
+   procedure AfterCancel(DataSet:TDataSet);
+   procedure OnFrPrintGridGetValue(const ParName: String; var ParValue: Variant);
    procedure SetControlWidth(AValue: Integer);
    procedure SetDataGrid(AValue: TDBGrid);
    procedure SetDataNavigator(AValue: TDBNavigator);
@@ -222,11 +221,13 @@ type
    procedure SetSqlQuery(AValue: string);
    procedure FillColumnList;
   public
-    constructor Create(aDbInfo:TAsDbConnectionInfo; aSchema:string; aTableInfo:TTableInfo);
+    constructor Create(aDbInfo:TAsDbConnectionInfo; aSchema:string; aTableInfo:TAsTableInfo);
     destructor Destroy;override;
     procedure OpenData;
+    procedure CloseData;//if this is not called after form is used, SQLDB with MsSql can cause troubles
     function ShowModal(FormFilter:TAsDbFormFilter=dffNone):TModalResult;
   published
+
     property EditControlsPanel:TScrollBox read FEditControlsBox;
     property DataObject:TAsUIDataAcessObject read FDataObject;
     property RefDataObjects:TAsUIDataAcessObjects read FRefDataObjects;
@@ -301,7 +302,7 @@ begin
  FSqlQuery:=AValue;
 end;
 
-constructor TAsQueryBuilderForm.Create(aTableInfo: TTableInfo);
+constructor TAsQueryBuilderForm.Create(aTableInfo: TAsTableInfo);
 var
  I: Integer;
  lbl:TLabel;
@@ -739,6 +740,27 @@ begin
  FColumnsList.Visible:=False;
 end;
 
+procedure TAsDbForm.AfterEdit(DataSet: TDataSet);
+begin
+ FEditControlsBox.Enabled:=True;
+end;
+
+procedure TAsDbForm.AfterInsert(DataSet: TDataSet);
+begin
+ FEditControlsBox.Enabled:=True;
+end;
+
+procedure TAsDbForm.AfterPost(DataSet: TDataSet);
+begin
+ FEditControlsBox.Enabled:=False;
+ FDataObject.FQuery.ApplyUpdates;
+end;
+
+procedure TAsDbForm.AfterCancel(DataSet: TDataSet);
+begin
+ FEditControlsBox.Enabled:=False;
+end;
+
 procedure TAsDbForm.OnFrPrintGridGetValue(const ParName: String;
  var ParValue: Variant);
 begin
@@ -1000,13 +1022,7 @@ begin
         cmbLookup.Name:='cmb'+controlName;
         cmbLookup.OnEditButtonClick:=@OnDbLookupComboEditClick;
         ik :=FTableInfo.ImportedKeys.GetByName(fieldName);
-        if FDbInfo.DbEngineType=deSqlDB then
-          dao := TAsUIDataAcessObject.Create(FCon,'select * from '+ik.ForeignTableName)
-        else
-         if  FDbInfo.DbEngineType=deZeos then
-          dao := TAsUIDataAcessObject.Create(FZCon,'select * from '+ik.ForeignTableName);
-
-
+        dao := TAsUIDataAcessObject.Create(FDbInfo,'select * from '+ik.ForeignTableName);
         FRefDataObjects.Add(dao);
         cmbLookup.ListSource := dao.DataSource;
         cmbLookup.ListField:=ik.ForeignFirstTextField;
@@ -1133,7 +1149,7 @@ end;
 
 
 constructor TAsDbForm.Create(aDbInfo: TAsDbConnectionInfo; aSchema: string;
- aTableInfo: TTableInfo);
+ aTableInfo: TAsTableInfo);
 var
   grp:TGroupBox;
 begin
@@ -1155,16 +1171,18 @@ begin
  FTableInfo := aTableInfo;
  FSqlQuery:= 'Select * from '+FTableInfo.Tablename;
 
- if FDbInfo.DbEngineType=deSqlDB then
- begin
-  FCon := FDbInfo.ToSqlConnector;
-  FDataObject := TAsUIDataAcessObject.Create(FCon,FSqlQuery);
- end else
- if FDbInfo.DbEngineType=deZeos then
- begin
-  FZCon := FDbInfo.ToZeosConnection;
-  FDataObject := TAsUIDataAcessObject.Create(FZCon,FSqlQuery);
- end;
+ FDataObject := TAsUIDataAcessObject.Create(FDbInfo,FSqlQuery);
+
+ //FDataObject.FQuery.DataSet.AfterInsert:=@AfterInsert;
+ //FDataObject.FQuery.DataSet.AfterEdit:=@AfterEdit;
+ //
+ //FDataObject.FQuery.DataSet.AfterPost:=@AfterPost;
+ //FDataObject.FQuery.DataSet.AfterDelete:=@AfterPost;
+ //
+ //FDataObject.FQuery.DataSet.AfterCancel:=@AfterCancel;
+ //FDataObject.FQuery.DataSet.AfterClose:=@AfterCancel;
+ //FDataObject.FQuery.DataSet.AfterRefresh:=@AfterCancel;
+
 
  FRefDataObjects := TAsUIDataAcessObjects.Create;
 
@@ -1174,6 +1192,8 @@ begin
  FEditControlsBox.HorzScrollBar.Visible:=False;
 
  MakeEditControls;
+
+ //FEditControlsBox.Enabled:=False;//enabled when Insert or Edit
 
  FGridNavGroup := TGroupBox.Create(Self);
  FGridNavGroup.Parent := Self;
@@ -1228,9 +1248,6 @@ end;
 
 destructor TAsDbForm.Destroy;
 begin
-  if FCon<>nil then
-  FCon.Destroy;
-
   FDataObject.Destroy;
   FRefDataObjects.Destroy;
  inherited Destroy;
@@ -1239,7 +1256,6 @@ end;
 procedure TAsDbForm.OpenData;
 var
  I: Integer;
- lst:TStringList;
 begin
   if FRefDataObjects.OpenAll then
   begin
@@ -1251,20 +1267,27 @@ begin
     end;
 
     if FQuickSearchFieldsCmb <> nil then
-    try
-      lst := TAsDbUtils.GetColumnNames(FDbInfo,FTableInfo.Tablename);
+    begin
       FQuickSearchFieldsCmb.Clear;
-      FQuickSearchFieldsCmb.Items.AddStrings(lst);
+      for I:= 0 to FTableInfo.AllFields.Count-1 do
+      begin
+        FQuickSearchFieldsCmb.Items.Add(FTableInfo.AllFields[I].FieldName);
+      end;
       if FQuickSearchFieldsCmb.Items.Count>0 then
         FQuickSearchFieldsCmb.ItemIndex:=0;
-    finally
-      lst.Free;
     end;
+
 
   end else
   begin
     ShowMessage(FRefDataObjects.LastError);
   end;
+end;
+
+procedure TAsDbForm.CloseData;
+begin
+ FRefDataObjects.CloseAll;
+ FDataObject.Close;
 end;
 
 function TAsDbForm.ShowModal(FormFilter: TAsDbFormFilter): TModalResult;
@@ -1336,7 +1359,11 @@ begin
 
  if OpenForm then
  begin
-  OpenData;
+  try
+    OpenData;
+  except on E:Exception do
+   ShowMessage(E.Message);
+  end;
   Result := inherited ShowModal
  end;
 
@@ -1352,10 +1379,7 @@ end;
 
 function TAsUIDataAcessObject.GetQueryComponent: TDataSet;
 begin
- case FDBengine of
-  deSqlDB: Result := FQuery;
-  deZeos:Result:=FZQuery;
- end;
+ Result:= FQuery.DataSet;
 end;
 
 
@@ -1366,21 +1390,10 @@ begin
  FName:=AValue;
 end;
 
-procedure TAsUIDataAcessObject.SetQuery(AValue: TSQLQuery);
+procedure TAsUIDataAcessObject.SetQuery(AValue: TAsQuery);
 begin
  if FQuery=AValue then Exit;
  FQuery:=AValue;
-end;
-
-procedure TAsUIDataAcessObject.AfterPost(DataSet: TDataSet);
-begin
- {some tables give errors on TMSSQLConnection and don't update  (but Zeos doesn't fail on those tables)}
- FQuery.ApplyUpdates;
-end;
-
-procedure TAsUIDataAcessObject.AfterDelete(DataSet: TDataSet);
-begin
- FQuery.ApplyUpdates;
 end;
 
 procedure TAsUIDataAcessObject.SetSqlQuery(AValue: string);
@@ -1388,57 +1401,29 @@ begin
  if FSqlQuery=AValue then Exit;
  FSqlQuery:=AValue;
 
- case FDBengine of
-  deZeos:FZQuery.SQL.Text:=FSqlQuery;
-  deSqlDB:FQuery.SQL.Text:=FSqlQuery;
- end;
-
-
+ FQuery.SQL.Text:=FSqlQuery;
 end;
 
-constructor TAsUIDataAcessObject.Create(SqlCon: TSQLConnector; aSqlQuery: string
- );
+constructor TAsUIDataAcessObject.Create(DbInfo: TAsDbConnectionInfo;
+ aSqlQuery: string);
 begin
-  inherited Create(nil);
-  FSqlQuery:= aSqlQuery;
-  FSqlCon := SqlCon;
-  FQuery := TSQLQuery.Create(nil);
-  FQuery.DataBase := FSqlCon;
-  FQuery.AfterPost:=@AfterPost;
-  FQuery.AfterDelete:=@AfterDelete;
-  FQuery.SQL.Text:=FSqlQuery;
-  FQuery.FilterOptions:=[foCaseInsensitive];
-  FDataSource := TDataSource.Create(nil);
-  FDataSource.DataSet := FQuery;
-  FDBengine:= deSqlDB;
-end;
+ inherited Create(nil);
+ FDBInfo := DbInfo;
+ FSqlQuery:= aSqlQuery;
+ FQuery := TAsQuery.Create(FDBInfo);
+ FQuery.SQL.Text:=aSqlQuery;
+ FDataSource := TDataSource.Create(nil);
 
-constructor TAsUIDataAcessObject.Create(ZCon: TZConnection; aSqlQuery: string);
-begin
-  inherited Create(nil);
-  FSqlQuery:= aSqlQuery;
-  FZCon := ZCon;
-  FZQuery := TZQuery.Create(nil);
-  FZQuery.Connection := FZCon;
-  FZQuery.SQL.Text:=FSqlQuery;
-  FZQuery.FilterOptions:=[foCaseInsensitive];
-  FDataSource := TDataSource.Create(nil);
-  FDataSource.DataSet := FZQuery;
-  FDBengine:= deZeos;
+
+ FDataSource.DataSet := FQuery.DataSet;
+ FQuery.FilterOptions:= [foCaseInsensitive];
 end;
 
 destructor TAsUIDataAcessObject.Destroy;
 begin
-  if FDBengine = deSqlDB then
   FQuery.Destroy;
-
-  If FDBengine = deZeos then
-  FZQuery.Destroy;
-
   FDataSource.Destroy;
-
   inherited Destroy;
-
 end;
 
 procedure TAsUIDataAcessObject.Open;

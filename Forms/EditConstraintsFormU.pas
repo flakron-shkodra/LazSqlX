@@ -36,7 +36,7 @@ type
     { private declarations }
     FDBInfo:TAsDbConnectionInfo;
     FTablename:string;
-    FWorkingTable:TTableInfo;
+    FWorkingTable:TAsTableInfo;
     FSchema:string;
     function GetForeignColumn: string;
     function GetForeignTable: string;
@@ -47,7 +47,7 @@ type
     function GetReferenceName: string;
   public
     { public declarations }
-    function ShowModal(aDbInfo:TAsDbConnectionInfo; Schema:string; WorkingTable:TTableInfo):TModalResult;
+    function ShowModal(aDbInfo:TAsDbConnectionInfo; Schema:string; WorkingTable:TAsTableInfo):TModalResult;
     property LocalColumn:string read GetLocalColumn;
     property ReferencedTable:string read GetForeignTable;
     property ReferencedColumn:string read GetForeignColumn;
@@ -155,7 +155,7 @@ begin
 end;
 
 function TEditConstraintForm.ShowModal(aDbInfo: TAsDbConnectionInfo;
- Schema: string; WorkingTable: TTableInfo): TModalResult;
+ Schema: string; WorkingTable: TAsTableInfo): TModalResult;
 begin
   FDBInfo := aDbInfo;
   FSchema:=Schema;

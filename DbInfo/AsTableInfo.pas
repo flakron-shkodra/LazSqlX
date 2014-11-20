@@ -242,11 +242,11 @@ type
     property Items[Index:integer]:TImportedKeyInfo read GetRefInfo write SetRefInfo; default;
  end;
 
- { TTableInfo }
+ { TAsTableInfo }
 
  TAsTableInfos = class;
 
- TTableInfo = class(TCollectionItem)
+ TAsTableInfo = class(TCollectionItem)
  strict private
   FAllFields:TAsFieldInfos;//to contain all fields
   FIndexes: TAsIndexInfos;
@@ -273,7 +273,7 @@ type
   function FieldByName(Fieldname:string):TAsFieldInfo;
   function PrimaryKeysAsDelText:string;
   {Compares this instance to given tableInfo returns SQL valid code for altering if they are different}
-  function Compare(otherTable:TTableInfo;AsDbType:TAsDatabaseType):string;
+  function Compare(otherTable:TAsTableInfo;AsDbType:TAsDatabaseType):string;
  published
   property Tablename:string read FTablename write SetTableName;
   property TableNameAsControlName:string read FTableNameAsControlName write FTableNameAsControlName;
@@ -309,12 +309,12 @@ type
 
     FLogListBox:TListBox;
     FDBinfo:TAsDbConnectionInfo;
-    FAutoConnect:Boolean;
+
     procedure GetImportedKeyInfos(Schema:string;Tablename:string;var ConstraintInfos:TAsImportedKeyInfos);
     procedure GetIndexeInfos(Schema:string; Tablename:string; var indexInfos:TAsIndexInfos);
     procedure GetTriggersInfos(Schema:string;Tablename:string; var TriggerInfos:TAsTriggerInfos);
 
-    function GetItem(Index: Integer): TTableInfo;
+    function GetItem(Index: Integer): TAsTableInfo;
 
     function GetSqlType(AdoType:TFieldType):string;
     function GetCSharpType(SqlType:String):string;
@@ -324,29 +324,39 @@ type
     function GetTableNameAsControl(TableName:string):string;
     function GetControlType(SqlType:string):TAsControlType;
     procedure SetDBInfo(AValue: TAsDbConnectionInfo);
-    procedure SetItem(Index: Integer; AValue: TTableInfo);
+    procedure SetItem(Index: Integer; AValue: TAsTableInfo);
     procedure WriteLog(msg:string);
-    function GetTable(Index: integer): TTableInfo;
+    function GetTable(Index: integer): TAsTableInfo;
 
  public
-    constructor Create(aOwner: TComponent; DbInfo: TAsDbConnectionInfo; AutoConnect:Boolean=true);
+    constructor Create(aOwner: TComponent; DbInfo: TAsDbConnectionInfo);
     destructor Destroy;override;
+    {Adds given tables as TAsTableInfo filled with info}
     procedure LoadFromTables(Schema:string; Tables:TStrings);
-    function Add:TTableInfo;overload;
-    function Add(Schema:string; Tablename:string):TTableInfo;overload;
-    function TableByName(Tablename:string):TTableInfo;
+    {Adds an empty TAsTableInfo }
+    function Add:TAsTableInfo;overload;
+    {Adds a TAsTableInfo filled with table info from database; if FullInfo= true triggers&indexes are retrieved too}
+    function Add(Schema:string; Tablename:string; FullInfo:Boolean = true):TAsTableInfo;overload;
+    {Gets table by it's name}
+    function TableByName(Tablename:string):TAsTableInfo;
+    {Gets index of given tablename}
     function IndexOf(TableName:string):Integer;
+    {gets create table script for sql}
     function GetCreateSQL(TableIndex:Integer):string;
-    procedure AddTable(Schema,Tablename:string);
+    {backward compatibilty; calls Add(Schema,Tablename)}
+    procedure AddTable(Schema,Tablename:string; FullInfo:Boolean=True);
+    {Log info}
     property LogStrings:TStrings read FLogStrings write FLogStrings;
+    {Log listbox}
     property LogList:TListBox read FLogListBox write FLogListBox;
-    property Items[Index:Integer]:TTableInfo read GetItem write SetItem;default;
+    property Items[Index:Integer]:TAsTableInfo read GetItem write SetItem;default;
+    {Database information object}
     property DbInfo:TAsDbConnectionInfo read FDBinfo write SetDBInfo;
  end;
 
- { TAsDbTablesInfo }
+ { TAsDbTables }
 
- TAsDbTablesInfo = class(TComponent)
+ TAsDbTables = class(TComponent)
  private
     FItems:TAsTableInfos;
     FName: string;
@@ -482,15 +492,15 @@ begin
  inherited Assign(Source);
 end;
 
-{ TAsDbTablesInfo }
+{ TAsDbTables }
 
-procedure TAsDbTablesInfo.SetName(AValue: string);
+procedure TAsDbTables.SetName(AValue: string);
 begin
  if FName=AValue then Exit;
  FName:=AValue;
 end;
 
-procedure TAsDbTablesInfo.SetDBInfo(AValue: TAsDbConnectionInfo);
+procedure TAsDbTables.SetDBInfo(AValue: TAsDbConnectionInfo);
 begin
  FDBInfo := AValue;
  FItems.DbInfo:=AValue;
@@ -498,14 +508,14 @@ begin
 end;
 
 
-procedure TAsDbTablesInfo.OnFindClass(Reader: TReader; const AClassName: string;
+procedure TAsDbTables.OnFindClass(Reader: TReader; const AClassName: string;
  var ComponentClass: TComponentClass);
 begin
-  if CompareText(AClassName,'TDbSchemata')=0 then
-    ComponentClass:=TAsDbTablesInfo;
+  if CompareText(AClassName,'TAsDbTables')=0 then
+    ComponentClass:=TAsDbTables;
 end;
 
-constructor TAsDbTablesInfo.Create(aDbInfo: TAsDbConnectionInfo; AutoConnect: Boolean
+constructor TAsDbTables.Create(aDbInfo: TAsDbConnectionInfo; AutoConnect: Boolean
  );
 begin
  inherited Create(nil);
@@ -515,18 +525,18 @@ begin
    FDBInfo := TAsDbConnectionInfo.Create;
    FShouldFreeDbInfo:=True;
  end;
- FItems := TAsTableInfos.Create(Self,aDbInfo,AutoConnect);
+ FItems := TAsTableInfos.Create(Self,aDbInfo);
 end;
 
-constructor TAsDbTablesInfo.Create;
+constructor TAsDbTables.Create;
 begin
   inherited Create(nil);
   FDBInfo := TAsDbConnectionInfo.Create;
   FShouldFreeDbInfo:=True;
-  FItems := TAsTableInfos.Create(Self,FDBInfo,False);
+  FItems := TAsTableInfos.Create(Self,FDBInfo);
 end;
 
-destructor TAsDbTablesInfo.Destroy;
+destructor TAsDbTables.Destroy;
 begin
  FItems.Destroy;
 
@@ -536,12 +546,12 @@ begin
  inherited Destroy;
 end;
 
-procedure TAsDbTablesInfo.Clear;
+procedure TAsDbTables.Clear;
 begin
  FItems.Clear;
 end;
 
-procedure TAsDbTablesInfo.LoadFromFile(Filename: string);
+procedure TAsDbTables.LoadFromFile(Filename: string);
 var
   mem:TMemoryStream;
 begin
@@ -554,10 +564,10 @@ begin
   end;
 end;
 
-procedure TAsDbTablesInfo.SaveToFile(Filename: string);
+procedure TAsDbTables.SaveToFile(Filename: string);
 var
   mem:TMemoryStream;
-  ti :TTableInfo;
+  ti :TAsTableInfo;
 begin
   try
     mem := TMemoryStream.Create;
@@ -1039,7 +1049,7 @@ end;
 
 {$REGION 'Constructor/Destructor'}
 
-function TTableInfo.GetHasPrimaryKeys: Boolean;
+function TAsTableInfo.GetHasPrimaryKeys: Boolean;
 begin
  Result := False;
  if FPrimaryKeys <> nil then
@@ -1047,20 +1057,20 @@ begin
 end;
 
 
-procedure TTableInfo.SetTableName(AValue: string);
+procedure TAsTableInfo.SetTableName(AValue: string);
 begin
  if FTablename=AValue then Exit;
  FTablename:=AValue;
  FTableAlias:=TAsStringUtils.GetFriendlyAlias(FTablename);
 end;
 
-function TTableInfo.GetDisplayName: string;
+function TAsTableInfo.GetDisplayName: string;
 begin
   Result:=FTablename
 end;
 
 
-constructor TTableInfo.Create(aCollection: TCollection);
+constructor TAsTableInfo.Create(aCollection: TCollection);
 begin
   inherited Create(aCollection);
 
@@ -1076,7 +1086,7 @@ begin
 
 end;
 
-destructor TTableInfo.Destroy;
+destructor TAsTableInfo.Destroy;
 begin
   FAllFields.Free;
   FFields.Free;
@@ -1088,30 +1098,30 @@ begin
   inherited Destroy;
 end;
 
-procedure TTableInfo.Assign(Source: TPersistent);
+procedure TAsTableInfo.Assign(Source: TPersistent);
 begin
   if Source=nil then
   Exit;
- if Source is TTableInfo then
+ if Source is TAsTableInfo then
  begin
-  //FExportedKeys.Assign(TTableInfo(Source).ExportedKeys);
-  FAllFields.Assign(TTableInfo(Source).AllFields);
-  FIndexes.Assign(TTableInfo(Source).Indexes);
-  FPrimaryKeys.Assign(TTableInfo(Source).PrimaryKeys);
-  FFields.Assign(TTableInfo(Source).Fields);
-  FIdentities.Assign(TTableInfo(Source).Identities);
-  FTableAlias:= TTableInfo(Source).TableAlias;
-  FTablename:=TTableInfo(Source).Tablename;
-  FSchema:= TTableInfo(Source).Schema;
-  FImportedKeys.Assign(TTableInfo(Source).ImportedKeys);
-  FHasPrimaryKey:=TTableInfo(Source).HasPrimaryKeys;
-  FTriggerInfos.Assign(TTableInfo(Source).Triggers);
-  FTableNameAsControlName:=TTableInfo(Source).TableNameAsControlName;
+  //FExportedKeys.Assign(TAsTableInfo(Source).ExportedKeys);
+  FAllFields.Assign(TAsTableInfo(Source).AllFields);
+  FIndexes.Assign(TAsTableInfo(Source).Indexes);
+  FPrimaryKeys.Assign(TAsTableInfo(Source).PrimaryKeys);
+  FFields.Assign(TAsTableInfo(Source).Fields);
+  FIdentities.Assign(TAsTableInfo(Source).Identities);
+  FTableAlias:= TAsTableInfo(Source).TableAlias;
+  FTablename:=TAsTableInfo(Source).Tablename;
+  FSchema:= TAsTableInfo(Source).Schema;
+  FImportedKeys.Assign(TAsTableInfo(Source).ImportedKeys);
+  FHasPrimaryKey:=TAsTableInfo(Source).HasPrimaryKeys;
+  FTriggerInfos.Assign(TAsTableInfo(Source).Triggers);
+  FTableNameAsControlName:=TAsTableInfo(Source).TableNameAsControlName;
  end else
  inherited Assign(Source);
 end;
 
-function TTableInfo.FieldByName(Fieldname: string): TAsFieldInfo;
+function TAsTableInfo.FieldByName(Fieldname: string): TAsFieldInfo;
 var
  i:Integer;
 begin
@@ -1125,7 +1135,7 @@ begin
   end;
 end;
 
-function TTableInfo.PrimaryKeysAsDelText: string;
+function TAsTableInfo.PrimaryKeysAsDelText: string;
 var
   I: Integer;
   s: string;
@@ -1143,7 +1153,7 @@ begin
   Result := k;
 end;
 
-function TTableInfo.Compare(otherTable: TTableInfo;AsDbType:TAsDatabaseType): string;
+function TAsTableInfo.Compare(otherTable: TAsTableInfo;AsDbType:TAsDatabaseType): string;
 var
   I: Integer;
   lst:TStringList;
@@ -1220,14 +1230,13 @@ end;
 
 {$REGION 'Constructor/Desctructor'}
 
-constructor TAsTableInfos.Create(aOwner: TComponent; DbInfo: TAsDbConnectionInfo;
- AutoConnect: Boolean);
+constructor TAsTableInfos.Create(aOwner: TComponent; DbInfo: TAsDbConnectionInfo
+ );
 var
  r : TResourceStream;
 begin
 
-  inherited Create(aOwner,TTableInfo);
-  FAutoConnect:=AutoConnect;
+  inherited Create(aOwner,TAsTableInfo);
 
   if DbInfo<>nil then
   begin
@@ -1328,7 +1337,7 @@ begin
  FDBinfo:=AValue;
 end;
 
-procedure TAsTableInfos.SetItem(Index: Integer; AValue: TTableInfo);
+procedure TAsTableInfos.SetItem(Index: Integer; AValue: TAsTableInfo);
 begin
  Items[Index] := AValue;
 end;
@@ -1412,7 +1421,7 @@ begin
 end;
 
 
-function TAsTableInfos.GetTable(Index: integer): TTableInfo;
+function TAsTableInfos.GetTable(Index: integer): TAsTableInfo;
 begin
   Result := Items[Index];
 end;
@@ -1507,9 +1516,9 @@ begin
  end;
 end;
 
-function TAsTableInfos.GetItem(Index: Integer): TTableInfo;
+function TAsTableInfos.GetItem(Index: Integer): TAsTableInfo;
 begin
-  Result := TTableInfo(inherited Items[Index]);
+  Result := TAsTableInfo(inherited Items[Index]);
 end;
 
 function TAsTableInfos.GetSqlType(AdoType: TFieldType): string;
@@ -1574,7 +1583,7 @@ procedure TAsTableInfos.LoadFromTables(Schema:string; Tables: TStrings);
 	procedure CheckDependencies(tablename:string);
   var
   	J:Integer;
-    tbl:TTableInfo;
+    tbl:TAsTableInfo;
   begin
   	tbl := TableByName(tablename);
     if tbl<>nil then
@@ -1611,16 +1620,16 @@ begin
     WriteLog('Done');
 end;
 
-function TAsTableInfos.Add: TTableInfo;
+function TAsTableInfos.Add: TAsTableInfo;
 begin
-  Result := TTableInfo(inherited Add);
+  Result := TAsTableInfo(inherited Add);
 end;
 
-function TAsTableInfos.Add(Schema: string; Tablename: string
-  ): TTableInfo;
+function TAsTableInfos.Add(Schema: string; Tablename: string;
+ FullInfo: Boolean): TAsTableInfo;
 var
  lstPKs,lstIdentity:Tstringlist;
- table:TTableInfo;
+ table:TAsTableInfo;
  field,pkField,idField,nField:TAsFieldInfo;
  strSqlCastExpr:string;
  tis:TAsTriggerInfos;
@@ -1634,7 +1643,7 @@ begin
 
    try
     Screen.Cursor:=crHourGlass;
-     table := TTableInfo(inherited Add);
+     table := TAsTableInfo(inherited Add);
      table.Tablename := Tablename;
      table.TableNameAsControlName:=GetTableNameAsControl(Tablename);
 
@@ -1652,9 +1661,12 @@ begin
      columns := TAsDbUtils.GetColumns(FDBinfo,Schema,Tablename);
 
      GetImportedKeyInfos(Schema,Tablename,iks);
-     GetIndexeInfos(Schema,Tablename,ii);
 
-     GetTriggersInfos(Schema,Tablename,tis);
+     if FullInfo then
+     begin
+      GetIndexeInfos(Schema,Tablename,ii);
+      GetTriggersInfos(Schema,Tablename,tis);
+     end;
 
      ds := TAsQuery.Create(FDBinfo);
      //Get FIELD INFOS
@@ -1732,7 +1744,6 @@ begin
    finally
     Screen.Cursor:=crDefault;
     columns.Free;
-    lstPKs.Free;
     lstIdentity.Free;
     ds.Free;
    end;
@@ -1741,7 +1752,7 @@ begin
 
 end;
 
-function TAsTableInfos.TableByName(Tablename: string): TTableInfo;
+function TAsTableInfos.TableByName(Tablename: string): TAsTableInfo;
 var
   I:Integer;
 begin
@@ -1782,7 +1793,7 @@ var
   SqlCloseBr: string;
   SqlDot: string;
   i: Integer;
-  tbl:TTableInfo;
+  tbl:TAsTableInfo;
 begin
 
  SqlFromDot:='.';
@@ -1895,11 +1906,11 @@ begin
   end;
 end;
 
-procedure TAsTableInfos.AddTable(Schema, Tablename: string);
+procedure TAsTableInfos.AddTable(Schema, Tablename: string; FullInfo: Boolean);
 var
-  ti:TTableInfo;
+  ti:TAsTableInfo;
 begin
-  Add(Schema,Tablename);
+  Add(Schema,Tablename,FullInfo);
 end;
 
 {$ENDREGION}

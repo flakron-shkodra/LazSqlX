@@ -103,7 +103,7 @@ type
     function GetFriendlyConnStr: string;
     procedure SaveRecentConnToFile;
     procedure LoadRecentConnFromFile;
-    property DbInfo:TAsDbConnectionInfo read FDBInfo;
+    property DbInfo:TAsDbConnectionInfo read FDBInfo write FDBInfo;
   end;
 
 type
@@ -238,6 +238,7 @@ var
 begin
   try
     AssignDbInfo;
+    cmbDatabase.Clear;
     try
       lst := TAsDbUtils.GetCatalogNames(FDBInfo);
       cmbDatabase.Items.AddStrings(lst);
@@ -395,38 +396,10 @@ begin
   LastError := EmptyStr;
   AssignDbInfo;
 
-  case FDBInfo.DbEngineType of
-    deSqlDB:
-    begin
-      try
-        sqlcon := FDBInfo.ToSqlConnector;
-        try
-        sqlcon.Open;
-        except on E:Exception do
-          begin
-           LastError:=E.Message;
-          end;
-        end;
-
-      finally
-        sqlcon.Free;
-      end;
-    end;
-    deZeos:
-    begin
-     try
-      zcon := FDBInfo.ToZeosConnection;
-      try
-      zcon.Connect;
-      except on E:Exception do
-        begin
-          LastError:=E.Message;
-        end;
-      end;
-     finally
-       zcon.Free;
-     end;
-    end;
+  try
+    DbInfo.Open;
+  except on E:Exception do
+    LastError := E.Message;
   end;
 
   if not RecentConnections.Exists(FDBInfo) then
@@ -466,12 +439,16 @@ end;
 
 procedure TSqlConnBuilderForm.AssignDbInfo;
 begin
+  //first one to be set is DBType
   FDBInfo.DbType:=TAsDatabaseType(cmbDatabaseType.ItemIndex);
+
+   //mind this order Server,Port,Database; when database is set, if oracle then server and port must be filled
    FDBInfo.Server:=cmbServerName.Text;
+   FDBInfo.Port:=txtPort.Value;
    FDBInfo.Database:=cmbDatabase.Text;
+
    FDBInfo.Username:=txtUserName.Text;
    FDBInfo.Password:=txtPassword.Text;
-   FDBInfo.Port:=txtPort.Value;
    FDBInfo.DbEngineType:=TAsDatabaseEngineType(cmbDbEngine.ItemIndex);
 end;
 
@@ -643,8 +620,6 @@ begin
   imgDbEngines.GetBitmap(0,bmpSqlDBEngine);
   imgDbEngines.GetBitmap(1,bmpZeosEngine);
 
-  FDBInfo := TAsDbConnectionInfo.Create;
-
   RecentConnections:=TAsDbConnectionInfos.Create;
   RecentConnectionsFilename := GetTempDir+ ExtractFileName(ChangeFileExt(Application.ExeName,'.ini'))
 end;
@@ -659,7 +634,6 @@ begin
   bmpSqlType.Free;
   bmpFirebird.Free;
   RecentConnections.Free;
-  FDBInfo.Free;
 end;
 
 procedure TSqlConnBuilderForm.btnOpenDatabaseClick(Sender: TObject);

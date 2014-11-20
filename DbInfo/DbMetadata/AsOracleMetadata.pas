@@ -16,7 +16,6 @@ TAsOracleMetadata = class(TInterfacedObject, IAsDbMetadata)
     FDBInfo:TAsDbConnectionInfo;
   public
     constructor Create(DbInfo:TAsDbConnectionInfo);
-    destructor Destroy;
     function GetSchemas: TStringList;
     function GetTablenames(schema: string): TStringList;
     function GetPrimaryKeys(Schema, TableName: string): TStringList;
@@ -35,14 +34,8 @@ implementation
 
 constructor TAsOracleMetadata.Create(DbInfo: TAsDbConnectionInfo);
 begin
- FDBInfo:=TAsDbConnectionInfo.Create;
- FDBInfo.Assign(DbInfo);
+ FDBInfo:=DbInfo;
  FDBInfo.DbType:=dtOracle;
-end;
-
-destructor TAsOracleMetadata.Destroy;
-begin
- FDBInfo.Destroy;
 end;
 
 function TAsOracleMetadata.GetSchemas: TStringList;
@@ -51,8 +44,9 @@ var
 begin
   Result := TStringList.Create;
   try
-    ds :=TAsQuery.GetData('select distinct username from dba_users',FDBInfo);
+    ds :=TAsQuery.Create(FDBInfo);
     try
+      ds.Open('select distinct username from dba_users');
        while not ds.EOF do
         begin
           Result.Add(ds.Fields[0].AsString);
@@ -79,8 +73,9 @@ begin
   try
    sql:='SELECT table_name '+
         ' FROM all_tables where owner='''+schema+''' order by table_name';
-   ds :=  TAsQuery.GetData(sql,FDBInfo);
+   ds :=  TAsQuery.Create(FDBInfo);
    try
+    ds.Open(sql);
      while not ds.EOF do
      begin
       Result.Add(Trim(ds.Fields[0].AsString));
@@ -112,8 +107,9 @@ begin
           ' AND cons.owner = cols.owner '+
           ' ORDER BY cols.table_name, cols.position ';
  try
-    ds := TAsQuery.GetData(sql,FDBInfo);
+    ds := TAsQuery.Create(FDBInfo);
     try
+     ds.Open(sql);
      while not ds.EOF do
       begin
         Result.Add(Trim(ds.Fields[0].AsString));
@@ -156,9 +152,10 @@ begin
 ' AND a.table_name='''+TableName+'''';
 
  try
- ds := TAsQuery.GetData(sql,FDBInfo);
+ ds := TAsQuery.Create(FDBInfo);
 
   try
+    ds.Open(sql);
     while not ds.EOF do
      begin
        fk := TAsForeignKey.Create;
@@ -203,9 +200,9 @@ begin
 
 
   try
-    ds := TAsQuery.GetData(sql,FDBInfo);
+    ds := TAsQuery.Create(FDBInfo);
     try
-
+      ds.Open(sql);
       while not ds.EOF do
        begin
 
@@ -255,8 +252,9 @@ begin
             ' FROM dba_ind_columns ind WHERE ind.TABLE_NAME='''+TableName+''' and ind.TABLE_OWNER='''+Schema+'''';
 
  try
-    ds := TAsQuery.GetData(sql,FDBInfo);
+    ds := TAsQuery.Create(FDBInfo);
    try
+     ds.Open(sql);
      while not ds.EOF do
       begin
         c := TAsIndex.Create;
@@ -292,8 +290,9 @@ begin
             ' where a.TABLE_NAME = '''+TableName+''' and a.TABLE_OWNER='''+Schema+'''';
 
  try
-   ds := TAsQuery.GetData(sql,FDBInfo);
+   ds := TAsQuery.Create(FDBInfo);
    try
+     ds.Open(sql);
     while not ds.EOF do
      begin
        c := TAsTrigger.Create;
@@ -329,8 +328,9 @@ begin
 
  Result := TStringList.Create;
  try
-  ds := TAsQuery.GetData(sql,FDBInfo);
+  ds := TAsQuery.Create(FDBInfo);
   try
+   ds.Open(sql);
     while not ds.EOF do
     begin
       s := ds.Fields[0].AsString;
@@ -358,8 +358,9 @@ begin
               '  DATA_LENGTH MAX_LENGTH, IN_OUT PARAM_TYPE '+
               ' FROM SYS.ALL_ARGUMENTS WHERE OBJECT_NAME='''+ProcedureName+'''';
  try
-   ds := TAsQuery.GetData(sql,FDBInfo);
+   ds := TAsQuery.Create(FDBInfo);
    try
+    ds.Open(sql);
     while not ds.EOF do
     begin
       p := TAsProcedureParam.Create;

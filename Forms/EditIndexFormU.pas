@@ -32,7 +32,7 @@ type
    procedure FormCreate(Sender: TObject);
    procedure FormShow(Sender: TObject);
   private
-   _Table:TTableInfo;
+   _Table:TAsTableInfo;
    function GetColumn: string;
    function GetIndexName: string;
    function GetSortOrder: string;
@@ -45,7 +45,7 @@ type
    property IndexName:string read GetIndexName;
    property Unique:Boolean read GetUnique;
    property Column:string read GetColumn;
-   function ShowModal(table:TTableInfo):TModalResult;
+   function ShowModal(table:TAsTableInfo):TModalResult;
   end;
 
 var
@@ -100,7 +100,7 @@ begin
   end;
 end;
 
-function TEditIndexForm.ShowModal(table: TTableInfo): TModalResult;
+function TEditIndexForm.ShowModal(table: TAsTableInfo): TModalResult;
 begin
  _Table:=table;
  inherited ShowModal;

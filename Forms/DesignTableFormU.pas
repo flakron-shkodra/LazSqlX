@@ -81,7 +81,7 @@ type
     { Private declarations }
     FSchema: string;
     FTablename: string;
-    FWorkingTableInfo: TTableInfo;
+    FWorkingTableInfo: TAsTableInfo;
     FDbInfo:TAsDbConnectionInfo;
     FTableInfos:TAsTableInfos;
     function GetCreateTableSQL: string;
@@ -887,7 +887,7 @@ begin
     begin
       FCreateNew := True;
       lsvFields.Clear;
-      FWorkingTableInfo := TTableInfo.Create(nil);
+      FWorkingTableInfo := TAsTableInfo.Create(nil);
       FWorkingTableInfo.Tablename:=FTablename;
       FWorkingTableInfo.Schema:=Schema;
     end

@@ -60,7 +60,7 @@ type
 
   { TAsDbConnectionInfo }
 
-  TAsDbConnectionInfo = class(TPersistent)
+  TAsDbConnectionInfo = class(TComponent)
   private
    FDatabase: string;
    FDbEngine: TAsDatabaseEngineType;
@@ -69,7 +69,12 @@ type
    FPort: Integer;
    FServer: string;
    FUsername: string;
+   FSqlCon:TSQLConnector;
+   FTrans: TSQLTransaction;
+   FZCon:TZConnection;
+   FConnectionsCreated:Boolean;
    function GetIdentifier: string;
+   function GetIsConnected: Boolean;
    procedure SetDatabase(AValue: string);
    procedure SetDbEngine(AValue: TAsDatabaseEngineType);
    procedure SetDbType(AValue: TAsDatabaseType);
@@ -77,16 +82,23 @@ type
    procedure SetPort(AValue: Integer);
    procedure SetServer(AValue: string);
    procedure SetUsername(AValue: string);
+    {creates a new instance of Zeos connection according to properties of this class}
+    //function ToZeosConnection:TZConnection;
+    {creates a new instance of SqlDbConnector according to properties of this class}
+    //function ToSqlConnector:TSQLConnector;
   public
+    {Constructor: CreateConnections set to false when sqlcon and zcon not needed to be created, for instance for RecentConnections}
+    constructor Create(CreateConnections:Boolean=true; AOwner:TComponent=nil);
+    destructor Destroy;override;
     {returns a string made up of all properties, could be used for easy compare}
     function ToFullString:string;
-    {creates a Zeos connection according to properties of this class}
-    function ToZeosConnection:TZConnection;
-    {creates a SqlDbConnector according to properties of this class}
-    function ToSqlConnector:TSQLConnector;
 
     procedure Assign(Source: TPersistent); override;
+
+    procedure Open;
+    procedure Close;
   published
+
     {returns Server+Database+DbType as string processed by AsDbUtils.GetSafeName meaning no symbols or spaces included}
     property Identifier:string read GetIdentifier;
     {Database type dtMsSql,dtOracle,dtMySql,dtFirebird,dtSqlite}
@@ -103,6 +115,13 @@ type
     property Port:Integer read FPort write SetPort;
     {DatabaseEngine [deSqlDB or deZeos]}
     property DbEngineType:TAsDatabaseEngineType read FDbEngine write SetDbEngine;
+
+    property SqlConnection:TSQLConnector read FSqlCon;
+
+    property ZeosConnection:TZConnection read FZCon;
+
+    property Connected:Boolean read GetIsConnected;
+
   end;
 
   { TAsDbConnectionInfos }
@@ -130,9 +149,17 @@ type
     function GetEof: Boolean;
     function GetField(Index: Integer): TField;
     function GetFieldCount: Integer;
+    function GetFilter: string;
+    function GetFiltered: Boolean;
+    function GetFilterOption: TFilterOptions;
     function GetIsActive: Boolean;
     function GetSQL: TStrings;
     function GetState: TDataSetState;
+    procedure SetFilter(AValue: string);
+    procedure SetFiltered(AValue: Boolean);
+    procedure SetFilterOption(AValue: TFilterOptions);
+    procedure AfterDelete(DataSet: TDataSet);
+    procedure AfterPost(DataSet: TDataSet);
   public
    constructor Create(dbInfo:TAsDbConnectionInfo);
    destructor Destroy;override;
@@ -145,8 +172,10 @@ type
    procedure Prior;
    procedure Insert;
    procedure Post;
+   procedure Refresh;
    procedure ExecSQL;
    procedure Edit;
+   procedure ApplyUpdates;
    function FieldByName(FieldName:string):TField;
    property DataSet:TDataSet read GetDataSet;
    property EOF:Boolean read GetEof;
@@ -155,9 +184,10 @@ type
    property SQL:TStrings read GetSQL;
    property Active:Boolean read GetIsActive;
    property State:TDataSetState read GetState;
+   property FilterOptions:TFilterOptions read GetFilterOption write SetFilterOption;
+   property Filtered:Boolean read GetFiltered write SetFiltered;
+   property Filter:string read GetFilter write SetFilter;
 
-   {Creates instance for itself executes query and returns that object}
-   class function GetData(SqlQuery:string;DbInfo:TAsDbConnectionInfo):TAsQuery;
   end;
 
   TAsForeignKey = class
@@ -268,11 +298,9 @@ type
     {Checks syntax using TSQLParser}
     class function CheckSqlSyntax(SqlCommand:string; out Error:TAsSqlSyntaxError):Boolean;
 
-    {Executes SQL Command using given DBConnectionInfo, executes according to  DbInfo.DbEngine (with zeos or sqldb) }
-    class procedure ExecuteQuery(SqlQuery:string; DbInfo:TAsDbConnectionInfo);overload;
 
     {Executes SQL Command using SQLDB or ZEOS Engine and given DBConnectionInfo}
-    class procedure ExecuteQuery(SqlQuery:string; DbInfo:TAsDbConnectionInfo; DbEngine:TAsDatabaseEngineType);overload;
+    class procedure ExecuteQuery(SqlQuery:string; DbInfo:TAsDbConnectionInfo);
 
     {Gets db schemas using Zeos}
     class function GetSchemas(DBInfo:TAsDbConnectionInfo):TStringList;
@@ -281,7 +309,7 @@ type
     class function GetTablenames(DbInfo:TAsDbConnectionInfo; schema:string):TStringList;
 
     {Gets column names from db}
-    class function GetColumnNames(DbInfo:TAsDbConnectionInfo; TableName:string):TStringList;overload;
+    class function GetColumnNames(DbInfo:TAsDbConnectionInfo; TableName:string):TStringList;
 
     {Gets primary keys of the given table}
     class function GetPrimaryKeys(DbInfo:TAsDbConnectionInfo; Schema,TableName: string):TStringList;
@@ -353,6 +381,18 @@ end;
 
 { TAsQuery }
 
+procedure TAsQuery.AfterDelete(DataSet: TDataSet);
+begin
+  FQuery.ApplyUpdates(0);
+  FCon.Transaction.CommitRetaining;
+end;
+
+procedure TAsQuery.AfterPost(DataSet: TDataSet);
+begin
+  FQuery.ApplyUpdates(0);
+  FCon.Transaction.CommitRetaining;
+end;
+
 function TAsQuery.GetDataSet: TDataSet;
 begin
  case FDBInfo.DbEngineType of
@@ -378,6 +418,21 @@ begin
  Result := DataSet.FieldCount;
 end;
 
+function TAsQuery.GetFilter: string;
+begin
+ Result := DataSet.Filter;
+end;
+
+function TAsQuery.GetFiltered: Boolean;
+begin
+  Result := DataSet.Filtered;
+end;
+
+function TAsQuery.GetFilterOption: TFilterOptions;
+begin
+ Result := DataSet.FilterOptions;
+end;
+
 function TAsQuery.GetIsActive: Boolean;
 begin
  case FDBInfo.DbEngineType of
@@ -399,6 +454,21 @@ begin
  Result := DataSet.State;
 end;
 
+procedure TAsQuery.SetFilter(AValue: string);
+begin
+ DataSet.Filter:=AValue;
+end;
+
+procedure TAsQuery.SetFiltered(AValue: Boolean);
+begin
+ DataSet.Filtered:=AValue;
+end;
+
+procedure TAsQuery.SetFilterOption(AValue: TFilterOptions);
+begin
+  DataSet.FilterOptions:= AValue;
+end;
+
 constructor TAsQuery.Create(dbInfo: TAsDbConnectionInfo);
 begin
  inherited Create(nil);
@@ -406,15 +476,17 @@ begin
   case FDBInfo.DbEngineType of
     deZeos:
      begin
-       FZCon:=FDBInfo.ToZeosConnection;
+       FZCon:=FDBInfo.ZeosConnection;
        FZQuery:=TZQuery.Create(nil);
        FZQuery.Connection:=FZCon;
      end;
      deSqlDB:
       begin
-        FCon:=FDBInfo.ToSqlConnector;
+        FCon:=FDBInfo.SqlConnection;
         FQuery:=TSQLQuery.Create(nil);
         FQuery.DataBase:=FCon;
+        FQuery.AfterPost:=@AfterPost;
+        FQuery.AfterDelete:=@AfterDelete;
       end;
   end;
 
@@ -422,18 +494,6 @@ end;
 
 destructor TAsQuery.Destroy;
 begin
-   case FDBInfo.DbEngineType of
-      deZeos:
-       begin
-         FZCon.Destroy;
-         FZQuery.Destroy;
-       end;
-      deSqlDB:
-       begin
-         FCon.Destroy;
-         FQuery.Destroy;
-       end;
-   end;
    inherited Destroy;
 end;
 
@@ -512,13 +572,13 @@ procedure TAsQuery.Post;
 begin
  case FDBInfo.DbEngineType of
     deZeos:FZQuery.Post;
-    deSqlDB:
-     begin
-      FQuery.Post;
-      FQuery.ApplyUpdates(0);
-      FCon.Transaction.CommitRetaining;
-     end;
+    deSqlDB: FQuery.Post;
  end;
+end;
+
+procedure TAsQuery.Refresh;
+begin
+ DataSet.Refresh;
 end;
 
 procedure TAsQuery.ExecSQL;
@@ -538,25 +598,15 @@ begin
  DataSet.Edit;
 end;
 
+procedure TAsQuery.ApplyUpdates;
+begin
+ if FDBInfo.DbEngineType=deSqlDB then
+ FQuery.ApplyUpdates;
+end;
+
 function TAsQuery.FieldByName(FieldName: string): TField;
 begin
  Result := DataSet.FieldByName(FieldName);
-end;
-
-class function TAsQuery.GetData(SqlQuery: string; DbInfo: TAsDbConnectionInfo
- ): TAsQuery;
-var
-  asquery:TAsQuery;
-begin
-  Result := nil;
-  try
-    asquery:=TAsQuery.Create(DbInfo);
-    asquery.Open(SqlQuery);
-    Result:=asquery;
-  except
-    Result.Free;
-    raise;
-  end;
 end;
 
 { TAsSqlSyntaxError }
@@ -826,52 +876,16 @@ end;
 
 class procedure TAsDbUtils.ExecuteQuery(SqlQuery: string;
  DbInfo: TAsDbConnectionInfo);
-begin
-  ExecuteQuery(SqlQuery,DbInfo,DbInfo.DbEngineType);
-end;
-
-class procedure TAsDbUtils.ExecuteQuery(SqlQuery: string;
- DbInfo: TAsDbConnectionInfo; DbEngine: TAsDatabaseEngineType);
 var
- zcon:TZConnection;
- zquery:TZQuery;
- con:TSQLConnector;
- query:TSQLQuery;
+ query:TAsQuery;
 begin
-  case DbEngine of
-    deZeos:
-    begin
-      try
-        zcon := DbInfo.ToZeosConnection;
-        zquery := TZQuery.Create(nil);
-        zquery.Connection:=zcon;
-        zquery.SQL.Text:=SqlQuery;
-        zcon.Connect;
-        zquery.ExecSQL;
-      finally
-        zquery.Free;
-        zcon.Free;
-      end;
-    end;
-    deSqlDB:
-    begin
-      try
-      con:=DbInfo.ToSqlConnector;
-      query:=TSQLQuery.Create(nil);
-      query.DataBase:=con;
-      query.Transaction:=con.Transaction;
-      con.Open;
-      query.SQL.Text:=SqlQuery;
-      query.ExecSQL;
-      con.Close;
-      finally
-        query.Free;
-        con.Free;
-      end;
-    end;
-
+  query := TAsQuery.Create(DbInfo);
+  try
+    query.SQL.Text:=SqlQuery;
+    query.ExecSQL;
+  finally
+    query.Free;
   end;
-
 end;
 
 class function TAsDbUtils.GetSchemas(DBInfo: TAsDbConnectionInfo): TStringList;
@@ -901,19 +915,22 @@ var
 begin
   Result := TStringList.Create;
   try
+     ds := TAsQuery.Create(DbInfo);
      try
-      ds := TAsQuery.GetData(GetTopRecordsSelect(DbInfo.DbType,TableName,1),DbInfo);
+      ds.Open(GetTopRecordsSelect(DbInfo.DbType,TableName,1));
       for I:=0 to ds.FieldCount-1 do
        begin
         Result.Add(ds.Fields[I].FieldName);
         ds.Next;
        end;
      finally
-      ds.Free;
+        ds.Free;
      end;
-  except
-    Result.Free;
-    raise;
+  except on e:Exception do
+    begin
+      Result.Free;
+      raise e;
+    end;
   end;
 end;
 
@@ -965,8 +982,9 @@ var
 begin
  Result := TStringList.Create;
  try
-   ds := TAsQuery.GetData(GetTopRecordsSelect(DbInfo.DbType,TableName,1),DbInfo);
+   ds := TAsQuery.Create(DbInfo);
    try
+    ds.Open(GetTopRecordsSelect(DbInfo.DbType,TableName,1));
     for I:=0 to ds.FieldCount-1 do
     begin
       if ds.Fields[I].DataType in [ftString,ftWideString] then
@@ -1025,8 +1043,18 @@ end;
 
 procedure TAsDbConnectionInfo.SetDatabase(AValue: string);
 begin
- if FDatabase=AValue then Exit;
  FDatabase:=AValue;
+ if FConnectionsCreated then
+ begin
+   case FDBType of
+       dtOracle: FZCon.Database := TAsDbUtils.GetOracleDescriptor(Self);
+       dtMsSql: FZCon.Database := TAsStringUtils.WrapString(Database,TAsStringWrapType.swtBrackets);
+   else
+       FZCon.Database := FDatabase;
+   end;
+   FSqlCon.DatabaseName:= FDatabase;
+ end;
+
 end;
 
 function TAsDbConnectionInfo.GetIdentifier: string;
@@ -1040,6 +1068,14 @@ begin
  Result :='ID'+s;
 end;
 
+function TAsDbConnectionInfo.GetIsConnected: Boolean;
+begin
+  if FConnectionsCreated then
+  begin
+    Result := FSqlCon.Connected or FZCon.Connected;
+  end;
+end;
+
 procedure TAsDbConnectionInfo.SetDbEngine(AValue: TAsDatabaseEngineType);
 begin
  if FDbEngine=AValue then Exit;
@@ -1048,32 +1084,84 @@ end;
 
 procedure TAsDbConnectionInfo.SetDbType(AValue: TAsDatabaseType);
 begin
- if FDbType=AValue then Exit;
  FDbType:=AValue;
+ if FConnectionsCreated then
+ begin
+  FSqlCon.ConnectorType:= TAsDbUtils.DatabaseTypeAsConnectorType(FDbType);
+  FZCon.Protocol := TAsDbUtils.DatabaseTypeAsString(FDbType, True);
+ end;
 end;
 
 procedure TAsDbConnectionInfo.SetPassword(AValue: string);
 begin
- if FPassword=AValue then Exit;
  FPassword:=AValue;
+ if FConnectionsCreated then
+ begin
+  FSqlCon.Password:=FPassword;
+  FZCon.Password:=FPassword;
+ end;
 end;
 
 procedure TAsDbConnectionInfo.SetPort(AValue: Integer);
 begin
- if FPort=AValue then Exit;
  FPort:=AValue;
+ if FConnectionsCreated then
+ begin
+  FZCon.Port:=FPort;
+//
+//  if FPort<>0 then
+//  if FSqlCon.HostName<>EmptyStr then
+//  begin
+//   if not AnsiContainsText(FSqlCon.HostName,':') then
+//   FSqlCon.HostName:=FSqlCon.HostName+':'+IntToStr(FPort);
+//  end;
+ end;
 end;
 
 procedure TAsDbConnectionInfo.SetServer(AValue: string);
 begin
- if FServer=AValue then Exit;
  FServer:=AValue;
+ if FConnectionsCreated then
+ begin
+  FSqlCon.HostName:= FServer;
+  FZCon.HostName:=FServer;
+ end;
 end;
 
 procedure TAsDbConnectionInfo.SetUsername(AValue: string);
 begin
- if FUsername=AValue then Exit;
  FUsername:=AValue;
+ if FConnectionsCreated then
+ begin
+  FSqlCon.UserName:=FUsername;
+  FZCon.User:=FUsername;
+ end;
+end;
+
+constructor TAsDbConnectionInfo.Create(CreateConnections: Boolean;
+ AOwner: TComponent);
+begin
+ inherited Create(AOwner);
+ FConnectionsCreated:= CreateConnections;
+
+ if CreateConnections then
+ begin
+  FSqlCon:=TSQLConnector.Create(nil);
+  FTrans := TSQLTransaction.Create(FSqlCon);
+  FSqlCon.Transaction:=FTrans;
+  FZCon := TZConnection.Create(nil);
+ end;
+
+end;
+
+destructor TAsDbConnectionInfo.Destroy;
+begin
+ if FConnectionsCreated then
+ begin
+ FSqlCon.Destroy;
+ FZCon.Destroy;
+ end;
+ inherited Destroy;
 end;
 
 function TAsDbConnectionInfo.ToFullString: string;
@@ -1081,43 +1169,43 @@ begin
  Result:='aDbType='+ IntToStr(Integer(FDbType))+';aServer='+Server+';aDatabase='+FDatabase+';aUsername='+FUsername+';aPassword='+FPassword+';aPort='+IntToStr(FPort)+';';
 end;
 
-function TAsDbConnectionInfo.ToZeosConnection: TZConnection;
-var
-  con:TZConnection;
-begin
-   con := TZConnection.Create(nil);
-   case FDBType of
-     dtOracle: con.Database := TAsDbUtils.GetOracleDescriptor(Self);
-     dtMsSql: con.Database := TAsStringUtils.WrapString(Database,TAsStringWrapType.swtBrackets);
-   else
-     con.Database := FDatabase;
-   end;
-   con.HostName := FServer;
-   con.User := FUsername;
-   con.Password := FPassword;
-   con.Protocol := TAsDbUtils.DatabaseTypeAsString(FDbType, True);
-   con.Port := FPort;
-
-   Result:=con;
-end;
-
-function TAsDbConnectionInfo.ToSqlConnector: TSQLConnector;
-var
- con:TSQLConnector;
- trans:TSQLTransaction;
-begin
-   con := TSQLConnector.Create(nil);
-   trans := TSQLTransaction.Create(con);
-
-   con.DatabaseName :=FDatabase;
-   trans.Action:=caCommit;
-   con.Transaction := trans;
-   con.HostName := FServer;
-   con.UserName := FUsername;
-   con.Password := FPassword;
-   con.ConnectorType := TAsDbUtils.DatabaseTypeAsConnectorType(FDbType);
-   Result:=con;
-end;
+//function TAsDbConnectionInfo.ToZeosConnection: TZConnection;
+//var
+//  con:TZConnection;
+//begin
+//   con := TZConnection.Create(nil);
+//   case FDBType of
+//     dtOracle: con.Database := TAsDbUtils.GetOracleDescriptor(Self);
+//     dtMsSql: con.Database := TAsStringUtils.WrapString(Database,TAsStringWrapType.swtBrackets);
+//   else
+//     con.Database := FDatabase;
+//   end;
+//   con.HostName := FServer;
+//   con.User := FUsername;
+//   con.Password := FPassword;
+//   con.Protocol := TAsDbUtils.DatabaseTypeAsString(FDbType, True);
+//   con.Port := FPort;
+//
+//   Result:=con;
+//end;
+//
+//function TAsDbConnectionInfo.ToSqlConnector: TSQLConnector;
+//var
+// con:TSQLConnector;
+// trans:TSQLTransaction;
+//begin
+//   con := TSQLConnector.Create(nil);
+//   trans := TSQLTransaction.Create(con);
+//
+//   con.DatabaseName :=FDatabase;
+//   trans.Action:=caCommit;
+//   con.Transaction := trans;
+//   con.HostName := FServer;
+//   con.UserName := FUsername;
+//   con.Password := FPassword;
+//   con.ConnectorType := TAsDbUtils.DatabaseTypeAsConnectorType(FDbType);
+//   Result:=con;
+//end;
 
 procedure TAsDbConnectionInfo.Assign(Source: TPersistent);
 begin
@@ -1130,8 +1218,54 @@ begin
   FUsername:=TAsDbConnectionInfo(Source).Username;
   FPassword:=TAsDbConnectionInfo(Source).Password;
   FPort:=TAsDbConnectionInfo(Source).Port;
+  if TAsDbConnectionInfo(Source).SqlConnection <> nil then
+  begin
+    if FSqlCon=nil then
+      FSqlCon := TSQLConnector.Create(Self);
+
+    FSqlCon.HostName := TAsDbConnectionInfo(Source).SqlConnection.HostName;
+    FSqlCon.ConnectorType:=TAsDbConnectionInfo(Source).SqlConnection.ConnectorType;
+    FSqlCon.DatabaseName:=TAsDbConnectionInfo(Source).SqlConnection.DatabaseName;
+    FSqlCon.UserName:=TAsDbConnectionInfo(Source).SqlConnection.UserName;
+    FSqlCon.Password:=TAsDbConnectionInfo(Source).SqlConnection.Password;
+  end;
+
+  if TAsDbConnectionInfo(Source).ZeosConnection<>nil then
+  begin
+    if FZCon=nil then
+      FZCon := TZConnection.Create(Self);
+
+    FZCon.HostName := TAsDbConnectionInfo(Source).Server;
+    FZCon.User:=TAsDbConnectionInfo(Source).Username;
+    FZCon.Password:=TAsDbConnectionInfo(Source).Password;
+    FZCon.Protocol:=TAsDbUtils.DatabaseTypeAsString(TAsDbConnectionInfo(Source).DbType,true);
+    FZCon.Port:=TAsDbConnectionInfo(Source).Port;
+    case FDBType of
+     dtOracle: FZCon.Database := TAsDbUtils.GetOracleDescriptor(Self);
+     dtMsSql: FZCon.Database := TAsStringUtils.WrapString(Database,TAsStringWrapType.swtBrackets);
+    else
+      FZCon.Database := FDatabase;
+    end;
+  end;
+
  end else
  inherited Assign(Source);
+end;
+
+procedure TAsDbConnectionInfo.Open;
+begin
+ case FDbEngine of
+   deSqlDB:FSqlCon.Open;
+   deZeos:FZCon.Connect;
+ end;
+end;
+
+procedure TAsDbConnectionInfo.Close;
+begin
+ case FDbEngine of
+   deSqlDB:FSqlCon.Close();
+   deZeos:FZCon.Disconnect;
+ end;
 end;
 
 { TAsDbConnectionInfos }
@@ -1160,7 +1294,7 @@ begin
       lstLine.Delimiter:=';';
       lstLine.StrictDelimiter:=True;
       lstLine.DelimitedText :=lstLines[I];
-      s := TAsDbConnectionInfo.Create;
+      s := TAsDbConnectionInfo.Create(False);
       try
         s.DbType:= TAsDatabaseType(StrToInt(lstLine.Values['aDbType']));
         s.Server:=lstLine.Values['aServer'];
