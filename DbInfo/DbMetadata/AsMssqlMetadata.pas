@@ -447,8 +447,6 @@ begin
       ds.Free;
     end;
   except
-    Result.Free;
-    raise;
   end;
 
 end;

@@ -402,8 +402,6 @@ begin
     end;
 
   except
-    Result.Free;
-    raise;
   end;
 end;
 

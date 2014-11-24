@@ -1034,9 +1034,9 @@ class function TAsDbUtils.GetCatalogNames(aDbInfo: TAsDbConnectionInfo
 var
  md:IAsDbMetadata;
 begin
-  md := MakeEngine(aDbInfo);
-  Result := md.GetCatalogNames;
-  DisposeEngine(aDbInfo,md);
+   md := MakeEngine(aDbInfo);
+   Result := md.GetCatalogNames;
+   DisposeEngine(aDbInfo,md);
 end;
 
 { TAsDbConnectionInfo }

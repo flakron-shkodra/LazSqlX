@@ -1178,6 +1178,7 @@ begin
   actExportJSON.Enabled:=aIsConnected;
   actExportXML.Enabled:=aIsConnected;
   actPrint.Enabled:= aIsConnected;
+  actSaveAs.Enabled:=aIsConnected;
 
   if aIsConnected then
   begin
@@ -1690,12 +1691,24 @@ begin
 end;
 
 procedure TMainForm.actPrintExecute(Sender: TObject);
+var
+  p:TAsSqlParser;
+  fromTable:string;
 begin
- GridPrinter.Caption:=FPageControl.ActiveTab.Caption;
- GridPrinter.DBGrid:=FPageControl.ActiveTab.DataGrid;
- GridPrinter.Template:=TLazSqlXResources.ReportTemplatePath;
- GridPrinter.PreviewReport;
-
+ try
+   p := TAsSqlParser.Create(cmbSchema.Text,FDBInfo);
+   p.ParseCommand(FPageControl.ActiveTab.QueryEditor.Text);
+   if (p.FromTables.Count>0) then
+     fromTable:=p.FromTables[0].Name
+   else
+   fromTable:= FPageControl.ActiveTab.Caption;
+ finally
+   p.Free;
+ end;
+ GridPrinter.Caption:=fromTable;
+  GridPrinter.DBGrid:=FPageControl.ActiveTab.DataGrid;
+  GridPrinter.Template:=TLazSqlXResources.ReportTemplatePath;
+  GridPrinter.PreviewReport;
 end;
 
 procedure TMainForm.actQueryDesignerExecute(Sender: TObject);
@@ -2215,7 +2228,10 @@ end;
 
 procedure TMainForm.ApplicationPropertiesException(Sender: TObject; E: Exception);
 begin
-  SaveSession;
+  try
+    SaveSession;
+  except
+  end;
   MessageDlg('Error',E.Message,mtError,[mbOk],0);
 end;
 

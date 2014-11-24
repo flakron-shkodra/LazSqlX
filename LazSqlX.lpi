@@ -29,7 +29,7 @@
       <MajorVersionNr Value="4"/>
       <MinorVersionNr Value="6"/>
       <RevisionNr Value="3"/>
-      <BuildNr Value="1516"/>
+      <BuildNr Value="1518"/>
       <StringTable ProductVersion=""/>
     </VersionInfo>
     <BuildModes Count="2">
@@ -421,7 +421,9 @@
     </SearchPaths>
     <CodeGeneration>
       <Checks>
-        <StackChecks Value="True"/>
+        <IOChecks Value="True"/>
+        <RangeChecks Value="True"/>
+        <OverflowChecks Value="True"/>
       </Checks>
     </CodeGeneration>
     <Linking>
