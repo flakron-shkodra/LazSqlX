@@ -371,6 +371,7 @@ type
 
     {Connects sqldb or zeos}
     procedure DoSelectiveConnect;
+    function GetDbInfo: TAsDbConnectionInfo;
 
     {Updates GUI controls based on status connected/disconnected}
     procedure UpdateGUI(aIsConnected: boolean);
@@ -450,7 +451,7 @@ type
     {Image used for QueryDesigner}
     RectImage: TBitmap;
 
-    property DbInfo:TAsDbConnectionInfo read FDBInfo;
+    property DbInfo:TAsDbConnectionInfo read GetDbInfo;
 
   end;
 
@@ -1214,6 +1215,14 @@ end;
 procedure TMainForm.DoSelectiveConnect;
 begin
   FDBInfo.Open;
+end;
+
+function TMainForm.GetDbInfo: TAsDbConnectionInfo;
+begin
+  if FDBInfo=nil then
+  FDBInfo := TAsDbConnectionInfo.Create;
+
+ Result := FDBInfo;
 end;
 
 procedure TMainForm.DoDisconnect;

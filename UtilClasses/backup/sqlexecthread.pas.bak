@@ -241,9 +241,9 @@ begin
      end;
    end;
 
-  finally
+  //finally
   //  FLock.Release;
-  end;
+  //end;
 
 end;
 

@@ -1,3 +1,6 @@
+v.4.6.3.1419
+-Bugfixes: After running a query multiple times repeatedly,it threw an unhandled exception 
+
 v.4.6.3.1518
 -BugFix ConnectionForm: When server couln't be found, unhandled exception occured in listing databases
 -Printing query result now displays from tablename as report title when possible instead of tab caption

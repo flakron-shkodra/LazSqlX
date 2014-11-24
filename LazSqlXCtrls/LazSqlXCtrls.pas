@@ -16,6 +16,8 @@ type
 
   { TLazSqlXTabSheet }
 
+  TLazSqlXPageControl = class;
+
   TLazSqlXScanNeeded = procedure (ScanText:string) of object;
   TLazSqlXLastWordChanged = procedure (var LastWord:string) of object;
 
@@ -35,12 +37,12 @@ type
     FErrorMemo: TMemo;
     FNumbering: string;
     FZQuery: TZQuery;
-    FParent:TPageControl;
+    FParent:TLazSqlXPageControl;
     FCurrentExecutor:TSqlExecThread;
     FExecutionInProgress:Boolean;
     FEditMode:Boolean;
     FTransaction:TSQLTransaction;
-    function GetDbInfo:TAsDbConnectionInfo;
+    function GetDataSet: TDataSet;
     function GetHasActiveData: Boolean;
     function GetSqlQuery: string;
     procedure OnDBGridDrawColumnCell(Sender: TObject; const Rect: TRect; DataCol: integer; Column: TColumn; State: TGridDrawState);
@@ -64,7 +66,7 @@ type
     procedure InternalOnExecutionFinished(Sender: TObject; IsTableData: boolean);
     procedure ResizeColumns(ColumnWidth:integer=100);
   public
-    constructor Create(ParentPage:TPageControl);
+    constructor Create(ParentPage:TLazSqlXPageControl);
     destructor Destroy; override;
     procedure DisplayMessage(Msg:string; IsError:Boolean);
     property Query:TSQLQuery read FQuery write SetQuery;
@@ -83,6 +85,7 @@ type
     property OnTextScanNeeded:TLazSqlXScanNeeded read FOnTextScanNeeded write SetOnTextScanNeeded;
     property OnLastWordChanged:TLazSqlXLastWordChanged read FOnLastWordChanged write SetOnLastWordChanged;
     property OnExecutionFinished:TOnSqlExecThreadFinish read FOnExecutionFinished write SetOnExecutionFinished;
+    property DataSet:TDataSet read GetDataSet;
   end;
 
 
@@ -240,9 +243,14 @@ begin
   end;
 end;
 
-function TLazSqlXTabSheet.GetDbInfo: TAsDbConnectionInfo;
+
+
+function TLazSqlXTabSheet.GetDataSet: TDataSet;
 begin
-  Result := (FParent as TLazSqlXPageControl).DBInfo;
+ case FParent.DBInfo.DbEngineType of
+   deSqlDB:Result:=FQuery;
+   deZeos:Result:=FZQuery;
+ end;
 end;
 
 function TLazSqlXTabSheet.GetHasActiveData: Boolean;
@@ -279,7 +287,7 @@ procedure TLazSqlXTabSheet.OnQueryEditorKeyDown(Sender: TObject;
     key:=VK_UNKNOWN;
 
     // Tell synedit to call autocompletion popup
-    (FParent as TLazSqlXPageControl).PopupAutoComplete;
+    FParent.PopupAutoComplete;
 
     if Assigned(FOnLastWordChanged) then
       FOnLastWordChanged(s);
@@ -289,10 +297,8 @@ begin
   case key of
     VK_SPACE: //Ctrl-Space
       if ssCtrl in Shift then InvokeSynCompleteKey;
-    VK_OEM_COMMA:
-      key:=VK_SPACE;
      VK_DELETE:
-    (FParent as TLazSqlXPageControl).FullScanTableAliases;
+    FParent.FullScanTableAliases;
   end;
 end;
 procedure TLazSqlXTabSheet.OnQueryEditorKeyPress(Sender: TObject; var Key: char
@@ -311,7 +317,7 @@ procedure TLazSqlXTabSheet.OnQueryEditorKeyUp(Sender: TObject; var Key: word;
     key:=VK_UNKNOWN;
 
     // Tell synedit to call autocompletion popup
-    (FParent as TLazSqlXPageControl).PopupAutoComplete;
+    FParent.PopupAutoComplete;
 
     if Assigned(FOnLastWordChanged) then
       FOnLastWordChanged(s);
@@ -342,7 +348,7 @@ begin
     ds := (DataSet as TSQLQuery);
     I := ds.RecNo;
     ds.UpdateMode:=upWhereKeyOnly;
-    if (GetDbInfo.DbType = dtOracle) and (GetDbInfo.DbEngineType=deSqlDB) then
+    if (FParent.DBInfo.DbType = dtOracle) and (FParent.DBInfo.DbEngineType=deSqlDB) then
     begin
       //generate update or delete statement
     end;
@@ -488,12 +494,12 @@ begin
   end;
 end;
 
-constructor TLazSqlXTabSheet.Create(ParentPage: TPageControl);
+constructor TLazSqlXTabSheet.Create(ParentPage: TLazSqlXPageControl);
 begin
 
   inherited Create(Parent);
 
-  FParent:=ParentPage as TLazSqlXPageControl;
+  FParent:=ParentPage;
 
   FNumbering := IntToStr(ParentPage.PageCount);
 
@@ -557,6 +563,7 @@ begin
   FDataGrid.Align := alClient;
   FDataGrid.DataSource := FDataSource;
   FDataGrid.TitleStyle := tsNative;
+  FDataSource.DataSet := DataSet;
 
   FDataGrid.Options := FDataGrid.Options + [dgMultiselect];
   FDataGrid.Visible := True;
@@ -626,6 +633,7 @@ procedure TLazSqlXTabSheet.ResizeDataGrid(ColumnWidth: Integer);
 var
   i: Integer;
 begin
+  Exit;
   FDataGrid.BeginUpdate;
   try
     for i:=0 to FDataGrid.Columns.Count-1 do
@@ -660,6 +668,7 @@ var
   CommandExecutor: TSqlExecThread;
 begin
 
+
   if FExecutionInProgress then
   begin
     if not Assigned(FCurrentExecutor) then
@@ -686,30 +695,30 @@ begin
     begin
       sqlCommand := FQueryEditor.Text;
     end;
-    if (FParent as TLazSqlXPageControl).DBInfo.DbType = dtOracle then
+    if FParent.DBInfo.DbType = dtOracle then
       sqlCommand := StringReplace(sqlCommand, ';', '', [rfReplaceAll]);
   end
   else
   begin
     sqlCommand := 'SELECT * FROM ' +Schema+'.'+ Table;
-    if (FParent as TLazSqlXPageControl).DBInfo.DbType in [dtSQLite, dtFirebirdd] then
+    if FParent.DBInfo.DbType in [dtSQLite, dtFirebirdd] then
       sqlCommand := 'SELECT * FROM ' + Table;
     Self.Caption := Table;
   end;
 
   try
-    case (FParent as TLazSqlXPageControl).DBInfo.DbEngineType of
+    case FParent.DBInfo.DbEngineType of
       deSqlDB:
       begin
-        CommandExecutor :=
+       CommandExecutor :=
           TSqlExecThread.Create(Schema, FQuery, @InternalOnExecutionFinished);
-        FDataSource.DataSet := FQuery;
+
       end;
       deZeos:
       begin
-        CommandExecutor := TSqlExecThread.Create(Schema,
+       CommandExecutor := TSqlExecThread.Create(Schema,
           FZQuery, @InternalOnExecutionFinished);
-        FDataSource.DataSet := FZQuery;
+
       end;
     end;
     FEditMode := EditMode;
