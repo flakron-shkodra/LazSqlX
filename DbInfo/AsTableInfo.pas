@@ -1635,9 +1635,9 @@ var
  tis:TAsTriggerInfos;
  ii:TAsIndexInfos;
  iks:TAsImportedKeyInfos;
- columns:TAsColumns;
+ columns:TAsColumns=nil;
  c:TAsColumn;
- ds:TAsQuery;
+ ds:TAsQuery=nil;
  sql:string;
 begin
 
@@ -1647,12 +1647,12 @@ begin
      table.Tablename := Tablename;
      table.TableNameAsControlName:=GetTableNameAsControl(Tablename);
 
-     lstPKs := TAsDbUtils.GetPrimaryKeys(FDBinfo,Schema,Tablename);
      lstIdentity := TStringList.Create;
+     lstPKs := TAsDbUtils.GetPrimaryKeys(FDBinfo,Schema,Tablename);
 
-    if FDBinfo.DbType=dtSQLite then Schema:='';
-    if FDBinfo.DbType = dtSQLite then Schema:='';
-    table.Schema := Schema;
+     if FDBinfo.DbType=dtSQLite then Schema:='';
+     if FDBinfo.DbType = dtSQLite then Schema:='';
+     table.Schema := Schema;
 
      iks := table.ImportedKeys;
      ii:=table.Indexes;
@@ -1743,9 +1743,12 @@ begin
 
    finally
     Screen.Cursor:=crDefault;
-    columns.Free;
     lstIdentity.Free;
-    ds.Free;
+    lstPKs.Free;
+    if columns<>nil then
+      columns.Free;
+    if ds<>nil then
+      ds.Free;
    end;
 
    Result := table;

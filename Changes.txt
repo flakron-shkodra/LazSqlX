@@ -1,4 +1,10 @@
-v.4.6.3.1419
+v4.6.3.1520
+-A memory leak fix in  TAsTableInfo.Add(-,-): pks list wasn't being freed
+-Handle ShowEditForm (which creates a AsDbForm for the selected table) in MainForm in case something goes wrong
+-Implementations of IAsDbmetada tweaked for all dbtypes.
+-Fix for SQLDB's TMSSQLConnection "Error 20019 : Attempt to initiate a new Adaptive Server operation with results pending" (happened sometimes) by setting TAsQuery.FQuery.PacketRecord to -1 (on creation)
+
+v.4.6.3.1519
 -Bugfixes: After running a query multiple times repeatedly,it threw an unhandled exception 
 
 v.4.6.3.1518

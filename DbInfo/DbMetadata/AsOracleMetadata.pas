@@ -43,7 +43,6 @@ var
  ds:TAsQuery;
 begin
   Result := TStringList.Create;
-  try
     ds :=TAsQuery.Create(FDBInfo);
     try
       ds.Open('select distinct username from dba_users');
@@ -55,11 +54,6 @@ begin
     finally
       ds.Free;
     end;
-
-  except
-    Result.Free;
-    raise;
-  end;
 end;
 
 function TAsOracleMetadata.GetTablenames(schema: string): TStringList;
@@ -70,7 +64,6 @@ begin
 
   Result := TStringList.Create;
 
-  try
    sql:='SELECT table_name '+
         ' FROM all_tables where owner='''+schema+''' order by table_name';
    ds :=  TAsQuery.Create(FDBInfo);
@@ -84,11 +77,6 @@ begin
    finally
     ds.Free;
    end;
-
-  except
-    Result.Free;
-    raise;
-  end;
 end;
 
 function TAsOracleMetadata.GetPrimaryKeys(Schema, TableName: string
@@ -106,7 +94,6 @@ begin
           ' AND cons.constraint_name = cols.constraint_name '+
           ' AND cons.owner = cols.owner '+
           ' ORDER BY cols.table_name, cols.position ';
- try
     ds := TAsQuery.Create(FDBInfo);
     try
      ds.Open(sql);
@@ -118,12 +105,6 @@ begin
     finally
      ds.Free;
     end;
- except on e:exception do
-    begin
-      Result.Free;
-      raise e;
-    end;
- end;
 
 end;
 
@@ -151,7 +132,6 @@ begin
 ' WHERE  C.R_OWNER = '''+Schema+''''+
 ' AND a.table_name='''+TableName+'''';
 
- try
  ds := TAsQuery.Create(FDBInfo);
 
   try
@@ -171,11 +151,6 @@ begin
   finally
     ds.Free;
   end;
-
- except
-   Result.Free;
-   raise;
- end;
 
 end;
 
@@ -198,8 +173,6 @@ begin
 ' inner join sys.all_tables st on st.table_name=t.table_name '+
 ' where st.table_name = '''+TableName+''' and st.owner='''+Schema+''' order by t.column_id ';
 
-
-  try
     ds := TAsQuery.Create(FDBInfo);
     try
       ds.Open(sql);
@@ -231,12 +204,6 @@ begin
     finally
       ds.Free;
     end;
-
-  except
-    Result.Free;
-    raise;
-  end;
-
 end;
 
 function TAsOracleMetadata.GetIndexes(Schema, TableName: string): TAsIndexes;
@@ -251,8 +218,7 @@ begin
  sql:= 'SELECT  ind.INDEX_NAME,ind.COLUMN_NAME,ind.DESCEND '+
             ' FROM dba_ind_columns ind WHERE ind.TABLE_NAME='''+TableName+''' and ind.TABLE_OWNER='''+Schema+'''';
 
- try
-    ds := TAsQuery.Create(FDBInfo);
+   ds := TAsQuery.Create(FDBInfo);
    try
      ds.Open(sql);
      while not ds.EOF do
@@ -267,12 +233,6 @@ begin
    finally
      ds.Free;
    end;
-
- except
-   Result.Free;
-   raise;
- end;
-
 end;
 
 function TAsOracleMetadata.GetTriggers(Schema, TableName: string): TAsTriggers;
@@ -289,7 +249,6 @@ begin
             ' from ALL_TRIGGERS a '+
             ' where a.TABLE_NAME = '''+TableName+''' and a.TABLE_OWNER='''+Schema+'''';
 
- try
    ds := TAsQuery.Create(FDBInfo);
    try
      ds.Open(sql);
@@ -307,12 +266,6 @@ begin
    finally
     ds.Free;
    end;
-
- except
-   Result.Free;
-   raise;
- end;
-
 end;
 
 
@@ -327,7 +280,6 @@ begin
               ' and OWNER='''+Schema+'''';
 
  Result := TStringList.Create;
- try
   ds := TAsQuery.Create(FDBInfo);
   try
    ds.Open(sql);
@@ -340,10 +292,6 @@ begin
   finally
     ds.Free;
   end;
- except
-   Result.Free;
-   raise;
- end;
 end;
 
 function TAsOracleMetadata.GetProcedureParams(ProcedureName: string
@@ -357,7 +305,6 @@ begin
   sql:= 'SELECT Argument_Name PARAM_NAME, DATA_TYPE, '+
               '  DATA_LENGTH MAX_LENGTH, IN_OUT PARAM_TYPE '+
               ' FROM SYS.ALL_ARGUMENTS WHERE OBJECT_NAME='''+ProcedureName+'''';
- try
    ds := TAsQuery.Create(FDBInfo);
    try
     ds.Open(sql);
@@ -374,10 +321,6 @@ begin
    finally
     ds.Free;
    end;
- except
-   Result.Free;
-   raise;
- end;
 end;
 
 function TAsOracleMetadata.GetCatalogNames: TStringList;

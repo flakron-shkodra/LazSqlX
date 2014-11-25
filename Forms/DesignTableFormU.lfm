@@ -63,10 +63,10 @@ object DesignTableForm: TDesignTableForm
     Height = 478
     Top = 37
     Width = 692
-    ActivePage = tabDependencies
+    ActivePage = tabIndexes
     Anchors = [akTop, akLeft, akRight, akBottom]
     Images = ilTableInfoImages
-    TabIndex = 1
+    TabIndex = 3
     TabOrder = 0
     object tabFields: TTabSheet
       Caption = 'Fields'

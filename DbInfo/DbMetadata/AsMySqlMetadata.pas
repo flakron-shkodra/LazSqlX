@@ -44,14 +44,8 @@ function TAsMySqlMetadata.GetSchemas: TStringList;
 var
  qr:TAsQuery;
 begin
-
   Result := TStringList.Create;
-  try
-    Result.Add(FDBInfo.Database);
-  except
-    Result.Free;
-    raise;
-  end;
+  Result.Add(FDBInfo.Database);
 end;
 
 function TAsMySqlMetadata.GetTablenames(schema: string): TStringList;
@@ -62,7 +56,6 @@ begin
 
   Result := TStringList.Create;
 
-  try
    sql:='select t.TABLE_NAME from information_schema.tables t '+
               ' where t.table_schema='''+schema+''' order by TABLE_NAME';
 
@@ -78,10 +71,6 @@ begin
     ds.Free;
    end;
 
-  except
-    Result.Free;
-    raise;
-  end;
 end;
 
 function TAsMySqlMetadata.GetPrimaryKeys(Schema, TableName: string
@@ -98,7 +87,6 @@ begin
             ' USING(constraint_name,table_schema,table_name) '+
             ' WHERE t.table_name='''+TableName+''' and t.table_schema='''+Schema+''''+
             ' ORDER BY ORDINAL_POSITION ASC;';
- try
     ds := TAsQuery.Create(FDbInfo);
     try
      ds.Open(sql);
@@ -110,11 +98,6 @@ begin
     finally
      ds.Free;
     end;
- except
-   Result.Free;
-   raise;
- end;
-
 end;
 
 function TAsMySqlMetadata.GetForeignKeys(Schema, TableName: string
@@ -139,7 +122,6 @@ begin
 ' AND t.TABLE_NAME='''+TableName+''''+
 ' AND t.TABLE_SCHEMA='''+Schema+'''';
 
- try
  ds := TAsQuery.Create(FDbInfo);
 
   try
@@ -159,12 +141,6 @@ begin
   finally
     ds.Free;
   end;
-
- except
-   Result.Free;
-   raise;
- end;
-
 end;
 
 function TAsMySqlMetadata.GetColumns(Schema, TableName: string): TAsColumns;
@@ -186,7 +162,6 @@ begin
 ' where c.TABLE_NAME='''+TableName+''''+
 ' and c.TABLE_SCHEMA='''+Schema+''' order by ordinal_position';
 
-  try
     ds := TAsQuery.Create(FDBInfo);
     try
      ds.Open(sql);
@@ -218,12 +193,6 @@ begin
     finally
       ds.Free;
     end;
-
-  except
-    Result.Free;
-    raise;
-  end;
-
 end;
 
 function TAsMySqlMetadata.GetIndexes(Schema, TableName: string): TAsIndexes;
@@ -244,7 +213,6 @@ begin
            ' FROM INFORMATION_SCHEMA.STATISTICS c '+
            ' WHERE TABLE_NAME='''+TableName+''' and TABLE_SCHEMA='''+Schema+'''';
 
-  try
    ds := TAsQuery.Create(FDbInfo);
    try
      ds.Open(sql);
@@ -260,11 +228,6 @@ begin
    finally
      ds.Free;
    end;
-
- except
-   Result.Free;
-   raise;
- end;
 
 end;
 
@@ -282,7 +245,6 @@ begin
             ' from information_schema.triggers '+
             ' where event_object_table='''+TableName+''' and event_object_schema='''+Schema+'''';
 
- try
    ds := TAsQuery.Create(FDbInfo);
    try
     ds.Open(sql);
@@ -300,12 +262,6 @@ begin
    finally
     ds.Free;
    end;
-
- except
-   Result.Free;
-   raise;
- end;
-
 end;
 
 function TAsMySqlMetadata.GetProcedureNames(Schema: string): TStringList;
@@ -320,7 +276,6 @@ begin
             ' where routine_type = ''PROCEDURE'' and routine_schema='''+Schema+'''';
 
  Result := TStringList.Create;
- try
   ds := TAsQuery.Create(FDbInfo);
   try
    ds.Open(sql);
@@ -333,10 +288,6 @@ begin
   finally
     ds.Free;
   end;
- except
-   Result.Free;
-   raise;
- end;
 end;
 
 function TAsMySqlMetadata.GetProcedureParams(ProcedureName: string
@@ -352,7 +303,6 @@ begin
               ' CHARACTER_MAXIMUM_LENGTH MAX_LENGTH, PARAMETER_MODE PARAM_TYPE '+
               ' FROM   INFORMATION_SCHEMA.PARAMETERS '+
               ' WHERE SPECIFIC_NAME='''+ProcedureName+''' AND SPECIFIC_SCHEMA='''+FDbInfo.Database+'''';
- try
    ds := TAsQuery.Create(FDbInfo);
    try
     ds.Open(sql);
@@ -370,10 +320,6 @@ begin
     ds.Free;
    end;
 
- except
-   Result.Free;
-   raise;
- end;
 end;
 
 function TAsMySqlMetadata.GetCatalogNames: TStringList;

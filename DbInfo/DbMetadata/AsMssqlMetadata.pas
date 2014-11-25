@@ -43,7 +43,6 @@ var
   qr: TAsQuery;
 begin
   Result := TStringList.Create;
-  try
     qr := TAsQuery.Create(FDBInfo);
     try
       qr.Open('SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA');
@@ -55,11 +54,6 @@ begin
     finally
       qr.Free;
     end;
-
-  except
-    Result.Free;
-    raise;
-  end;
 end;
 
 function TAsMssqlMetadata.GetTablenames(schema: string): TStringList;
@@ -68,9 +62,7 @@ var
  ds:TAsQuery;
 begin
 
-Result := TStringList.Create;
-
-  try
+  Result := TStringList.Create;
 
   sql:='select t.TABLE_NAME from information_schema.tables t '+
               ' where t.TABLE_CATALOG='''+FDBInfo.Database+''' and t.TABLE_SCHEMA='''+schema+''' order by TABLE_NAME';
@@ -87,11 +79,6 @@ Result := TStringList.Create;
    finally
     ds.Free;
    end;
-
-  except
-    Result.Free;
-    raise;
-  end;
 end;
 
 
@@ -107,7 +94,6 @@ begin
  ' INNER JOIN INFORMATION_SCHEMA.TABLE_CONSTRAINTS tc on tc.Constraint_Name = c.Constraint_Name '+
  ' INNER JOIN INFORMATION_SCHEMA.TABLES s on s.TABLE_NAME=c.TABLE_NAME '+
  ' WHERE tc.Constraint_Type = ''PRIMARY KEY'' AND c.Table_Name = '''+TableName+''' and s.TABLE_SCHEMA='''+Schema+'''';
- try
     ds := TAsQuery.Create(FDBInfo);
     try
      ds.Open(sql);
@@ -119,11 +105,6 @@ begin
     finally
      ds.Free;
     end;
- except
-   Result.Free;
-   raise;
- end;
-
 end;
 
 function TAsMssqlMetadata.GetForeignKeys(Schema, TableName: string): TAsForeignKeys;
@@ -148,7 +129,6 @@ begin
 ' INNER JOIN information_schema.tables t1 on t1.table_name=object_name(fkc.referenced_object_id) '+
 ' WHERE   t.TABLE_NAME = '''+TableName+''''+
 ' AND t.TABLE_SCHEMA='''+Schema+'''';
- try
   ds := TAsQuery.Create(FDBInfo);
   try
    ds.Open(sql);
@@ -167,11 +147,6 @@ begin
   finally
     ds.Free;
   end;
-
- except
-   Result.Free;
-   raise;
- end;
 
 end;
 
@@ -194,7 +169,6 @@ begin
 ' where c.TABLE_NAME='''+TableName+''''+
 ' and c.TABLE_SCHEMA='''+Schema+''' order by ordinal_position';
 
-  try
     ds := TAsQuery.Create(FDBInfo);
 
     try
@@ -229,12 +203,6 @@ begin
     finally
       ds.Free;
     end;
-
-  except
-    Result.Free;
-    raise;
-  end;
-
 end;
 
 function TAsMssqlMetadata.GetIndexes(Schema, TableName: string): TAsIndexes;
@@ -257,7 +225,6 @@ begin
         ' inner join sys.index_columns ic on ic.object_id = t.object_id '+
         ' inner join sys.columns c on c.object_id = t.object_id and ic.column_id = c.column_id '+
         ' where i.is_primary_key=0 and t.name='''+TableName+''' and s.name='''+Schema+'''';
- try
     ds := TAsQuery.Create(FDBInfo);
    try
      ds.Open(sql);
@@ -274,10 +241,6 @@ begin
      ds.Free;
    end;
 
- except
-   Result.Free;
-   raise;
- end;
 end;
 
 function TAsMssqlMetadata.GetTriggers(Schema, TableName: string): TAsTriggers;
@@ -310,7 +273,6 @@ begin
            ' INNER JOIN sys.schemas s ON t.schema_id = s.schema_id '+
            ' WHERE sysobjects.type = ''TR'' and t.name ='''+TableName+''' and s.name='''+Schema+'''';
 
- try
    ds := TAsQuery.Create(FDBInfo);
    try
     ds.Open(sql);
@@ -345,12 +307,6 @@ begin
    finally
     ds.Free;
    end;
-
- except
-   Result.Free;
-   raise;
- end;
-
 end;
 
 function TAsMssqlMetadata.GetProcedureNames(Schema: string): TStringList;
@@ -366,8 +322,7 @@ begin
            'and SPECIFIC_SCHEMA='''+Schema+''' and ROUTINE_CATALOG='''+FDBInfo.Database+'''';
 
  Result := TStringList.Create;
- try
-  ds := TAsQuery.Create(FDbInfo);
+ ds := TAsQuery.Create(FDbInfo);
   try
    ds.Open(sql);
     while not ds.EOF do
@@ -379,10 +334,6 @@ begin
   finally
     ds.Free;
   end;
- except
-   Result.Free;
-   raise;
- end;
 end;
 
 function TAsMssqlMetadata.GetProcedureParams(ProcedureName: string): TAsProcedureParams;
@@ -398,7 +349,6 @@ Result := TAsProcedureParams.Create;
              ' CHARACTER_MAXIMUM_LENGTH MAX_LENGTH, PARAMETER_MODE PARAM_TYPE '+
              '  FROM   INFORMATION_SCHEMA.PARAMETERS ' +
              ' WHERE SPECIFIC_NAME='''+ProcedureName+'''  and SPECIFIC_CATALOG='''+FDBInfo.Database+'''';
- try
    ds := TAsQuery.Create(FDBInfo);
    try
     ds.Open(sql);
@@ -415,11 +365,6 @@ Result := TAsProcedureParams.Create;
    finally
     ds.Free;
    end;
-
- except
-   Result.Free;
-   raise;
- end;
 end;
 
 function TAsMssqlMetadata.GetCatalogNames: TStringList;

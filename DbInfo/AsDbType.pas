@@ -350,7 +350,6 @@ uses
   AsFirebirdMetadata,
   AsSqliteMetadata;
 
-
 { TAsRegExUtils }
 
 class procedure TAsRegExUtils.RunRegex(InputStr: string; RegEx: string;
@@ -485,6 +484,7 @@ begin
         FCon:=FDBInfo.SqlConnection;
         FQuery:=TSQLQuery.Create(nil);
         FQuery.DataBase:=FCon;
+        FQuery.PacketRecords:=-1;
         FQuery.AfterPost:=@AfterPost;
         FQuery.AfterDelete:=@AfterDelete;
       end;
@@ -981,22 +981,22 @@ var
   I: Integer;
 begin
  Result := TStringList.Create;
+
+ ds := TAsQuery.Create(DbInfo);
  try
-   ds := TAsQuery.Create(DbInfo);
-   try
+  try
     ds.Open(GetTopRecordsSelect(DbInfo.DbType,TableName,1));
     for I:=0 to ds.FieldCount-1 do
     begin
       if ds.Fields[I].DataType in [ftString,ftWideString] then
       Result.Add(ds.Fields[I].FieldName);
     end;
-   finally
-    ds.Free;
-   end;
- except
-   Result.Free;
-   raise;
+  except
+  end;
+ finally
+  ds.Free;
  end;
+
 end;
 
 class function TAsDbUtils.GetTriggers(DbInfo: TAsDbConnectionInfo; Schema,

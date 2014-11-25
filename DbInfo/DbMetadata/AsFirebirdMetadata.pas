@@ -43,12 +43,7 @@ end;
 function TAsFirebirdMetadata.GetSchemas: TStringList;
 begin
   Result := TStringList.Create;
-  try
-    Result.Add(ChangeFileExt(ExtractFileName(FDBInfo.Database), ''));
-  except
-    Result.Free;
-    raise;
-  end;
+  Result.Add(ChangeFileExt(ExtractFileName(FDBInfo.Database), ''));
 end;
 
 function TAsFirebirdMetadata.GetTablenames(schema: string): TStringList;
@@ -58,7 +53,6 @@ var
 begin
 
   Result := TStringList.Create;
-  try
     sql:='select rdb$relation_name '+
                 ' from rdb$relations '+
                 ' where rdb$view_blr is null and (rdb$system_flag is null or rdb$system_flag = 0)';
@@ -74,11 +68,6 @@ begin
    finally
     ds.Free;
    end;
-
-  except
-    Result.Free;
-    raise;
-  end;
 end;
 
 function TAsFirebirdMetadata.GetPrimaryKeys(Schema, TableName: string
@@ -95,7 +84,6 @@ begin
               ' left join rdb$relation_constraints rc on rc.rdb$index_name = i.rdb$index_name '+
               ' where rc.rdb$constraint_type = ''PRIMARY KEY'''+
               ' AND rc.rdb$relation_name='''+TableName+'''';
- try
     ds := TAsQuery.Create(FDBInfo);
     try
      ds.Open(sql);
@@ -107,11 +95,6 @@ begin
     finally
      ds.Free;
     end;
- except
-   Result.Free;
-   raise;
- end;
-
 end;
 
 function TAsFirebirdMetadata.GetForeignKeys(Schema, TableName: string
@@ -137,8 +120,6 @@ begin
 ' WHERE drc.rdb$constraint_type = ''FOREIGN KEY'' '+
 ' AND drc.rdb$relation_name = '''+TableName+'''';
 
- try
-
  ds := TAsQuery.Create(FDBInfo);
 
   try
@@ -158,12 +139,6 @@ begin
   finally
     ds.Free;
   end;
-
- except
-   Result.Free;
-   raise;
- end;
-
 end;
 
 function TAsFirebirdMetadata.GetColumns(Schema, TableName: string): TAsColumns;
@@ -202,7 +177,6 @@ begin
   ' WHERE r.RDB$RELATION_NAME='''+TableName+''''+
   ' ORDER BY r.RDB$FIELD_POSITION';
 
-  try
     ds := TAsQuery.Create(FDBInfo);
     try
      ds.Open(sql);
@@ -234,12 +208,6 @@ begin
     finally
       ds.Free;
     end;
-
-  except
-    Result.Free;
-    raise;
-  end;
-
 end;
 
 function TAsFirebirdMetadata.GetIndexes(Schema, TableName: string): TAsIndexes;
@@ -260,7 +228,6 @@ begin
               ' LEFT JOIN RDB$INDICES ON RDB$INDICES.RDB$INDEX_NAME = RDB$INDEX_SEGMENTS.RDB$INDEX_NAME '+
               ' LEFT JOIN RDB$RELATION_CONSTRAINTS ON RDB$RELATION_CONSTRAINTS.RDB$INDEX_NAME = RDB$INDEX_SEGMENTS.RDB$INDEX_NAME '+
               ' WHERE UPPER(RDB$INDICES.RDB$RELATION_NAME)='''+TableName+''' AND RDB$RELATION_CONSTRAINTS.RDB$CONSTRAINT_TYPE IS NULL; ';
- try
     ds := TAsQuery.Create(FDBInfo);
    try
      ds.Open(sql);
@@ -276,12 +243,6 @@ begin
    finally
      ds.Free;
    end;
-
- except
-   Result.Free;
-   raise;
- end;
-
 end;
 
 
@@ -319,7 +280,6 @@ begin
 ' FROM RDB$TRIGGERS t '+
 ' WHERE RDB$SYSTEM_FLAG=0 and RDB$RELATION_NAME='''+TableName+'''';
 
- try
    ds := TAsQuery.Create(FDBInfo);
    try
     ds.Open(sql);
@@ -337,12 +297,6 @@ begin
    finally
     ds.Free;
    end;
-
- except
-   Result.Free;
-   raise;
- end;
-
 end;
 
 function TAsFirebirdMetadata.GetProcedureNames(Schema: string): TStringList;
@@ -358,7 +312,6 @@ begin
 
  Result := TStringList.Create;
 
- try
   ds := TAsQuery.Create(FDbInfo);
   try
    ds.Open(sql);
@@ -371,10 +324,6 @@ begin
   finally
     ds.Free;
   end;
- except
-   Result.Free;
-   raise;
- end;
 end;
 
 function TAsFirebirdMetadata.GetProcedureParams(ProcedureName: string
@@ -409,7 +358,6 @@ begin
 ' FROM rdb$procedure_parameters p '+
 ' INNER JOIN rdb$fields rf on rf.rdb$field_name = p.rdb$field_source '+
 ' WHERE p.rdb$procedure_name='''+ProcedureName+'''';
- try
    ds := TAsQuery.Create(FDbInfo);
    try
     ds.Open(sql);
@@ -426,11 +374,6 @@ begin
    finally
     ds.Free;
    end;
-
- except
-   Result.Free;
-   raise;
- end;
 end;
 
 function TAsFirebirdMetadata.GetCatalogNames: TStringList;

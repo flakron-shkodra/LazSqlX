@@ -41,12 +41,7 @@ end;
 function TAsSqliteMetadata.GetSchemas: TStringList;
 begin
   Result := TStringList.Create;
-  try
-    Result.Add(ChangeFileExt(ExtractFileName(FDbInfo.Database), ''));
-  except
-    Result.Free;
-    raise;
-  end
+  Result.Add(ChangeFileExt(ExtractFileName(FDbInfo.Database), ''));
 end;
 
 function TAsSqliteMetadata.GetTablenames(schema: string): TStringList;
@@ -55,7 +50,6 @@ var
  ds:TAsQuery;
 begin
   Result := TStringList.Create;
-  try
    sql:='SELECT name from sqlite_master where type=''table''';
    ds :=  TAsQuery.Create(FDbInfo);
    try
@@ -68,11 +62,6 @@ begin
    finally
     ds.Free;
    end;
-
-  except
-    Result.Free;
-    raise;
-  end;
 end;
 
 function TAsSqliteMetadata.GetPrimaryKeys(Schema, TableName: string
@@ -83,7 +72,6 @@ var
 begin
  Result := TStringList.Create;
  sql:='PRAGMA table_info('+TableName+')';
- try
     ds := TAsQuery.Create(FDbInfo);
     try
      ds.Open(sql);
@@ -96,10 +84,6 @@ begin
     finally
      ds.Free;
     end;
- except
-   Result.Free;
-   raise;
- end;
 
 end;
 
@@ -123,7 +107,6 @@ begin
 
  sql:='pragma table_info('+TableName+')';
 
-  try
     ds := TAsQuery.Create(FDbInfo);
     try
      ds.Open(sql);
@@ -139,12 +122,6 @@ begin
     finally
       ds.Free;
     end;
-
-  except
-    Result.Free;
-    raise;
-  end;
-
 end;
 
 function TAsSqliteMetadata.GetIndexes(Schema, TableName: string): TAsIndexes;
@@ -161,7 +138,6 @@ begin
  sql:='select name INDEX_NAME,sql COLUMN_NAME, sql DESCEND '+
             ' from sqlite_master where type = ''index'' and tbl_name='''+TableName+'''';
 
- try
     ds := TAsQuery.Create(FDbInfo);
    try
      ds.Open(sql);
@@ -192,14 +168,6 @@ begin
    finally
      ds.Free;
    end;
-
- except
-   Result.Free;
-   raise;
- end;
-
-
-
 end;
 
 function TAsSqliteMetadata.GetTriggers(Schema, TableName: string): TAsTriggers;
@@ -214,7 +182,6 @@ begin
  sql:='select '' '' TRIGGER_OWNER, name TRIGGER_NAME, '' '' TRIGGER_EVENT,sql TRIGGER_BODY,'' '' TRIGGER_STATUS '+
             ' from sqlite_master where type = ''trigger'' and tbl_name='''+TableName+'''';
 
- try
 
    ds := TAsQuery.Create(FDBInfo);
    try
@@ -233,11 +200,6 @@ begin
    finally
     ds.Free;
    end;
-
- except
-   Result.Free;
-   raise;
- end;
 
 end;
 

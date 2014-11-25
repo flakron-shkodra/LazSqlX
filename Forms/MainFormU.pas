@@ -1306,12 +1306,17 @@ begin
  begin
   ti := TAsTableInfos.Create(nil,FDBInfo);
   try
-    ti.AddTable(cmbSchema.Text,lstTables.Items[lstTables.ItemIndex],False);
-    frm := TAsDbForm.Create(FDBInfo,cmbSchema.Text,ti[0]);
-    frm.ShowModal(FormFilter);
-    frm.CloseData;
+    try
+      ti.AddTable(cmbSchema.Text,lstTables.Items[lstTables.ItemIndex],False);
+      frm := TAsDbForm.Create(FDBInfo,cmbSchema.Text,ti[0]);
+      frm.ShowModal(FormFilter);
+      frm.CloseData;
+    except on E:Exception do
+      ShowMessage(E.Message);
+    end;
   finally
     ti.Free;
+    if frm<>nil then
     frm.Free;
   end;
  end;
