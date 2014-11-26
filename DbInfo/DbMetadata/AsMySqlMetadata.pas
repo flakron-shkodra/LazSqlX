@@ -334,7 +334,7 @@ begin
     dbi.Assign(FDBInfo);
     dbi.Database:='INFORMATION_SCHEMA';
     sql := 'SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA';
-    ds := TAsQuery.Create(FDBInfo);
+    ds := TAsQuery.Create(dbi);
     try
      ds.Open(sql);
      while not ds.EOF do

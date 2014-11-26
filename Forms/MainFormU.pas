@@ -1119,9 +1119,7 @@ var
 begin
 
   DoDisconnect;
-  {assign this reference and SqlConnBuilderForm will fill it}
-  SqlConnBuilderForm.DbInfo := FDBInfo;
-  if SqlConnBuilderForm.ShowModal = mrOk then
+  if SqlConnBuilderForm.ShowModal(FDBInfo) = mrOk then
   begin
 
     lstTables.Clear;
@@ -1145,7 +1143,8 @@ begin
 
 
     try
-      DoSelectiveConnect;
+
+      //DoSelectiveConnect; //connection done in sqlconnbuilderform
 
       if FPageControl.PageCount = 0 then
       begin
@@ -1219,9 +1218,6 @@ end;
 
 function TMainForm.GetDbInfo: TAsDbConnectionInfo;
 begin
-  if FDBInfo=nil then
-  FDBInfo := TAsDbConnectionInfo.Create;
-
  Result := FDBInfo;
 end;
 

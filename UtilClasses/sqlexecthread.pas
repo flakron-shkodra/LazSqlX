@@ -200,6 +200,7 @@ begin
         FQuery.Close;
         FQuery.SQL.Text := FCommand;
         FQuery.ExecSQL;
+        (FQuery.Transaction as TSQLTransaction).CommitRetaining;
         affected:=FQuery.RowsAffected;
        end else
        if Assigned(FZQuery) then

@@ -82,6 +82,7 @@ type
    procedure SetPort(AValue: Integer);
    procedure SetServer(AValue: string);
    procedure SetUsername(AValue: string);
+   function GetConnectionsCreated:Boolean;
     {creates a new instance of Zeos connection according to properties of this class}
     //function ToZeosConnection:TZConnection;
     {creates a new instance of SqlDbConnector according to properties of this class}
@@ -893,8 +894,11 @@ var
  md:IAsDbMetadata;
 begin
   md := MakeEngine(DbInfo);
-  Result := md.GetSchemas;
-  DisposeEngine(DbInfo,md);
+  try
+    Result := md.GetSchemas;
+  finally
+    DisposeEngine(DbInfo,md);
+  end;
 end;
 
 class function TAsDbUtils.GetTablenames(DbInfo: TAsDbConnectionInfo;
@@ -903,8 +907,11 @@ var
  md:IAsDbMetadata;
 begin
   md := MakeEngine(DbInfo);
-  Result := md.GetTablenames(schema);
-  DisposeEngine(DbInfo,md);
+  try
+    Result := md.GetTablenames(schema);
+  finally
+    DisposeEngine(DbInfo,md);
+  end;
 end;
 
 class function TAsDbUtils.GetColumnNames(DbInfo: TAsDbConnectionInfo;
@@ -940,8 +947,12 @@ var
  md:IAsDbMetadata;
 begin
   md := MakeEngine(DbInfo);
-  Result := md.GetPrimaryKeys(schema,TableName);
-  DisposeEngine(DbInfo,md);
+  try
+    Result := md.GetPrimaryKeys(schema,TableName);
+  finally
+     DisposeEngine(DbInfo,md);
+  end;
+
 end;
 
 class function TAsDbUtils.GetForeignKeys(DbInfo: TAsDbConnectionInfo; Schema,
@@ -950,8 +961,11 @@ var
  md:IAsDbMetadata;
 begin
   md := MakeEngine(DbInfo);
-  Result := md.GetForeignKeys(schema,TableName);
-  DisposeEngine(DbInfo,md);
+  try
+    Result := md.GetForeignKeys(schema,TableName);
+  finally
+     DisposeEngine(DbInfo,md);
+  end;
 end;
 
 class function TAsDbUtils.GetColumns(DbInfo: TAsDbConnectionInfo; Schema,
@@ -960,8 +974,11 @@ var
  md:IAsDbMetadata;
 begin
   md := MakeEngine(DbInfo);
-  Result := md.GetColumns(schema,TableName);
-  DisposeEngine(DbInfo,md);
+  try
+    Result := md.GetColumns(schema,TableName);
+  finally
+     DisposeEngine(DbInfo,md);
+  end;
 end;
 
 class function TAsDbUtils.GetIndexes(DbInfo: TAsDbConnectionInfo; Schema,
@@ -970,8 +987,11 @@ var
  md:IAsDbMetadata;
 begin
   md := MakeEngine(DbInfo);
-  Result := md.GetIndexes(schema,TableName);
-  DisposeEngine(DbInfo,md);
+  try
+    Result := md.GetIndexes(schema,TableName);
+  finally
+     DisposeEngine(DbInfo,md);
+  end;
 end;
 
 class function TAsDbUtils.GetTextFields(DbInfo: TAsDbConnectionInfo; Schema,
@@ -1005,8 +1025,11 @@ var
  md:IAsDbMetadata;
 begin
   md := MakeEngine(DbInfo);
-  Result := md.GetTriggers(schema,TableName);
-  DisposeEngine(DbInfo,md);
+  try
+    Result := md.GetTriggers(schema,TableName);
+  finally
+   DisposeEngine(DbInfo,md);
+  end;
 end;
 
 class function TAsDbUtils.GetProcedureNames(DbInfo: TAsDbConnectionInfo;
@@ -1015,8 +1038,11 @@ var
  md:IAsDbMetadata;
 begin
   md := MakeEngine(DbInfo);
-  Result := md.GetProcedureNames(schema);
-  DisposeEngine(DbInfo,md);
+  try
+    Result := md.GetProcedureNames(schema);
+  finally
+   DisposeEngine(DbInfo,md);
+  end;
 end;
 
 class function TAsDbUtils.GetProcedureParams(DbInfo: TAsDbConnectionInfo;
@@ -1025,8 +1051,11 @@ var
  md:IAsDbMetadata;
 begin
   md := MakeEngine(DbInfo);
-  Result := md.GetProcedureParams(ProcedureName);
-  DisposeEngine(DbInfo,md);
+  try
+    Result := md.GetProcedureParams(ProcedureName);
+  finally
+   DisposeEngine(DbInfo,md);
+  end;
 end;
 
 class function TAsDbUtils.GetCatalogNames(aDbInfo: TAsDbConnectionInfo
@@ -1035,8 +1064,11 @@ var
  md:IAsDbMetadata;
 begin
    md := MakeEngine(aDbInfo);
-   Result := md.GetCatalogNames;
-   DisposeEngine(aDbInfo,md);
+   try
+    Result := md.GetCatalogNames;
+   finally
+    DisposeEngine(aDbInfo,md);
+   end;
 end;
 
 { TAsDbConnectionInfo }
@@ -1085,7 +1117,7 @@ end;
 procedure TAsDbConnectionInfo.SetDbType(AValue: TAsDatabaseType);
 begin
  FDbType:=AValue;
- if FConnectionsCreated then
+ if GetConnectionsCreated then
  begin
   FSqlCon.ConnectorType:= TAsDbUtils.DatabaseTypeAsConnectorType(FDbType);
   FZCon.Protocol := TAsDbUtils.DatabaseTypeAsString(FDbType, True);
@@ -1095,7 +1127,7 @@ end;
 procedure TAsDbConnectionInfo.SetPassword(AValue: string);
 begin
  FPassword:=AValue;
- if FConnectionsCreated then
+ if GetConnectionsCreated then
  begin
   FSqlCon.Password:=FPassword;
   FZCon.Password:=FPassword;
@@ -1121,7 +1153,7 @@ end;
 procedure TAsDbConnectionInfo.SetServer(AValue: string);
 begin
  FServer:=AValue;
- if FConnectionsCreated then
+ if GetConnectionsCreated then
  begin
   FSqlCon.HostName:= FServer;
   FZCon.HostName:=FServer;
@@ -1131,11 +1163,16 @@ end;
 procedure TAsDbConnectionInfo.SetUsername(AValue: string);
 begin
  FUsername:=AValue;
- if FConnectionsCreated then
+ if GetConnectionsCreated then
  begin
   FSqlCon.UserName:=FUsername;
   FZCon.User:=FUsername;
  end;
+end;
+
+function TAsDbConnectionInfo.GetConnectionsCreated: Boolean;
+begin
+  Result := (FZCon<>nil) and (FSqlCon<>nil);
 end;
 
 constructor TAsDbConnectionInfo.Create(CreateConnections: Boolean;
@@ -1156,7 +1193,7 @@ end;
 
 destructor TAsDbConnectionInfo.Destroy;
 begin
- if FConnectionsCreated then
+ if GetConnectionsCreated then
  begin
  FSqlCon.Destroy;
  FZCon.Destroy;

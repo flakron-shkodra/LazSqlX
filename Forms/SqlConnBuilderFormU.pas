@@ -56,6 +56,7 @@ type
     cmbDatabase: TComboBox;
     procedure btnOpenDatabaseClick(Sender: TObject);
     procedure chkAlternateLibLocationChange(Sender: TObject);
+    procedure cmbDatabaseChange(Sender: TObject);
     procedure cmbDatabaseTypeChange(Sender: TObject);
     procedure cmbDatabaseTypeDrawItem(Control: TWinControl; Index: integer;
       ARect: TRect; State: TOwnerDrawState);
@@ -104,6 +105,7 @@ type
     procedure SaveRecentConnToFile;
     procedure LoadRecentConnFromFile;
     property DbInfo:TAsDbConnectionInfo read FDBInfo write FDBInfo;
+    function ShowModal(var aDbInfo:TAsDbConnectionInfo):TModalResult;
   end;
 
 type
@@ -236,16 +238,13 @@ procedure TSqlConnBuilderForm.cmbDatabaseEnter(Sender: TObject);
 var
   lst:TStringList;
 begin
+  cmbDatabase.Clear;
+  AssignDbInfo;
   try
-    AssignDbInfo;
-    cmbDatabase.Clear;
-    try
-      lst := TAsDbUtils.GetCatalogNames(FDBInfo);
-      cmbDatabase.Items.AddStrings(lst);
-    finally
-      lst.Free;
-    end;
-  except
+    lst := TAsDbUtils.GetCatalogNames(FDBInfo);
+    cmbDatabase.Items.AddStrings(lst);
+  finally
+    lst.Free;
   end;
 end;
 
@@ -387,6 +386,7 @@ var
   wt:TAsStringWrapType;
   s: TCaption;
   LastError:string;
+  dbi:TAsDbConnectionInfo;
 begin
   if (txtPort.Visible) and
     (not TryStrToInt(txtPort.Text, i)) then
@@ -403,7 +403,11 @@ begin
   end;
 
   if not RecentConnections.Exists(FDBInfo) then
-    RecentConnections.Add(FDBInfo);
+  begin
+    dbi := TAsDbConnectionInfo.Create(False);
+    dbi.Assign(FDBInfo);
+    RecentConnections.Add(dbi);
+  end;
 
   if RecentConnections.Count>9 then
     RecentConnections.Delete(0);
@@ -656,6 +660,11 @@ begin
  txtLibraryFilename.Enabled:=chkAlternateLibLocation.Checked;
 end;
 
+procedure TSqlConnBuilderForm.cmbDatabaseChange(Sender: TObject);
+begin
+
+end;
+
 function TSqlConnBuilderForm.GetFriendlyConnStr: string;
 begin
 end;
@@ -668,6 +677,14 @@ end;
 procedure TSqlConnBuilderForm.LoadRecentConnFromFile;
 begin
   RecentConnections.LoadFromFile(RecentConnectionsFilename);
+end;
+
+function TSqlConnBuilderForm.ShowModal(var aDbInfo: TAsDbConnectionInfo
+ ): TModalResult;
+begin
+ FDBInfo:=aDbInfo;
+ Result := inherited ShowModal;
+ FDBInfo := nil;
 end;
 
 end.

@@ -109,6 +109,7 @@ object SqlConnBuilderForm: TSqlConnBuilderForm
       AutoComplete = True
       AutoCompleteText = [cbactEnabled, cbactEndOfLineComplete, cbactSearchAscending]
       ItemHeight = 13
+      OnChange = cmbDatabaseChange
       OnEnter = cmbDatabaseEnter
       TabOrder = 6
     end
@@ -216,6 +217,7 @@ object SqlConnBuilderForm: TSqlConnBuilderForm
     Caption = 'Cancel'
     Kind = bkCancel
     ModalResult = 2
+    OnClick = btnCancelClick
     TabOrder = 2
   end
   object lstRecentConnections: TListBox

@@ -1,3 +1,9 @@
+v4.6.3.1522
+-Bugfix: the main dbInfo on mainform was being passed accidentally as reference in RecentConnections.
+-Bugfix: MySql list databases on connection form wasn't working properly.
+-Bugfix: using sqldb: When writing an sql statement (that alter structure or data) such as create,drop,alter,insert,update etc. the transaction wasn't commiting changes to db
+-Other bugfixes
+
 v4.6.3.1520
 -A memory leak fix in  TAsTableInfo.Add(-,-): pks list wasn't being freed
 -Handle ShowEditForm (which creates a AsDbForm for the selected table) in MainForm in case something goes wrong
