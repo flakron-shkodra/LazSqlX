@@ -29,7 +29,7 @@
       <MajorVersionNr Value="4"/>
       <MinorVersionNr Value="6"/>
       <RevisionNr Value="3"/>
-      <BuildNr Value="1522"/>
+      <BuildNr Value="1523"/>
       <StringTable ProductVersion=""/>
     </VersionInfo>
     <BuildModes Count="2">
@@ -299,6 +299,7 @@
         <ComponentName Value="DataImporterDialog"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
+        <UnitName Value="DataImporterDialogU"/>
       </Unit28>
       <Unit29>
         <Filename Value="LoadingIndicator\animatedgif.pas"/>

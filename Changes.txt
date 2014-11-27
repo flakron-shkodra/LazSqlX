@@ -1,3 +1,8 @@
+v4.6.3.1523
+-Fix: DataImporter was broken after refactorings
+-Fix: Preview Image fields on DblClick on queryTab result grid didn't work
+-Fix: there was a memory leak in FileTypeDetector (used fro Blob field filetype detection and preview)
+
 v4.6.3.1522
 -Bugfix: the main dbInfo on mainform was being passed accidentally as reference in RecentConnections.
 -Bugfix: MySql list databases on connection form wasn't working properly.

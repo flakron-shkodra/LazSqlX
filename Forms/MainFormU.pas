@@ -1493,6 +1493,8 @@ begin
       begin
         try
           fDetect := TFileDetector.Create;
+          if fDetect.Errors.Count>0 then
+          ShowMessage(fDetect.Errors.Text);
           m := TMemoryStream.Create;
           TBlobField(grd.SelectedField).SaveToStream(m);
           fType := fDetect.Detect(m);
@@ -2159,7 +2161,7 @@ begin
       if cmbTablename.ItemIndex > -1 then
       begin
         DoDisconnect;
-        DataImporterForm.ShowModal(SqlConnBuilderForm.DbInfo,
+        DataImporterForm.ShowModal(FDbInfo,
           cmbSchema.Text, cmbTablename.Items[cmbTablename.ItemIndex]);
         DoSelectiveConnect;
       end
@@ -2266,7 +2268,7 @@ begin
 
   actCheckSyntax.Enabled := actExecute.Enabled;
   actQueryDesigner.Enabled := FDBInfo.Connected;
-  actDatabaseCloner.Enabled := FDBInfo.Connected;
+  //actDatabaseCloner.Enabled := FDBInfo.Connected;
   actDataImporter.Enabled := FDBInfo.Connected;
   actOpen.Enabled:=FDBInfo.Connected;
   actFind.Enabled:=FDBInfo.Connected;
@@ -2281,7 +2283,7 @@ begin
   actGridCopyAll.Enabled := False;
   actCheckSyntax.Enabled := False;
   actQueryDesigner.Enabled := False;
-  actDatabaseCloner.Enabled := False;
+  //actDatabaseCloner.Enabled := False;
   actDataImporter.Enabled := False;
  end;
 end;

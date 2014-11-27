@@ -34,6 +34,8 @@ TFileType = class
   function SignatureToString:string;
  end;
 
+{ TFileTypes }
+
 TFileTypes = class(specialize TFPGObjectList<TFileType>)
  strict private
    _Exceptions:TStringList;
@@ -41,11 +43,12 @@ TFileTypes = class(specialize TFPGObjectList<TFileType>)
    procedure SetSigMaxLength;
  public
    constructor Create;
+   destructor Destroy; override;
    property Exceptions:TStringList read _Exceptions;
    property MaxSignatureLength:Integer read _SigMaxLength;
    function FindBySignature(sig:TBytes):TFileType;
    procedure LoadFromText(AList: TStringList);
-   procedure AddDelimited(TextLine:String);//commad delimited: sig, extensions, description
+   procedure AddDelimited(TextLine:String);//comma delimited: sig, extensions, description
  end;
 
 {$ENDREGION}
@@ -57,11 +60,13 @@ TFileTypes = class(specialize TFPGObjectList<TFileType>)
  TFileDetector = class
  strict private
   _FileTypes:TFileTypes;
+  function GetErrors: TStringList;
  public
   constructor Create;
   function Detect(Filename:string):TFileType;overload;
   function Detect(Stream:TStream):TFileType;overload;
   function GetFirstBytes(Filename:string):string;
+  property Errors:TStringList read GetErrors;
   destructor Destroy;
  end;
 
@@ -97,13 +102,14 @@ var
   str:string;
   strB:array of string;
   ex:TExceptionClass;
+  conv:Integer;
 begin
   try
     lst:=TStringList.Create;
     lst.Delimiter:=',';
     lst.DelimitedText:=TextLine;
     ft := TFileType.Create;
-    try
+
       str := lst[0];
 
       SetLength(b,Length(str) div 2);
@@ -113,14 +119,19 @@ begin
       J:=0;
       while I<=Length(str) do
       begin
-        strB[J]:= '$'+str[I]+str[I+1];
+        if I+1<length(str) then
+        begin
+          strB[J]:= '$'+str[I]+str[I+1];
+        end;
         Inc(I,2);
         Inc(J,1);
       end;
 
       for I := 0 to Length(strB) - 1 do
       begin
-        b[I] := StrToInt(strB[I]);
+        conv := 0;
+        TryStrToInt(strB[I],conv);
+        b[I] := conv;
       end;
 
       ft.Signature := b;
@@ -141,16 +152,8 @@ begin
       if (ft.Description = 'PNG Image File') then
       ft.PreviewType:= ftpPng;
 
-
-      Add(ft);
-    except on e:Exception do
-      begin
-        e.Message:=e.Message+(TextLine);
-        ShowException(e,@e);
-      end;
-    end;
-
   finally
+   Add(ft);
    lst.Free;
   end;
 
@@ -161,6 +164,12 @@ begin
   inherited Create;
   _SigMaxLength := 0;
   _Exceptions :=  TStringList.Create;
+end;
+
+destructor TFileTypes.Destroy;
+begin
+  _Exceptions.Free;
+ inherited Destroy;
 end;
 
 function TFileTypes.FindBySignature(sig: TBytes): TFileType;
@@ -190,12 +199,16 @@ procedure TFileTypes.LoadFromText(AList: TStringList);
 var
   I: Integer;
 begin
-
-  try
-    for I := 0 to AList.Count - 1 do
-    AddDelimited(AList[I]);
-  except on E:Exception do
-    begin
+  _Exceptions.Clear;
+  for I := 0 to AList.Count - 1 do
+  begin
+    try
+      if I < AList.Count then
+      begin
+         if Trim(AList[I])<>EmptyStr then
+        AddDelimited(AList[I]);
+      end;
+    except on E:Exception do
       _Exceptions.Add('Line ['+IntToStr(I)+'] : '+E.Message);
     end;
   end;
@@ -219,22 +232,16 @@ end;
 
 {$Region 'TFileDetector Impl'}
 
+function TFileDetector.GetErrors: TStringList;
+begin
+ Result := _FileTypes.Exceptions;
+end;
+
 constructor TFileDetector.Create;
-var
- r:TResourceStream;
- lst:TStringList;
 begin
   inherited Create;
   _FileTypes := TFileTypes.Create;
-  try
-    r:=TResourceStream.Create(HInstance,'SIG','FS');
-    lst := TStringList.Create;
-    lst.LoadFromStream(r);
-    _FileTypes.LoadFromText(lst);
-  finally
-    r.Free;
-    lst.Free;
-  end;
+  _FileTypes.LoadFromText(TLazSqlXResources.FileTypeDetector);
 end;
 
 destructor TFileDetector.Destroy;
