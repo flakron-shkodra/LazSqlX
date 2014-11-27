@@ -2126,7 +2126,7 @@ begin
 
   if FPageControl.ActiveTab.HasActiveData then
   begin
-    parser := TAsSqlParser.Create(cmbSchema.Text, SqlConnBuilderForm.DbInfo);
+    parser := TAsSqlParser.Create(cmbSchema.Text, FDBInfo);
     try
       parser.ParseCommand(FPageControl.ActiveTab.SQLQuery);
       if parser.FromTables.Count > 0 then
