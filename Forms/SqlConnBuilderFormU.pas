@@ -494,9 +494,9 @@ begin
       txtPort.Text := '1521';
       txtUserName.Text := 'sa';
       txtPassword.Text := '';
-      cmbDbEngine.ItemIndex:=1;
       if Is64Bit then
       begin
+        cmbDbEngine.ItemIndex:=1;
         cmbDbEngine.Enabled:=False;
       end;
     end;
