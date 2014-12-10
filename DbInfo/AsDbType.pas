@@ -477,13 +477,13 @@ begin
     deZeos:
      begin
        FZCon:=FDBInfo.ZeosConnection;
-       FZQuery:=TZQuery.Create(nil);
+       FZQuery:=TZQuery.Create(Self);
        FZQuery.Connection:=FZCon;
      end;
      deSqlDB:
       begin
         FCon:=FDBInfo.SqlConnection;
-        FQuery:=TSQLQuery.Create(nil);
+        FQuery:=TSQLQuery.Create(Self);
         FQuery.DataBase:=FCon;
         FQuery.PacketRecords:=-1;
         FQuery.AfterPost:=@AfterPost;

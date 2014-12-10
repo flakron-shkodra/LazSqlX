@@ -1,3 +1,6 @@
+v4.6.3.1526
+-Fix: Found some memory leaks 
+
 v4.6.3.1524
 -Fix: Copy Selected Rows as SQL Insert Script (on context menu of queryTab grid) caused application to crash
 

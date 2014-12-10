@@ -1,0 +1,59 @@
+object PropertyGridForm: TPropertyGridForm
+  Left = 699
+  Height = 343
+  Top = 299
+  Width = 343
+  BorderStyle = bsToolWindow
+  Caption = 'PropertyGridForm'
+  ClientHeight = 343
+  ClientWidth = 343
+  LCLVersion = '1.2.6.0'
+  object TIPropertyGrid1: TTIPropertyGrid
+    Left = 0
+    Height = 306
+    Top = 0
+    Width = 343
+    Align = alClient
+    BorderStyle = bsNone
+    DefaultItemHeight = 23
+    DefaultValueFont.Color = clWindowText
+    Filter = [tkInteger, tkChar, tkEnumeration, tkFloat, tkSet, tkMethod, tkSString, tkLString, tkAString, tkWString, tkVariant, tkArray, tkRecord, tkInterface, tkClass, tkObject, tkWChar, tkBool, tkInt64, tkQWord, tkDynArray, tkInterfaceRaw, tkProcVar, tkUString, tkUChar, tkHelper]
+    Indent = 16
+    NameFont.Color = clWindowText
+    PreferredSplitterX = 160
+    SplitterX = 160
+    ValueFont.Color = clMaroon
+  end
+  object pnlBottom: TPanel
+    Left = 0
+    Height = 37
+    Top = 306
+    Width = 343
+    Align = alBottom
+    ClientHeight = 37
+    ClientWidth = 343
+    TabOrder = 1
+    object btnOK: TBitBtn
+      Left = 184
+      Height = 25
+      Top = 8
+      Width = 75
+      Default = True
+      DefaultCaption = True
+      Kind = bkOK
+      ModalResult = 1
+      TabOrder = 0
+    end
+    object btnCancel: TBitBtn
+      Left = 264
+      Height = 25
+      Top = 8
+      Width = 75
+      Cancel = True
+      DefaultCaption = True
+      Kind = bkCancel
+      ModalResult = 2
+      TabOrder = 1
+    end
+  end
+end
