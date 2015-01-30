@@ -263,7 +263,7 @@ end;
 constructor TSqlExecThread.Create(Schema: string; sqlQuery: TZQuery;
  OnFinish: TOnSqlExecThreadFinish);
 begin
-  FLock.Free;
+  FLock :=TCriticalSection.Create;
   FSchema := Schema;
   FZQuery := sqlQuery;
   FExecuteAsThread := True;
@@ -296,6 +296,7 @@ end;
 
 destructor TSqlExecThread.Destroy;
 begin
+  FLock.Free;
   inherited Destroy;
 end;
 

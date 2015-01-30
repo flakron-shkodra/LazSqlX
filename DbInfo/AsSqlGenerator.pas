@@ -67,13 +67,13 @@ TAsProcedureNames = object
       QueryType: TQueryType): TStringList;
   public
     constructor Create(DbConInfo:TAsDbConnectionInfo;ProcedureNames: TAsProcedureNames); overload;
-    destructor Destroy;
+    destructor Destroy;override;
     procedure Generate(Tables: TAsTableInfos; QueryTypes: TQueryTypes;
       Prefix: string = 'usp'); overload;
     procedure Generate(AsTableInfo: TAsTableInfo; QueryTypes: TQueryTypes;
       Prefix: string = 'usp'); overload;
     function GenerateStoredProcedure(AsTableInfo: TAsTableInfo;
-      QueryType: TQueryType; Prefix: string = 'usp'): string;
+     QueryType: TQueryType): TStringList;
     {Used in Generate procedures and functions}
     function GetCreateSql(AsTableInfo: TAsTableInfo; QueryType: TQueryType;
       SqlSpKeyword: string = 'CREATE '): TStringList;
@@ -118,6 +118,7 @@ destructor TAsSqlGenerator.Destroy;
 begin
   FAsQuery.Free;
   FlstExistingProcedures.Free;
+
 end;
 
 procedure TAsSqlGenerator.DropProcedure(spName: string);
@@ -245,39 +246,45 @@ begin
 end;
 
 function TAsSqlGenerator.GenerateStoredProcedure(AsTableInfo: TAsTableInfo;
-  QueryType: TQueryType; Prefix: string): string;
+  QueryType: TQueryType): TStringList;
 var
   lstAll: TStringList;
   lst: TStringList;
 begin
-  lst := TStringList.Create;
   lstAll := TStringList.Create;
-  try
+
     if QueryType = qtAll then
     begin
       lst := GetCreateSql(AsTableInfo, qtSelect);
       lstAll.AddStrings(lst);
+      lst.Free;
+
       lst := GetCreateSql(AsTableInfo, qtSelectItem);
       lstAll.AddStrings(lst);
+      lst.Free;
+
       lst := GetCreateSql(AsTableInfo, qtInsert);
       lstAll.AddStrings(lst);
+      lst.Free;
+
       lst := GetCreateSql(AsTableInfo, qtUpdate);
       lstAll.AddStrings(lst);
+      lst.Free;
+
       lst := GetCreateSql(AsTableInfo, qtDelete);
       lstAll.AddStrings(lst);
+      lst.Free;
     end
     else
     begin
       lst := GetCreateSql(AsTableInfo, QueryType);
       lstAll.AddStrings(lst);
+      lst.Free;
     end;
 
 
-    Result := lstAll.Text;
-  finally
-    lstAll.Free;
-    lst.Free;
-  end;
+    Result := lstAll;
+
 end;
 
 function TAsSqlGenerator.GetSql(Ident: integer; AsTableInfo: TAsTableInfo;
@@ -370,11 +377,12 @@ begin
   AsTableInfo.TableAlias:=AsTableInfo.Tablename[1];
 
 
-  r := TStringList.Create;
+
 
   if (AsTableInfo.PrimaryKeys.Count = 0) and not (QueryType in [qtSelect, qtInsert]) then
     raise Exception.Create('No primary keys found!');
 
+  r := TStringList.Create;
 
 
   tmpSelect := TStringList.Create;
@@ -676,9 +684,11 @@ var
   lst: TStringList;
 begin
 
+  Result := TStringList.Create;
+
     if QueryType = qtAll then
     begin
-      Result := TStringList.Create;
+
       lst := GetSql(0, AsTableInfo, qtSelect);
       Result.AddStrings(lst);
       lst.Free;
@@ -701,9 +711,10 @@ begin
     end
     else
     begin
-      Result := GetSql(0, AsTableInfo, QueryType);
+      lst := GetSql(0, AsTableInfo, QueryType);
+      Result.AddStrings(lst);
+      lst.Free;
     end;
-
 
 end;
 
@@ -953,12 +964,9 @@ begin
     end;
   end;
 
-  r := TStringList.Create;
-
   if (AsTableInfo.PrimaryKeys.Count = 0) and not (QueryType in [qtSelect, qtInsert]) then
     raise Exception.Create('No primary keys found!');
-
-
+ r := TStringList.Create;
 
   tmpSelect := TStringList.Create;
   tmpInsert := TStringList.Create;

@@ -11,21 +11,21 @@ type
 
   { TAsMySqlMetadata }
 
-  TAsMySqlMetadata = class(TInterfacedObject, IAsDbMetadata)
+  TAsMySqlMetadata = class(TAsDbMetadata)
   private
     FDBInfo:TAsDbConnectionInfo;
   public
     constructor Create(DbInfo:TAsDbConnectionInfo);
-    function GetSchemas: TStringList;
-    function GetTablenames(schema: string): TStringList;
-    function GetPrimaryKeys(Schema, TableName: string): TStringList;
-    function GetForeignKeys(Schema, TableName: string): TAsForeignKeys;
-    function GetColumns(Schema, TableName: string): TAsColumns;
-    function GetIndexes(Schema, TableName: string): TAsIndexes;
-    function GetTriggers(Schema, TableName: string): TAsTriggers;
-    function GetProcedureNames(Schema: string): TStringList;
-    function GetProcedureParams(ProcedureName: string): TAsProcedureParams;
-    function GetCatalogNames: TStringList;
+    function GetSchemas: TStringList;override;
+    function GetTablenames(schema: string): TStringList;override;
+    function GetPrimaryKeys(Schema, TableName: string): TStringList;override;
+    function GetForeignKeys(Schema, TableName: string): TAsForeignKeys;override;
+    function GetColumns(Schema, TableName: string): TAsColumns;override;
+    function GetIndexes(Schema, TableName: string): TAsIndexes;override;
+    function GetTriggers(Schema, TableName: string): TAsTriggers;override;
+    function GetProcedureNames(Schema: string): TStringList;override;
+    function GetProcedureParams(ProcedureName: string): TAsProcedureParams;override;
+    function GetCatalogNames: TStringList;override;
   end;
 
 
@@ -172,8 +172,8 @@ begin
         c.Column_Name:=Trim(ds.FieldByName('COLUMN_NAME').AsString);
         c.Data_Type:=Trim(ds.FieldByName('DATA_TYPE').AsString);
 
-        if not ds.FieldByName('DATA_PRECISION').IsNull then
-          if Trim(ds.FieldByName('DATA_PRECISION').AsString)<>'' then
+        if not ds.FieldByName('MAX_LENGTH').IsNull then
+          if Trim(ds.FieldByName('MAX_LENGTH').AsString)<>'' then
             c.Max_Length:=ds.FieldByName('MAX_LENGTH').AsInteger;
 
         if not ds.FieldByName('DATA_PRECISION').IsNull then

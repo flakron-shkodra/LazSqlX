@@ -674,8 +674,6 @@ begin
     p.PnSelectItem := table + '_selectItem';
     p.PnUpdate := table + '_update';
 
-    outPut := TStringList.Create;
-
     actSaveAs.Enabled := True;
     actExecute.Enabled := True;
 
@@ -687,7 +685,7 @@ begin
       if not IsStoredProcedure then
         Output := s.GenerateQuery(0, ti, queryType)
       else
-        outPut.Text := s.GenerateStoredProcedure(ti, queryType);
+        outPut := s.GenerateStoredProcedure(ti, queryType);
 
       tab:=FPageControl.AddTab;
 
@@ -699,10 +697,11 @@ begin
     end;
     FPageControl.ScanNeeded;
   finally
+    outPut.Free;
+    s.Free;
+    tis.Free;
     FLoadingIndicator.StopAnimation;
     sbMain.Panels[1].Text := EmptyStr;
-    tis.Free;
-    s.Free;
   end;
 end;
 

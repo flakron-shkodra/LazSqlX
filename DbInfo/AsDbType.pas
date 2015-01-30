@@ -91,7 +91,7 @@ type
     {Constructor: CreateConnections set to false when sqlcon and zcon not needed to be created, for instance for RecentConnections}
     constructor Create(CreateConnections:Boolean=true; AOwner:TComponent=nil);
     destructor Destroy;override;
-    {returns a string made up of all properties, could be used for easy compare}
+    {returns a string made up of all properties, is used for RecentConnections}
     function ToFullString:string;
 
     procedure Assign(Source: TPersistent); override;
@@ -245,9 +245,10 @@ type
 
   TAsProcedureParams = specialize TFPGObjectList<TAsProcedureParam>;
 
+
   { IAsDbMetadata }
 
-  IAsDbMetadata = interface (IInterface)
+  IAsDbMetadata = interface
     function GetSchemas:TStringList;
     function GetTablenames(schema:string):TStringList;
     function GetPrimaryKeys(Schema,TableName: string):TStringList;
@@ -260,12 +261,25 @@ type
     function GetCatalogNames:TStringList;
   end;
 
-  { TAsDbUtils }
+  TAsDbMetadata = class (TInterfacedObject,IInterface)
+    function GetSchemas:TStringList;virtual;abstract;
+    function GetTablenames(schema:string):TStringList;virtual;abstract;
+    function GetPrimaryKeys(Schema,TableName: string):TStringList;virtual;abstract;
+    function GetForeignKeys(Schema,TableName: string):TAsForeignKeys;virtual;abstract;
+    function GetColumns(Schema,TableName:string):TAsColumns;virtual;abstract;
+    function GetIndexes(Schema,TableName:string):TAsIndexes;virtual;abstract;
+    function GetTriggers(Schema,TableName:string):TAsTriggers;virtual;abstract;
+    function GetProcedureNames(Schema:string):TStringList;virtual;abstract;
+    function GetProcedureParams(ProcedureName:string):TAsProcedureParams;virtual;abstract;
+    function GetCatalogNames:TStringList;virtual;abstract;
+  end;
+
+ { TAsDbUtils }
 
  TAsDbUtils = object
   private
-    class function MakeEngine(DbInfo:TAsDbConnectionInfo):IAsDbMetadata;
-    class procedure DisposeEngine(dbinfo:TAsDbConnectionInfo; a:IAsDbMetadata);
+    class function MakeEngine(DbInfo:TAsDbConnectionInfo):TAsDbMetadata;
+    class procedure DisposeEngine(dbinfo:TAsDbConnectionInfo; a:TAsDbMetadata);
   public
     {this was supposed to 'know' the difference between GUID percieved as BLOB and a real BLOB}
     class function IsBlobGUID(var aField: TField): boolean;experimental;
@@ -648,7 +662,7 @@ end;
 { TAsDbUtils }
 
 class function TAsDbUtils.MakeEngine(DbInfo: TAsDbConnectionInfo
- ): IAsDbMetadata;
+ ): TAsDbMetadata;
 begin
  case DbInfo.DbType of
     dtMsSql: Result := TAsMssqlMetadata.Create(DbInfo);
@@ -660,15 +674,16 @@ begin
 end;
 
 class procedure TAsDbUtils.DisposeEngine(dbinfo: TAsDbConnectionInfo;
- a: IAsDbMetadata);
+ a: TAsDbMetadata);
 begin
- case DBInfo.DbType of
-    dtMsSql : TAsMssqlMetadata(a).Free;
-    dtOracle : TAsOracleMetadata(a).Free;
-    dtMySql : TAsMySqlMetadata(a).Free;
-    dtFirebirdd : TAsFirebirdMetadata(a).Free;
-    dtSQLite : TAsSqliteMetadata(a).Free;
- end;
+ a.Free;
+ //case DBInfo.DbType of
+ //   dtMsSql : TAsMssqlMetadata(a).Free;
+ //   dtOracle : TAsOracleMetadata(a).Free;
+ //   dtMySql : TAsMySqlMetadata(a).Free;
+ //   dtFirebirdd : TAsFirebirdMetadata(a).Free;
+ //   dtSQLite : TAsSqliteMetadata(a).Free;
+ //end;
 end;
 
 class function TAsDbUtils.IsBlobGUID(var aField: TField): boolean;
@@ -891,7 +906,7 @@ end;
 
 class function TAsDbUtils.GetSchemas(DBInfo: TAsDbConnectionInfo): TStringList;
 var
- md:IAsDbMetadata;
+ md:TAsDbMetadata;
 begin
   md := MakeEngine(DbInfo);
   try
@@ -904,7 +919,7 @@ end;
 class function TAsDbUtils.GetTablenames(DbInfo: TAsDbConnectionInfo;
  schema: string): TStringList;
 var
- md:IAsDbMetadata;
+ md:TAsDbMetadata;
 begin
   md := MakeEngine(DbInfo);
   try
@@ -944,7 +959,7 @@ end;
 class function TAsDbUtils.GetPrimaryKeys(DbInfo: TAsDbConnectionInfo; Schema,
  TableName: string): TStringList;
 var
- md:IAsDbMetadata;
+ md:TAsDbMetadata;
 begin
   md := MakeEngine(DbInfo);
   try
@@ -958,7 +973,7 @@ end;
 class function TAsDbUtils.GetForeignKeys(DbInfo: TAsDbConnectionInfo; Schema,
  TableName: string): TAsForeignKeys;
 var
- md:IAsDbMetadata;
+ md:TAsDbMetadata;
 begin
   md := MakeEngine(DbInfo);
   try
@@ -971,7 +986,7 @@ end;
 class function TAsDbUtils.GetColumns(DbInfo: TAsDbConnectionInfo; Schema,
  TableName: string): TAsColumns;
 var
- md:IAsDbMetadata;
+ md:TAsDbMetadata;
 begin
   md := MakeEngine(DbInfo);
   try
@@ -984,7 +999,7 @@ end;
 class function TAsDbUtils.GetIndexes(DbInfo: TAsDbConnectionInfo; Schema,
  TableName: string): TAsIndexes;
 var
- md:IAsDbMetadata;
+ md:TAsDbMetadata;
 begin
   md := MakeEngine(DbInfo);
   try
@@ -1022,7 +1037,7 @@ end;
 class function TAsDbUtils.GetTriggers(DbInfo: TAsDbConnectionInfo; Schema,
  TableName: string): TAsTriggers;
 var
- md:IAsDbMetadata;
+ md:TAsDbMetadata;
 begin
   md := MakeEngine(DbInfo);
   try
@@ -1035,7 +1050,7 @@ end;
 class function TAsDbUtils.GetProcedureNames(DbInfo: TAsDbConnectionInfo;
  Schema: string): TStringList;
 var
- md:IAsDbMetadata;
+ md:TAsDbMetadata;
 begin
   md := MakeEngine(DbInfo);
   try
@@ -1048,7 +1063,7 @@ end;
 class function TAsDbUtils.GetProcedureParams(DbInfo: TAsDbConnectionInfo;
  ProcedureName: string): TAsProcedureParams;
 var
- md:IAsDbMetadata;
+ md:TAsDbMetadata;
 begin
   md := MakeEngine(DbInfo);
   try
@@ -1061,7 +1076,7 @@ end;
 class function TAsDbUtils.GetCatalogNames(aDbInfo: TAsDbConnectionInfo
  ): TStringList;
 var
- md:IAsDbMetadata;
+ md:TAsDbMetadata;
 begin
    md := MakeEngine(aDbInfo);
    try

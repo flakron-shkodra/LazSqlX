@@ -11,21 +11,21 @@ type
 
   { TAsSqliteMetadata }
 
-  TAsSqliteMetadata = class(TInterfacedObject, IAsDbMetadata)
+  TAsSqliteMetadata = class(TAsDbMetadata)
   private
     FDBInfo:TAsDbConnectionInfo;
   public
     constructor Create(DbInfo:TAsDbConnectionInfo);
-    function GetSchemas: TStringList;
-    function GetTablenames(schema: string): TStringList;
-    function GetPrimaryKeys(Schema, TableName: string): TStringList;
-    function GetForeignKeys(Schema, TableName: string): TAsForeignKeys;
-    function GetColumns(Schema, TableName: string): TAsColumns;
-    function GetIndexes(Schema, TableName: string): TAsIndexes;
-    function GetTriggers(Schema, TableName: string): TAsTriggers;
-    function GetProcedureNames(Schema: string): TStringList;
-    function GetProcedureParams(ProcedureName: string): TAsProcedureParams;
-    function GetCatalogNames: TStringList;
+    function GetSchemas: TStringList;override;
+    function GetTablenames(schema: string): TStringList;override;
+    function GetPrimaryKeys(Schema, TableName: string): TStringList;override;
+    function GetForeignKeys(Schema, TableName: string): TAsForeignKeys;override;
+    function GetColumns(Schema, TableName: string): TAsColumns;override;
+    function GetIndexes(Schema, TableName: string): TAsIndexes;override;
+    function GetTriggers(Schema, TableName: string): TAsTriggers;override;
+    function GetProcedureNames(Schema: string): TStringList;override;
+    function GetProcedureParams(ProcedureName: string): TAsProcedureParams;override;
+    function GetCatalogNames: TStringList;override;
   end;
 
 implementation

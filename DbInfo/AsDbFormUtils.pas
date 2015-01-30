@@ -56,6 +56,7 @@ type
 
   { TAsUIDataAcessObjects }
 
+
   TAsUIDataAcessObjects = class(specialize TFPGObjectList<TAsUIDataAcessObject>)
   private
     FLastError:string;
@@ -151,6 +152,30 @@ type
     property Style:TComboBoxStyle read GetStyle write SetStyle;
   end;
 
+  TAsDBSpinEdit = class(TCustomFloatSpinEdit)
+  private
+   FDataField: string;
+    FDataLink:TFieldDataLink;
+    FDataSource: TDataSource;
+    FMaxValue: Double;
+    FValuePassedFromSource:Boolean;
+    function GetField: TField;
+    procedure SetDataField(AValue: string);
+    procedure SetDataSource(AValue: TDataSource);
+    procedure OnDataChange(Sender: TObject);
+    procedure SetMaxValue(AValue: Double);
+    procedure SpinOnchange(Sender: TObject);
+    procedure OnActiveChange(Sender: TObject);
+  public
+    constructor Create(AOwner:TComponent);override;
+    destructor Destroy;override;
+  published
+    property DataSource:TDataSource read FDataSource write SetDataSource;
+    property DataField:string read FDataField write SetDataField;
+    property Field:TField read GetField;
+    property MaximumValue:Double read FMaxValue write SetMaxValue;
+  end;
+
   { TAsQueryBuilderForm }
 
   TAsQueryBuilderForm = class(TForm)
@@ -217,6 +242,7 @@ type
    procedure OnGridColumnListExit(Sender: TObject);
    procedure ShowColumnsButtonClick(Sender:TObject);
    procedure MakeEditControls;
+   procedure ClearEditControls;
    function MakeQuickSearchToolbar(aOwner:TComponent):TToolbar;
    procedure SetSqlQuery(AValue: string);
    procedure FillColumnList;
@@ -938,6 +964,7 @@ var
  cmbLookup:TAsDBLookupComboBoxEdit;
  chk:TDBCheckBox;
  dt :TAsDbDateEdit;
+ sed:TAsDBSpinEdit;
  be:TAsDbBlobEdit;
  mem:TDBMemo;
  LastControlHeight: Integer;
@@ -1004,6 +1031,14 @@ begin
            be.Caption:='';
            lastControl := be;
         end;
+      ftInteger,ftWord, ftLargeint,ftSmallint,ftFloat,ftCurrency:
+        begin
+           sed := TAsDBSpinEdit.Create(FEditControlsBox);
+           sed.Name:='se'+controlName;
+           sed.DataField:=fieldName;
+           sed.DataSource:=FDataObject.DataSource;
+           lastControl:=sed;
+        end;
      else
        begin
         edt := TDBEdit.Create(FEditControlsBox);
@@ -1032,6 +1067,13 @@ begin
         cmbLookup.Hint:=ik.ForeignTableName; //used when clicking on editbutton
         cmbLookup.Style:=csDropDownList;
         lastControl := cmbLookup;
+      end else
+      begin
+        edt := TDBEdit.Create(FEditControlsBox);
+        edt.Name:='edt'+controlName;
+        edt.DataSource := FDataObject.DataSource;
+        edt.DataField:= FTableInfo.AllFields[I].FieldName;
+        lastControl := edt;
       end;
     end;
 
@@ -1064,6 +1106,12 @@ begin
   if FEditControlsBox.Height >= 340 then
   FEditControlsBox.Height := 340;
 
+end;
+
+procedure TAsDbForm.ClearEditControls;
+begin
+ while FEditControlsBox.ControlCount>0 do
+  FEditControlsBox.Controls[0].Free;
 end;
 
 function TAsDbForm.MakeQuickSearchToolbar(aOwner: TComponent): TToolbar;
@@ -1248,6 +1296,7 @@ end;
 
 destructor TAsDbForm.Destroy;
 begin
+  ClearEditControls;
   FDataObject.Destroy;
   FRefDataObjects.Destroy;
  inherited Destroy;
@@ -1369,6 +1418,89 @@ begin
 
 end;
 
+{ TAsDBSpinEdit }
+
+procedure TAsDBSpinEdit.OnDataChange(Sender: TObject);
+begin
+ FValuePassedFromSource:=True;
+ if FDataLink.Field<> nil then
+ begin
+  if not FDataLink.Field.IsNull then
+    Value:=FDataLink.Field.Value
+  else
+    Value:=0;
+ end;
+ FValuePassedFromSource:=False;
+end;
+
+procedure TAsDBSpinEdit.SetMaxValue(AValue: Double);
+begin
+ if FMaxValue=AValue then Exit;
+ FMaxValue:=AValue;
+
+ MaxValue:=FMaxValue;
+end;
+
+
+
+procedure TAsDBSpinEdit.SpinOnchange(Sender: TObject);
+begin
+ if not FValuePassedFromSource then
+ if FDataLink.Field.Value <> Value then
+ if FDataLink.Edit then
+ begin
+  FDataLink.Field.Value:=Value;
+ end;
+end;
+
+procedure TAsDBSpinEdit.OnActiveChange(Sender: TObject);
+begin
+  if FDataLink.Field <> nil then
+ case FDataLink.Field.DataType of
+  ftInteger,ftLargeint,ftSmallint: DecimalPlaces:=0;
+  ftFloat: DecimalPlaces:=2;
+  ftCurrency: DecimalPlaces:= 4;
+ end;
+end;
+
+function TAsDBSpinEdit.GetField: TField;
+begin
+ Result := FDataLink.Field;
+end;
+
+procedure TAsDBSpinEdit.SetDataField(AValue: string);
+begin
+ if FDataField=AValue then Exit;
+ FDataField:=AValue;
+ FDataLink.FieldName:= FDataField;
+
+
+end;
+
+procedure TAsDBSpinEdit.SetDataSource(AValue: TDataSource);
+begin
+ if FDataSource=AValue then Exit;
+ FDataSource:=AValue;
+ FDataLink.DataSource := FDataSource;
+end;
+
+constructor TAsDBSpinEdit.Create(AOwner: TComponent);
+begin
+ inherited Create(AOwner);
+ FDataLink := TFieldDataLink.Create;
+ FDataLink.Control := Self;
+ FDataLink.OnDataChange:=@OnDataChange;
+ FDataLink.OnActiveChange:=@OnActiveChange;
+ OnChange:=@SpinOnchange;
+ MaxValue:=9999999999;
+end;
+
+destructor TAsDBSpinEdit.Destroy;
+begin
+ FDataLink.Free;
+ inherited Destroy;
+end;
+
 { TAsUIDataAcessObject }
 
 procedure TAsUIDataAcessObject.SetDataSource(AValue: TDataSource);
@@ -1437,6 +1569,7 @@ begin
 end;
 
 { TAsUIDataAcessObjects }
+
 
 function TAsUIDataAcessObjects.FindByName(Name: string): TAsUIDataAcessObject;
 var

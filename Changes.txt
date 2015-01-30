@@ -1,3 +1,8 @@
+v.4.7.0.1530
+-Fixed column Length not showing in table designer 
+-Fixed memory leaks
+-In AsDbForm added new db-aware control TAsDBSpinEdit
+
 v4.6.3.1526
 -Fix: Found some memory leaks 
 

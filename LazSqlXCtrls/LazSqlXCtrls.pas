@@ -647,16 +647,20 @@ end;
 
 procedure TLazSqlXTabSheet.CheckSyntax;
 var
-  error: TAsSqlSyntaxError;
+  error: TAsSqlSyntaxError=nil;
 begin
-  if TAsDbUtils.CheckSqlSyntax(FQueryEditor.Text, error) then
-  begin
-    DisplayMessage('Syntax check completed', False);
-  end
-  else
-  begin
-    {FActiveSynMemo.CaretXY:= Point(error.Line,error.Position); //set caret to error line}
-    DisplayMessage(error.Message, True);
+  try
+    if TAsDbUtils.CheckSqlSyntax(FQueryEditor.Text, error) then
+    begin
+      DisplayMessage('Syntax check completed', False);
+    end
+    else
+    begin
+      DisplayMessage(error.Message, True);
+    end;
+  finally
+   if error<>nil then
+    error.Free;
   end;
 end;
 
