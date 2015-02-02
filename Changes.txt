@@ -1,3 +1,6 @@
+v.4.7.1.1531
+-Fix: AsDbSpinEdit wouldn't work with negative values and with ftBCD types
+
 v.4.7.0.1530
 -Fixed column Length not showing in table designer 
 -Fixed memory leaks

@@ -1031,7 +1031,7 @@ begin
            be.Caption:='';
            lastControl := be;
         end;
-      ftInteger,ftWord, ftLargeint,ftSmallint,ftFloat,ftCurrency:
+      ftInteger,ftWord, ftLargeint,ftSmallint,ftFloat,ftCurrency,ftBCD:
         begin
            sed := TAsDBSpinEdit.Create(FEditControlsBox);
            sed.Name:='se'+controlName;
@@ -1493,6 +1493,7 @@ begin
  FDataLink.OnActiveChange:=@OnActiveChange;
  OnChange:=@SpinOnchange;
  MaxValue:=9999999999;
+ MinValue:=-9999999999;
 end;
 
 destructor TAsDBSpinEdit.Destroy;
