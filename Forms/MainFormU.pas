@@ -70,6 +70,8 @@ type
     actCopyRunProcedureText: TAction;
     actFindReplace: TAction;
     actClearSessionHistory: TAction;
+    actAbout: TAction;
+    actHelp: TAction;
     actRefreshProcedures: TAction;
     actOpen: TAction;
     actPrint: TAction;
@@ -92,6 +94,7 @@ type
     GridPrinter: TFrPrintGrid;
     imgLogo: TImage;
     itmDataIporter: TMenuItem;
+    mitHelpShow: TMenuItem;
     MenuItem4: TMenuItem;
     mitClearSession: TMenuItem;
     mitPrint: TMenuItem;
@@ -149,6 +152,8 @@ type
     btnOpen: TToolButton;
     sep4: TToolButton;
     sep22: TToolButton;
+    ToolButton1: TToolButton;
+    ToolButton2: TToolButton;
     txtSearchTable: TEdit;
     EditCopy1: TEditCopy;
     EditCut1: TEditCut;
@@ -159,8 +164,8 @@ type
     ApplicationImages: TImageList;
     lstTables: TListBox;
     lstProcedures: TListBox;
-    MenuItem1: TMenuItem;
-    MenuItem3: TMenuItem;
+    mitHelp: TMenuItem;
+    mitAbout: TMenuItem;
     mitTabExportToSqlInsert: TMenuItem;
     mitTabExportToRTF: TMenuItem;
     mitTabExportToJason: TMenuItem;
@@ -238,6 +243,7 @@ type
     PageControlPopupMenu: TPopupMenu;
     SaveDialog: TSaveDialog;
     SqlSyntax: TSynSQLSyn;
+    procedure actAboutExecute(Sender: TObject);
     procedure actCheckSyntaxExecute(Sender: TObject);
     procedure actClearSessionHistoryExecute(Sender: TObject);
     procedure actCopyRunProcedureTextExecute(Sender: TObject);
@@ -260,6 +266,7 @@ type
     procedure actExportXMLExecute(Sender: TObject);
     procedure actFindExecute(Sender: TObject);
     procedure actFindReplaceExecute(Sender: TObject);
+    procedure actFormatQueryExecute(Sender: TObject);
     procedure actGenerateAllprocExecute(Sender: TObject);
     procedure actGenerateAllQueryExecute(Sender: TObject);
     procedure actGenerateCreateScriptExecute(Sender: TObject);
@@ -280,6 +287,7 @@ type
     procedure actGridCopyRowsAsInsertExecute(Sender: TObject);
     procedure actGridCopyRowsWithHeadersExecute(Sender: TObject);
     procedure actDataImporterExecute(Sender: TObject);
+    procedure actHelpExecute(Sender: TObject);
     procedure actNewTabExecute(Sender: TObject);
     procedure actExportJSONExecute(Sender: TObject);
     procedure actExportRTFExecute(Sender: TObject);
@@ -311,11 +319,13 @@ type
     procedure lstTablesDblClick(Sender: TObject);
     procedure lstTablesDrawItem(Control: TWinControl; Index: integer;
       ARect: TRect; State: TOwnerDrawState);
-    procedure MenuItem3Click(Sender: TObject);
+    procedure mitAboutClick(Sender: TObject);
     procedure mitOpenDataClick(Sender: TObject);
     procedure mitRefreshTablesClick(Sender: TObject);
+    procedure OnCaretPosition(Line, Column: Integer);
     procedure OnDynamicEditKeyDown(Sender: TObject; var Key: word;
       Shift: TShiftState);
+    procedure OnPageControlChange(Sender: TObject);
     procedure pgcMainMouseDown(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: integer);
     procedure ReplaceDialog1Find(Sender: TObject);
@@ -429,6 +439,9 @@ type
 
     {Event fired When query finished executing }
     procedure OnExecutionFinished(Sender: TObject; IsTableData: boolean);
+
+    {Event fired when the user stopped the query execution}
+    procedure OnExecutionStopped(Sender: TObject);
 
     {Event fired when Grid draws cells; this event is assigned to a LazSqlXTab property}
     procedure OnDBGridDrawColumnCell(Sender: TObject; const Rect: TRect; DataCol: integer; Column: TColumn; State: TGridDrawState);
@@ -574,6 +587,7 @@ begin
        end;
        if FPageControl.PageCount=0 then
        actNewTab.Execute;
+       FPageControl.ScanNeeded;
       finally
         if xmldoc<>nil then
         xmldoc.Free;
@@ -691,6 +705,7 @@ begin
 
       tab.QueryEditor.Lines.Add('');
       tab.QueryEditor.Lines.Text := tab.QueryEditor.Lines.Text + outPut.Text;
+      FPageControl.ScanNeeded;
     except
       on e: Exception do
         ShowMessage(e.Message);
@@ -978,7 +993,8 @@ end;
 procedure TMainForm.OnExecutionFinished(Sender: TObject; IsTableData: boolean);
 begin
   FLoadingIndicator.StopAnimation;
-  sbMain.Panels[1].Text:=FPageControl.ActiveTab.Message;
+  actExecute.ImageIndex:=22;
+  sbMain.Panels[3].Text:= FPageControl.ActiveTab.Message;
 end;
 
 
@@ -1222,7 +1238,15 @@ end;
 
 procedure TMainForm.DoDisconnect;
 begin
-  FDBInfo.Close;
+  try
+    FDBInfo.Close;
+    sbMain.Panels[2].Text:='';
+    sbMain.Panels[3].Text:='';
+  except
+    //usually when discconnection doesn't work for some reason
+    FDBInfo.Free;
+    FDBInfo := TAsDbConnectionInfo.Create;
+  end;
 end;
 
 
@@ -1455,6 +1479,8 @@ end;
 
 procedure TMainForm.ExecuteQuery(IsTableData: boolean);
 begin
+ actExecute.ImageIndex:=61;
+ actExecute.Hint:='Stop execution';
  FLoadingIndicator.StartAnimation;
  FPageControl.ActiveTab.RunQuery(IsTableData,cmbSchema.Text,lstTables.Items[lstTables.ItemIndex] );
 end;
@@ -1645,10 +1671,13 @@ begin
   FPageControl.Highlighter := SqlSyntax;
   FPageControl.Keywords.AddStrings(TLazSqlXResources.SqlReservedKeywords);
   FPageControl.OnExecutionFinished := @OnExecutionFinished;
+  FPageControl.OnExecutionStopped:=@OnExecutionStopped;
   FPageControl.OnDataGridDblClick:=@EditSpecialField;
   FPageControl.QueryEditorPopUpMenu:=QueryEditorPopupMenu;
   FPageControl.DataGridPopUpMenu:=GridPopupMenu;
   FPageControl.PopupMenu := PageControlPopupMenu;
+  FPageControl.OnChange:=@OnPageControlChange;
+  FPageControl.OnCaretPositionChanged:=@OnCaretPosition;
 
   FPageControl.TableIcon:=FtableIcon;
   FPageControl.FunctionIcon := FfunctionIcon;
@@ -1909,6 +1938,11 @@ begin
   FPageControl.ActiveTab.CheckSyntax;
 end;
 
+procedure TMainForm.actAboutExecute(Sender: TObject);
+begin
+ AboutForm.ShowModal;
+end;
+
 procedure TMainForm.actClearSessionHistoryExecute(Sender: TObject);
 begin
  DeleteFile(GetTempDir+LazSqlXSessionFile);
@@ -1967,6 +2001,12 @@ end;
 procedure TMainForm.actFindReplaceExecute(Sender: TObject);
 begin
  ReplaceDialog1.Execute;
+end;
+
+procedure TMainForm.actFormatQueryExecute(Sender: TObject);
+begin
+ if FPageControl.PageCount>0 then
+ FPageControl.ActiveTab.QueryEditor.Text:= TAsDbUtils.FormatQuery(FPageControl.ActiveTab.QueryEditor.Text);
 end;
 
 procedure TMainForm.actGenerateAllprocExecute(Sender: TObject);
@@ -2170,6 +2210,11 @@ begin
   end;
 end;
 
+procedure TMainForm.actHelpExecute(Sender: TObject);
+begin
+ OpenDocument(ChangeFileExt(Application.ExeName,'.chm'));
+end;
+
 procedure TMainForm.actNewTabExecute(Sender: TObject);
 begin
   if FDBInfo.Connected then
@@ -2259,15 +2304,16 @@ begin
  begin
   actExecute.Enabled:=Trim(FPageControl.ActiveTab.QueryEditor.Text)<>EmptyStr;
   actCheckSyntax.Enabled:=actExecute.Enabled;
+  actFormatQuery.Enabled:=actExecute.Enabled;
   actGridCopy.Enabled := (FPageControl.ActiveTab.HasActiveData);
   actPrint.Enabled:=(FPageControl.ActiveTab.HasActiveData);
 
   actGridCopyRow.Enabled := actGridCopy.Enabled;
-  actGridCopyAll.Enabled := actGridCopyAll.Enabled;
+  actGridCopyAll.Enabled := actGridCopy.Enabled;
 
   actCheckSyntax.Enabled := actExecute.Enabled;
   actQueryDesigner.Enabled := FDBInfo.Connected;
-  //actDatabaseCloner.Enabled := FDBInfo.Connected;
+  actDatabaseCloner.Enabled := FDBInfo.Connected;
   actDataImporter.Enabled := FDBInfo.Connected;
   actOpen.Enabled:=FDBInfo.Connected;
   actFind.Enabled:=FDBInfo.Connected;
@@ -2276,13 +2322,14 @@ begin
  end else
  begin
   actExecute.Enabled:=False;
+  actFormatQuery.Enabled := False;
   actCheckSyntax.Enabled:=False;
   actGridCopy.Enabled := False;
   actGridCopyRow.Enabled := False;
   actGridCopyAll.Enabled := False;
   actCheckSyntax.Enabled := False;
   actQueryDesigner.Enabled := False;
-  //actDatabaseCloner.Enabled := False;
+  actDatabaseCloner.Enabled := False;
   actDataImporter.Enabled := False;
  end;
 end;
@@ -2400,9 +2447,9 @@ begin
 end;
 
 
-procedure TMainForm.MenuItem3Click(Sender: TObject);
+procedure TMainForm.mitAboutClick(Sender: TObject);
 begin
-  AboutForm.ShowModal;
+
 end;
 
 procedure TMainForm.mitOpenDataClick(Sender: TObject);
@@ -2416,6 +2463,11 @@ begin
   FillTables;
 end;
 
+procedure TMainForm.OnCaretPosition(Line, Column: Integer);
+begin
+ sbMain.Panels[2].Text:= 'Row: '+IntToStr(Line)+' Col: '+IntToStr(Column);
+end;
+
 
 procedure TMainForm.OnDynamicEditKeyDown(Sender: TObject; var Key: word;
   Shift: TShiftState);
@@ -2423,6 +2475,34 @@ begin
   if (Key = VK_TAB) then
     if not (ssShift in Shift) then
       (Sender as TWinControl).PerformTab(True);
+end;
+
+procedure TMainForm.OnExecutionStopped(Sender: TObject);
+begin
+ if (Sender is TLazSqlXTabSheet) then
+ if (Sender as TLazSqlXTabSheet) = FPageControl.ActiveTab then
+ begin
+  actExecute.ImageIndex:=22;
+  actExecute.Hint:='Execute Query';
+  FLoadingIndicator.StopAnimation;
+ end;
+end;
+
+procedure TMainForm.OnPageControlChange(Sender: TObject);
+begin
+ if FPageControl.ActiveTab.ExecutionInProgress then
+ begin
+   actExecute.Hint:='Stop current execution';
+   actExecute.ImageIndex:=61;
+   FLoadingIndicator.StartAnimation;
+ end else
+ begin
+   actExecute.Hint:='Execute Query';
+   actExecute.ImageIndex:=22;
+   FLoadingIndicator.StopAnimation;
+ end;
+ sbMain.Panels[3].Text:=FPageControl.ActiveTab.Message;
+ sbMain.Panels[2].Text:= '';
 end;
 
 end.

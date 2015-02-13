@@ -25,7 +25,6 @@ type
     btnCancel: TBitBtn;
     chkDbStructure: TCheckBox;
     chkIntegratedSecurity: TCheckBox;
-    cmbDatabase: TComboBox;
     cmbDatabaseType: TComboBox;
     cmbServerName: TComboBox;
     grpLog: TGroupBox;
@@ -55,13 +54,13 @@ type
     procedure btnAcceptClick(Sender: TObject);
     procedure btnCancelClick(Sender: TObject);
     procedure btnOpenFileClick(Sender: TObject);
-    procedure cmbDatabaseEnter(Sender: TObject);
     procedure cmbDatabaseTypeChange(Sender: TObject);
     procedure cmbDatabaseTypeDrawItem(Control: TWinControl; Index: integer;
       ARect: TRect; State: TOwnerDrawState);
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure FormShow(Sender: TObject);
+    procedure pnlMainClick(Sender: TObject);
   private
     FTableInfos: TAsTableInfos;
     FDBInfo: TAsDbConnectionInfo;
@@ -122,7 +121,7 @@ end;
 
 procedure TDatabaseClonerForm.cmbDatabaseTypeChange(Sender: TObject);
 begin
-  cmbDatabase.Width := 397;
+
   txtDestinationDbName.Width:= 581;
   btnOpenFile.Visible:=False;
   lblUseraname.Visible := True;
@@ -134,7 +133,7 @@ begin
   lblSever.Visible := True;
   cmbServerName.Visible := True;
   lblDatabase1.Caption := 'Destination Database Name';
-  cmbDatabase.Visible:=True;
+
   case cmbDatabaseType.ItemIndex of
     0:
     begin
@@ -148,19 +147,18 @@ begin
       txtPort.Text := '1521';
       txtUserName.Text := 'sa';
       txtPassword.Text := '';
-      lblDatabase1.Caption := 'Destination Database Name (Uses existing database)';
+      lblDatabase1.Caption := 'Destination Database Name (Uses an existing database)';
     end;
     2:
     begin
       txtPort.Text := '3306';
       txtUserName.Text := 'root';
       txtPassword.Text := '';
-      lblDatabase1.Caption := 'Destination Database Name (Creates new database)';
+      lblDatabase1.Caption := 'Destination Database Name (Creates a new database)';
     end;
     3:
     begin
       //cmbDatabase.Width := 217;
-      cmbDatabase.Visible := False;
 
       lblUseraname.Visible := False;
       txtUserName.Visible := False;
@@ -170,15 +168,13 @@ begin
       txtPort.Visible := False;
       lblSever.Visible := False;
       cmbServerName.Visible := False;
-      lblDatabase1.Caption := 'Destination Database Name (Creates new database, provide full physical path like C:\~~.sqlite)';
+      lblDatabase1.Caption := 'Destination Database Name (Creates a new database, provide full physical path like D:\Sample.sqlite)';
       txtDestinationDbName.Text:=ChangeFileExt(txtDestinationDbName.Text,'')+'.sqlite';
     end;
     4:
     begin
       txtDestinationDbName.Width := 557;
-      cmbDatabase.Visible := False;
       btnOpenFile.Visible:=True;
-
       lblUseraname.Visible := True;
       txtUserName.Visible := True;
       lblPassword.Visible := True;
@@ -187,7 +183,7 @@ begin
       txtPort.Visible := False;
       lblSever.Visible := False;
       cmbServerName.Visible := False;
-      lblDatabase1.Caption := 'Destination Database Name (Uses existing database file. Provide full physical path like C:\~~.fdb)';
+      lblDatabase1.Caption := 'Destination Database Name (Creates a new database file, provide full physical path like D:\Sample.fdb)';
       txtDestinationDbName.Text:=ChangeFileExt(txtDestinationDbName.Text,'')+'.fdb';
     end;
   end;
@@ -207,21 +203,6 @@ begin
  end;
 end;
 
-procedure TDatabaseClonerForm.cmbDatabaseEnter(Sender: TObject);
-var
-  lst:TStringList;
-begin
-  try
-    try
-      lst :=TAsDbUtils.GetCatalogNames(FDBInfo);
-      cmbDatabase.Items.AddStrings(lst);
-    finally
-      lst.Free;
-    end;
-  except
-  end;
-end;
-
 procedure TDatabaseClonerForm.btnAcceptClick(Sender: TObject);
 var
   dbc: TAsDatabaseCloner;
@@ -230,6 +211,8 @@ var
   destDb:string;
   connDb:string;
   dbi:TAsDbConnectionInfo;
+  lst:TStringList;
+  CanMake:boolean;
 begin
   try
     pnlMain.Enabled:=False;
@@ -238,28 +221,55 @@ begin
     txtDestinationDbName.Enabled:=False;
 
     destDb:= txtDestinationDbName.Text;
-    cmbDatabaseEnter(Sender);
+
     lstLog.Clear;
     txtErrors.Clear;
 
+
     pgLog.ActivePageIndex:=0;
+
+    dbi:=TAsDbConnectionInfo.Create;
+    dbi.DbType := TAsDatabaseType(cmbDatabaseType.ItemIndex);
+
+    dbi.Server:=cmbServerName.Text;
+    dbi.Port := StrToInt(txtPort.Text);
+
+    dbi.Username := txtUserName.Text;
+    dbi.Password := txtPassword.Text;
+
+
+    dbi.DbEngineType:= deZeos;
+
+    lst := TAsDbUtils.GetCatalogNames(dbi);
+
+    try
+     case TAsDatabaseType(cmbDatabaseType.ItemIndex) of
+       dtSQLite,dtFirebirdd,dtOracle: connDb:=destDb;
+       dtMsSql,dtMySql:
+       begin
+         if lst.Count>0 then
+         begin
+          connDb:= lst[0];
+          CanMake:=True;
+         end else
+         CanMake:=False;
+       end;
+     end;
+    finally
+      lst.Free;
+    end;
+
+    if not CanMake then
+    begin
+      ShowMessage('Cannot make a database in that server');
+      Exit;
+    end;
+
+    dbi.Database:=connDb;
 
     WriteLog('Starting...',ltInfo);
     WriteLog('',ltInfo);
 
-    if FDBInfo.DbType in [dtSQLite,dtFirebirdd] then
-    begin
-      connDb:=destDb;
-    end else
-    begin
-      if cmbDatabase.Items.Count<1 then
-      begin
-        WriteLog('Sorry! We can''t create database on that server.',ltError);
-        WriteLog('Process stopped',ltInfo);
-        Exit;
-      end;
-      connDb:= cmbDatabase.Items[0];
-    end;
 
     case FDBInfo.DbType of
       dtMsSql: wt := swtBrackets;
@@ -277,22 +287,16 @@ begin
         Exit;
       end;
 
-    dbi:=TAsDbConnectionInfo.Create;
-    dbi.Server:=cmbServerName.Text;
-    dbi.Database:=connDb;
-    dbi.Username := txtUserName.Text;
-    dbi.Password := txtPassword.Text;
-    dbi.DbType := TAsDatabaseType(cmbDatabaseType.ItemIndex);
-    dbi.Port := StrToInt(txtPort.Text);
-
     dbc := TAsDatabaseCloner.Create(dbi,txtDestinationDbName.Text);
+
     try
 
       dbc.MakeDatabase;
+
       pbProgressBar.Max := FTableInfos.Count;
       pbProgressBar.Step:=1;
 
-
+      //create tables
       for I := 0 to FTableInfos.Count - 1 do
       begin
         try
@@ -311,29 +315,49 @@ begin
          Application.ProcessMessages;
         except on e:Exception do
           begin
-            WriteLog('FAIL: Table ['+FTableInfos[I].Tablename+']',ltError);
+            WriteLog('FAIL: Table ['+FTableInfos[I].Tablename+'] : '+e.Message,ltError);
           end;
         end;
       end;
 
       pbProgressBar.Position:=0;
 
+      //creat autonumber for oracle and firebird
+      for I := 0 to FTableInfos.Count - 1 do
+      begin
+        try
+         if FTableInfos[I].Identities.Count > 0 then
+         begin
+          lblProgress.Caption := 'Creating  autonumbers [' + FTableInfos[I].Tablename + ']';
+          dbc.MakeAutonumber(FTableInfos[I]);
+          WriteLog('SUCCESS: Create autonumbers for ['+FTableInfos[I].Tablename+']',ltInfo);
+         end;
+         pbProgressBar.StepIt;
+         Application.ProcessMessages;
+        except on e:exception do
+          begin
+            WriteLog('FAIL: Create autonumbers for ['+FTableInfos[I].Tablename+'] '+e.Message ,ltError);
+          end;
+        end;
+      end;
+
+      //create relations
       WriteLog('',ltInfo);
       WriteLog('CONSTRAINTS',ltInfo);
       WriteLog('',ltInfo);
 
-      if cmbDatabaseType.ItemIndex<>3 then
+      if FDBInfo.DbType<>dtSQLite then
       for I := 0 to FTableInfos.Count - 1 do
       begin
         try
-         lblProgress.Caption := 'Recreating constraints [' + FTableInfos[I].Tablename + ']';
+         lblProgress.Caption := 'Creating  relations [' + FTableInfos[I].Tablename + ']';
          dbc.CreateConstraints(FTableInfos[I]);
          pbProgressBar.StepIt;
-         WriteLog('SUCCESS: Create constraints for ['+FTableInfos[I].Tablename+']',ltInfo);
+         WriteLog('SUCCESS: Create realtions for ['+FTableInfos[I].Tablename+']',ltInfo);
          Application.ProcessMessages;
         except on e:exception do
           begin
-            WriteLog('FAIL: Create constraints for ['+FTableInfos[I].Tablename+']',ltError);
+            WriteLog('FAIL: Create relations for ['+FTableInfos[I].Tablename+'] '+e.Message,ltError);
           end;
         end;
       end;
@@ -353,13 +377,19 @@ begin
     WriteLog('End',ltInfo);
 
   finally
-    dbc.Free;
     pbProgressBar.Position:=0;
     lblProgress.Caption:='Progress';
     pnlMain.Enabled:=True;
     btnAccept.Enabled:=True;
     btnCancel.Enabled:=True;
     txtDestinationDbName.Enabled:=True;
+    dbc.Free;
+    try
+      dbi.Free;
+    except
+        {Firebird with zeos SQL Error:  cannot disconnect database with open transactions (1 active). Error Code: -901.
+        Unsuccessful execution caused by system error that does not preclude successful execution of subsequent statements}
+    end;
   end;
 end;
 
@@ -392,6 +422,11 @@ end;
 procedure TDatabaseClonerForm.FormShow(Sender: TObject);
 begin
  pgLog.ActivePageIndex:=0;
+end;
+
+procedure TDatabaseClonerForm.pnlMainClick(Sender: TObject);
+begin
+
 end;
 
 procedure TDatabaseClonerForm.WriteLog(Msg: string; LogType: TLogType);

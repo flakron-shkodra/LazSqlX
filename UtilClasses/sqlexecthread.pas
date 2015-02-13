@@ -27,16 +27,15 @@ type
     FLastError: string;
     FMessage: string;
     FOnFinish: TOnSqlExecThreadFinish;
-    FQuery: TSQLQuery;
-    FZQuery:TZQuery;
+    FQuery: TAsQuery;
     FRecordCount: word;
     FSchema: string;
     FActive: boolean;
     FCommand: string;
     FTablenameAssigned:Boolean;
     FIsSelect:Boolean;
+    function GetIsTerminated: Boolean;
     function GetOriginalQuery: string;
-    function GetResultSet: TDBDataset;
     procedure SetDurationTime(AValue: TTime);
     procedure SetExecuteAsThread(AValue: boolean);
     procedure SetLastError(AValue: string);
@@ -49,9 +48,7 @@ type
   public
 
 
-    constructor Create(Schema: string; sqlQuery: TSQLQuery;
-     OnFinish: TOnSqlExecThreadFinish); overload;
-    constructor Create(Schema:string; sqlQuery:TZQuery; OnFinish:TOnSqlExecThreadFinish);overload;
+    constructor Create(Schema: string; const sqlQuery: TAsQuery; OnFinish: TOnSqlExecThreadFinish);
     property Active: boolean read FActive;
     property LastError: string read FLastError write SetLastError;
     procedure ExecuteSQL(sqlCommand: string; TableData:Boolean);
@@ -61,6 +58,7 @@ type
     property OnFinish: TOnSqlExecThreadFinish read FOnFinish write SetOnFinish;
     property Message: string read FMessage write SetMessage;
     property IsSelect:Boolean read FIsSelect;
+    property IsTerminated:Boolean read GetIsTerminated;
     destructor Destroy; override;
 
   end;
@@ -94,14 +92,14 @@ begin
   FLastError := AValue;
 end;
 
-function TSqlExecThread.GetResultSet: TDBDataset;
-begin
-  Result := FQuery;
-end;
-
 function TSqlExecThread.GetOriginalQuery: string;
 begin
   Result := FCommand;
+end;
+
+function TSqlExecThread.GetIsTerminated: Boolean;
+begin
+ Result := Terminated;
 end;
 
 
@@ -167,10 +165,10 @@ var
 begin
   //FLock.Acquire; //fails with zeos components
   try
-   FIsSelect:=True;
+   FIsSelect:=AnsiContainsText(Lowercase(FCommand),'select');
    try
      FLastError := '';
-     c := (FQuery<>nil) or (FZQuery<>nil);
+     c := (FQuery<>nil);
 
      if not c then
      begin
@@ -178,16 +176,6 @@ begin
        FOnFinish(Self,FTablenameAssigned);
        Exit;
      end;
-
-
-     //IsSelect :=[expression] {doesn't seem to compile}
-     if ( (AnsiContainsText(Lowercase(FCommand), 'insert into ')) or
-       (AnsiContainsText(Lowercase(FCommand), 'update ')) or
-       (AnsiContainsText(Lowercase(FCommand), 'delete from ')) or
-       (AnsiContainsText(LowerCase(FCommand), 'alter ')) or
-       (AnsiContainsText(LowerCase(FCommand), 'drop ')) or
-       (AnsiContainsText(LowerCase(FCommand), 'create '))
-       ) then FIsSelect:=False;
 
      Sleep(300);
 
@@ -200,15 +188,7 @@ begin
         FQuery.Close;
         FQuery.SQL.Text := FCommand;
         FQuery.ExecSQL;
-        (FQuery.Transaction as TSQLTransaction).CommitRetaining;
         affected:=FQuery.RowsAffected;
-       end else
-       if Assigned(FZQuery) then
-       begin
-        FZQuery.Close;
-        FZQuery.SQL.Text := FCommand;
-        FZQuery.ExecSQL;
-        affected:=FZQuery.RowsAffected;
        end;
        FExecutionTime := Time - t1;
        FMessage := 'Command successfully executed. Rows affected (' +IntToStr(affected) + ')';
@@ -222,16 +202,8 @@ begin
          FQuery.PacketRecords:=-1;
          FQuery.Open;
          FRecordCount := FQuery.RecordCount;
-       end
-       else if Assigned(FZQuery) then
-       begin
-         FZQuery.Close;
-         FZQuery.SQL.Text:=FCommand;
-         FZQuery.Open;
-         FRecordCount := FZQuery.RecordCount;
        end;
        FExecutionTime:= Time-t1;
-
        FMessage := 'Execution time [' + TimeToStr(Time-t1) + '] Records [' +
          IntToStr(FRecordCount) + ']';
      end;
@@ -248,7 +220,7 @@ begin
 
 end;
 
-constructor TSqlExecThread.Create(Schema: string; sqlQuery: TSQLQuery;
+constructor TSqlExecThread.Create(Schema: string; const sqlQuery: TAsQuery;
  OnFinish: TOnSqlExecThreadFinish);
 begin
   FLock := TCriticalSection.Create;
@@ -259,19 +231,6 @@ begin
   inherited Create(True);
   inherited FreeOnTerminate:=True;
 end;
-
-constructor TSqlExecThread.Create(Schema: string; sqlQuery: TZQuery;
- OnFinish: TOnSqlExecThreadFinish);
-begin
-  FLock :=TCriticalSection.Create;
-  FSchema := Schema;
-  FZQuery := sqlQuery;
-  FExecuteAsThread := True;
-  FOnFinish := OnFinish;
-  inherited Create(True);
-  inherited FreeOnTerminate:=True;
-end;
-
 
 procedure TSqlExecThread.ExecuteSQL(sqlCommand: string; TableData: Boolean);
 begin

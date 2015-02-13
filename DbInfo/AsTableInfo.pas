@@ -910,7 +910,7 @@ case db of
 
       ftBoolean:Result:='int';
       ftDate,ftDateTime:Result:='varchar';
-      ftInteger,ftSmallint: Result:='int' ;
+      ftAutoInc, ftInteger,ftSmallint: Result:='int' ;
       ftBytes,ftVarBytes: Result:='blob';
       else
       Result:='varchar';
@@ -964,7 +964,7 @@ case db of
 
       ftBoolean:Result:='int';
       ftDate,ftDateTime:Result:='varchar';
-      ftInteger,ftSmallint: Result:='int' ;
+      ftInteger,ftAutoInc, ftSmallint: Result:='int' ;
       ftBytes,ftVarBytes: Result:='blob';
       else
       Result:='varchar';
@@ -991,8 +991,8 @@ begin
    end;
   dtMySql:
        begin
-     o:='';
-     c:='';
+     o:='`';
+     c:='`';
    end;
   dtSQLite:
      begin

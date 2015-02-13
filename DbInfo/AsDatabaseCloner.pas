@@ -22,13 +22,22 @@ type
     FDestDbName : string;
   public
     constructor Create(DestDBInfo:TAsDbConnectionInfo; DestDbName:string);
+    {get sql script for create}
     function GetCreateScript(Info:TAsTableInfo;CreateConstraints: boolean; OverrideDefaultTypes: boolean):string;
+    {Create table}
     procedure MakeTable(info: TAsTableInfo; CreateConstraints:boolean=true; OverrideDefaultTypes: boolean = False);
+    {Create constraints for Info}
     procedure CreateConstraints(info:TAsTableInfo);
+    {Create constraincts for all importedKeys in tableInfos}
     procedure CreateConstraintsForAll(infos:TAsTableInfos);
+    {Create tables for all tableInfos}
     procedure MakeTables(infos: TAsTableInfos; OverrideDefaultTypes: boolean = False);
+    {Create database}
     procedure MakeDatabase;
+    {Drop database}
     procedure UnmakeDatabase;
+    {Make autonumber for Oracle (create sequence) and Firebird (create trigger)}
+    procedure MakeAutonumber(info:TAsTableInfo);
     destructor Destroy; override;
   end;
 
@@ -62,6 +71,7 @@ var
   I: integer;
   HasPK: boolean;
   len:Integer;
+  fname:string;
 begin
 
   sql := 'CREATE TABLE ' + info.Tablename + ' ( ' ;
@@ -69,11 +79,11 @@ begin
 
   for I := 0 to info.AllFields.Count - 1 do
   begin
+    fname := info.AllFields[I].FieldName;
     if not OverrideDefaultTypes then
       sql := sql + info.AllFields[I].FieldName + ' ' + info.AllFields[I].FieldType
     else
-      sql := sql + info.AllFields[I].GetCompatibleFieldName(FDbInfo.DbType)+ ' ' +
-        info.AllFields[I].GetFieldTypeAs(FDbInfo.DbType);
+      sql := sql + info.AllFields[I].GetCompatibleFieldName(FDbInfo.DbType)+ ' ' +  info.AllFields[I].GetFieldTypeAs(FDbInfo.DbType);
 
     len := info.AllFields[I].Length;
 
@@ -89,19 +99,26 @@ begin
       (LowerCase(info.AllFields[I].GetFieldTypeAs(FDbInfo.DbType)) = 'nvarchar2') then
       begin
         if len>0 then
-        sql := sql + '( ' + IntToStr(len) + ')'
+          sql := sql + '( ' + IntToStr(len) + ')'
         else
           sql := sql + '(50)';
       end;
-
 
 
     if (info.AllFields[I].GetFieldTypeAs(FDbInfo.DbType) = 'decimal') or
       (info.AllFields[I].GetFieldTypeAs(FDbInfo.DbType) = 'float') then
       begin
 
-        if info.AllFields[I].Precision>1 then
-        info.AllFields[I].Precision := 1;
+        if info.AllFields[I].Precision=0 then
+        info.AllFields[I].Precision := 2;
+
+        if len=0 then len := 12;
+
+        if len< info.AllFields[I].Precision then
+        begin
+          len := 12;
+          info.AllFields[I].Precision := 2;
+        end;
 
         sql := sql + '( ' + IntToStr(len) + ',' +
         IntToStr(info.AllFields[I].Precision) + ')';
@@ -112,16 +129,7 @@ begin
 
       case FDbInfo.DbType of
         dtMsSql: sql := sql + ' IDENTITY ';
-        dtOracle:
-        begin
-          TAsDbUtils.ExecuteQuery
-          ('CREATE SEQUENCE ' + info.TableNameAsControlName + '_seq ' +
-            ' START WITH     1 ' +
-            ' INCREMENT BY   1 ' + '  NOCACHE ' +
-            ' NOCYCLE;',FDbInfo);
-        end;
-        dtMySql: sql := sql + ' auto_increment ';
-        //dtSQLite:sql := sql + ' AUTOINCREMENT ';
+        dtMySql: sql := sql + ' unsigned auto_increment ';
       end;
 
     end;
@@ -131,13 +139,6 @@ begin
       sql := sql + ' NOT NULL';
     end;
 
-    //if FDBType=dtFirebirdd then
-    //if info.HasPrimaryKeys then
-    //begin
-    //  if info.AllFields[I].IsPrimaryKey then
-    //  if info.PrimaryKeys[0].FieldName=info.AllFields[I].FieldName then
-    //  sql := sql + ' PRIMARY KEY';
-    //end;
     sql := sql + LoopSeperator[integer(I < info.AllFields.Count - 1)];
 
   end;
@@ -216,7 +217,10 @@ begin
   sql := sql + ')';
 
   if FDbInfo.DbType = dtMySql then
-    sql := sql + ';';
+  begin
+      sql := sql + ';'
+  end;
+
 
   Result:=Sql;
 end;
@@ -272,6 +276,7 @@ var
   sql: string;
   wt:TAsStringWrapType;
   dbtyp:TAsDatabaseType;
+  dbname:string;
 begin
   case FDbInfo.DbType of
     dtMsSql, dtSQLite: wt := swtBrackets;
@@ -281,18 +286,79 @@ begin
   end;
 
 
+
+  dbname:= TAsDbUtils.SafeWrap(FDbInfo.DbType, FDestDbName);
+
   if FDbInfo.DbType in [dtMsSql,dtMySql] then
   begin
-    dbtyp := FDbInfo.DbType;
-    sql := 'CREATE DATABASE ' + TAsStringUtils.WrapString(FDestDbName,wt);
+    sql := 'CREATE DATABASE ' + dbname;
     TAsDbUtils.ExecuteQuery(sql,FDbInfo);
-    FDbInfo.Database:=TAsStringUtils.WrapString(FDestDbName,wt);
+    sql := 'USE '+dbname;
+    TAsDbUtils.ExecuteQuery(sql,FDbInfo);
+    FDbInfo.Database:=dbname;
+  end else
+  if FDbInfo.DbType in [dtSQLite,dtFirebirdd] then
+  begin
+    if FDbInfo.DbType=dtFirebirdd then
+    begin
+      FDbInfo.Properties.Clear;
+      FDbInfo.ZeosConnection.Protocol:='firebird-1.5';
+      FDbInfo.Properties.Add(
+        'CreateNewDatabase=CREATE DATABASE ' + QuotedStr (FDbInfo.Database) +
+        ' USER ' + QuotedStr (FDbInfo.Username) + ' PASSWORD ' + QuotedStr (FDbInfo.Password) +
+        ' PAGE_SIZE 4096 DEFAULT CHARACTER SET ISO8859_1'
+      );
+
+    end;
+    FDbInfo.Open;
   end;
 end;
 
 procedure TAsDatabaseCloner.UnmakeDatabase;
 begin
  TAsDbUtils.ExecuteQuery('DROP DATABASE '+FDestDbName,FDbInfo);
+end;
+
+procedure TAsDatabaseCloner.MakeAutonumber(info: TAsTableInfo);
+var
+ I: Integer;
+ sql:string;
+ n:string;
+ t: String;
+begin
+ for I:=0 to info.Identities.Count -1 do
+ begin
+
+     case FDbInfo.DbType of
+       dtOracle:
+       begin
+         sql := 'CREATE SEQUENCE ' + info.TableNameAsControlName+'_'+info.Identities[I].FieldName + '_seq ' + LineEnding+
+           ' START WITH     1 ' + LineEnding+
+           ' INCREMENT BY   1 ' + LineEnding +
+           ' NOCACHE ' + LineEnding +
+           ' NOCYCLE;';
+         TAsDbUtils.ExecuteQuery(sql,FDbInfo);
+       end;
+       dtFirebirdd:
+       begin
+         n :='gen_'+info.Tablename+'_'+info.Identities[I].FieldName;
+         t := 't_'+info.Tablename+'_'+info.Identities[I].FieldName;
+         sql := ' CREATE GENERATOR '+n+';';
+         TAsDbUtils.ExecuteQuery(sql,FDbInfo);
+         sql := 'SET GENERATOR '+n+' TO 0;';
+         TAsDbUtils.ExecuteQuery(sql,FDbInfo);
+
+
+         sql :=' CREATE TRIGGER '+t+' FOR '+ info.Tablename+' '+ LineEnding +
+                ' ACTIVE BEFORE INSERT POSITION 0 AS '+ LineEnding +
+                ' BEGIN ' +LineEnding +
+                ' if (NEW.'+info.Identities[I].FieldName+' is NULL) then NEW.'+info.Identities[I].FieldName+' = GEN_ID('+n+', 1); '+ LineEnding +
+                ' END';
+         TAsDbUtils.ExecuteQuery(sql,FDbInfo);
+       end;
+     end;
+
+ end;
 end;
 
 destructor TAsDatabaseCloner.Destroy;

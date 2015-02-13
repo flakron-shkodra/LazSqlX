@@ -425,6 +425,11 @@ begin
     try
      dbcloner := TAsDatabaseCloner.Create(FDbInfo,FDbInfo.Database);
      dbcloner.MakeTable(FWorkingTableInfo);
+
+     case FDbInfo.DbType of
+       dtOracle,dtFirebirdd: if FWorkingTableInfo.Identities.Count>0 then dbcloner.MakeAutonumber(FWorkingTableInfo);
+     end;
+
     except on e:Exception do
       begin
           ShowMessage(e.Message);
@@ -488,6 +493,7 @@ var
   dt: string;
   I: integer;
   fi,pk:TAsFieldInfo;
+  id: TAsFieldInfo;
 begin
 
   EditColumnForm.ClearInputs;
@@ -556,6 +562,8 @@ begin
          fi.AllowNull:= EditColumnForm.AllowNull;
 
          fi.IsIdentity:= EditColumnForm.Autonumber;
+         id := FWorkingTableInfo.Identities.Add;
+         id.Assign(fi);
 
          if fi.IsPrimaryKey then
          begin
@@ -799,6 +807,10 @@ begin
           ImageIndex := 4;
         end;
 
+        if FWorkingTableInfo.AllFields[I].IsIdentity then
+        begin
+          SubItems[2] := SubItems[2] +' [Autonumber]';
+        end;
 
         if (FWorkingTableInfo.AllFields[I].FieldType='decimal') or (FWorkingTableInfo.AllFields[I].FieldType='float') then
         begin

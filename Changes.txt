@@ -1,3 +1,21 @@
+v.4.7.2.1535
+
+New:
+-Help added (basic descriptions of features), accessible through MainMenu->Help
+-Row/Col cursor position of active tab displayed in the statusbar
+-FormatQuery added (very basic)
+-NewConnection for each opened tab (so execution threads won't interfere with other tabs' connections)
+-Execution time info and record count in statusBar is updated according to tab's last execution time, when tab is changed
+-Ability to stop execution of active tab's query
+-TableDesigner shows if a column is autonumber/identity
+
+Fixes:
+-Commiting updates when data was being edited through table->RightClick->"Open" into new tab
+-Autocomplete items (reading table aliases in query editor) when loading session and generating query
+-Database Cloner re-enabled (some testing done with mssql's AdventureWorks sampel db, converting it between different database types)
+
+
+
 v.4.7.1.1531
 -Fix: AsDbSpinEdit wouldn't work with negative values and with ftBCD types
 

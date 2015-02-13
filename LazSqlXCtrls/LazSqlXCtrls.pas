@@ -20,29 +20,32 @@ type
 
   TLazSqlXScanNeeded = procedure (ScanText:string) of object;
   TLazSqlXLastWordChanged = procedure (var LastWord:string) of object;
+  TLazSqlXCaretPositionChanged = procedure (Line, Column : Integer) of object;
 
   TLazSqlXTabSheet = class(TTabSheet)
   private
     FMessage: string;
+    FOnCaretPositionChanged: TLazSqlXCaretPositionChanged;
     FOnExecutionFinished: TOnSqlExecThreadFinish;
+    FOnExecutionStopped: TNotifyEvent;
     FOnLastWordChanged: TLazSqlXLastWordChanged;
     FOnTextScanNeeded: TLazSqlXScanNeeded;
     FTopPanel, FBottomPanel: TPanel;
     FDataGrid: TDBGrid;
     FDBNavigator: TDBNavigator;
     FDataSource: TDataSource;
-    FQuery: TSQLQuery;
+    FQuery: TAsQuery;
     FQueryEditor: TSynEdit;
     FSplitter: TSplitter;
     FErrorMemo: TMemo;
     FNumbering: string;
-    FZQuery: TZQuery;
     FParent:TLazSqlXPageControl;
     FCurrentExecutor:TSqlExecThread;
-    FExecutionInProgress:Boolean;
     FEditMode:Boolean;
     FTransaction:TSQLTransaction;
+    FDbInfoNew:TAsDbConnectionInfo;
     function GetDataSet: TDataSet;
+    function GetExecutionInProgress: Boolean;
     function GetHasActiveData: Boolean;
     function GetSqlQuery: string;
     procedure OnDBGridDrawColumnCell(Sender: TObject; const Rect: TRect; DataCol: integer; Column: TColumn; State: TGridDrawState);
@@ -57,35 +60,37 @@ type
     procedure OnQueryAfterDelete(DataSet:TDataSet);
     procedure SetDataGrid(AValue: TDBGrid);
     procedure SetMessage(AValue: string);
+    procedure SetOnCaretPositionChanged(AValue: TLazSqlXCaretPositionChanged);
     procedure SetOnExecutionFinished(AValue: TOnSqlExecThreadFinish);
+    procedure SetOnExecutionStopped(AValue: TNotifyEvent);
     procedure SetOnLastWordChanged(AValue: TLazSqlXLastWordChanged);
     procedure SetOnTextScanNeeded(AValue: TLazSqlXScanNeeded);
-    procedure SetQuery(AValue: TSQLQuery);
     procedure SetQueryEditor(AValue: TSynEdit);
-    procedure SetZQuery(AValue: TZQuery);
     procedure InternalOnExecutionFinished(Sender: TObject; IsTableData: boolean);
     procedure ResizeColumns(ColumnWidth:integer=100);
   public
     constructor Create(ParentPage:TLazSqlXPageControl);
     destructor Destroy; override;
     procedure DisplayMessage(Msg:string; IsError:Boolean);
-    property Query:TSQLQuery read FQuery write SetQuery;
-    property ZQuery:TZQuery read FZQuery write SetZQuery;
+    property Query:TAsQuery read FQuery write FQuery;
     property DataGrid:TDBGrid read FDataGrid write SetDataGrid;
     property DataSource:TDataSource read FDataSource;
+    property DataSet:TDataSet read GetDataSet;
     property DbNavigator:TDBNavigator read FDBNavigator;
     property QueryEditor:TSynEdit read FQueryEditor write SetQueryEditor;
     property Message:string read FMessage write SetMessage;
     procedure ResizeDataGrid(ColumnWidth:Integer=100);
     procedure CheckSyntax;
-    property ExecutionInProgress:Boolean read FExecutionInProgress;
+    property ExecutionInProgress:Boolean read GetExecutionInProgress;
     procedure RunQuery(EditMode:Boolean=false;Schema:string='';Table:string='');
     property HasActiveData:Boolean read GetHasActiveData;
     property SQLQuery:string read GetSqlQuery;
     property OnTextScanNeeded:TLazSqlXScanNeeded read FOnTextScanNeeded write SetOnTextScanNeeded;
     property OnLastWordChanged:TLazSqlXLastWordChanged read FOnLastWordChanged write SetOnLastWordChanged;
     property OnExecutionFinished:TOnSqlExecThreadFinish read FOnExecutionFinished write SetOnExecutionFinished;
-    property DataSet:TDataSet read GetDataSet;
+    property OnCaretPositionChanged:TLazSqlXCaretPositionChanged read FOnCaretPositionChanged write SetOnCaretPositionChanged;
+    property OnExecutionStopped:TNotifyEvent read FOnExecutionStopped write SetOnExecutionStopped;
+
   end;
 
 
@@ -93,6 +98,8 @@ type
 
   TLazSqlXPageControl = class (TPageControl)
   private
+   FActiveTabPositionChanged: TLazSqlXCaretPositionChanged;
+   FOnExecutionStopped: TNotifyEvent;
     FTrans:TSQLTransaction;
     FCon:TSQLConnector;
     FDataGridPopUpMenu: TPopupMenu;
@@ -120,6 +127,7 @@ type
     procedure OnCompletionExecute(Sender: TObject); // Complete Execute
     function OnCompletionPaintItem(const AKey: string; ACanvas: TCanvas; X, Y: integer; Selected: boolean; Index: integer): boolean;
     procedure OnCompletionSearchPos(var Posi: integer); //Complete SearchPos
+    procedure SetActiveTabPositionChanged(AValue: TLazSqlXCaretPositionChanged);
 
     procedure SetDataGridPopUpMenu(AValue: TPopupMenu);
     procedure SetDBInfo(AValue: TAsDbConnectionInfo);
@@ -129,6 +137,7 @@ type
     procedure SetKeywords(AValue: TStringList);
     procedure SetLazSqlXTab(Index: Integer; AValue: TLazSqlXTabSheet);
     procedure SetOnDataGridDblClick(AValue: TNotifyEvent);
+    procedure SetOnExecionStopped(AValue: TNotifyEvent);
     procedure SetOnExecutionFinished(AValue: TOnSqlExecThreadFinish);
     procedure SetProcedureIcon(AValue: TBitmap);
     procedure SetProcedures(AValue: TStringList);
@@ -170,12 +179,15 @@ type
     property ProcedureIcon: TBitmap read FProcedureIcon write SetProcedureIcon;
 
     property OnExecutionFinished:TOnSqlExecThreadFinish read FOnExecutionFinished write SetOnExecutionFinished;
+    property OnExecutionStopped:TNotifyEvent read FOnExecutionStopped write SetOnExecionStopped;
     property OnDataGridDblClick:TNotifyEvent read FOnDataGridDblClick write SetOnDataGridDblClick;
     // Tells control to call autocompletion
     procedure PopupAutoComplete;
     procedure ScanNeeded;
 
     property Pages[Index:Integer]:TLazSqlXTabSheet read GetLazSqlXTab write SetLazSqlXTab;
+
+    property OnCaretPositionChanged:TLazSqlXCaretPositionChanged read FActiveTabPositionChanged write SetActiveTabPositionChanged;
   end;
 
 
@@ -247,24 +259,25 @@ end;
 
 function TLazSqlXTabSheet.GetDataSet: TDataSet;
 begin
- case FParent.DBInfo.DbEngineType of
-   deSqlDB:Result:=FQuery;
-   deZeos:Result:=FZQuery;
- end;
+ Result := FQuery.DataSet;
+end;
+
+function TLazSqlXTabSheet.GetExecutionInProgress: Boolean;
+begin
+ if Assigned(FCurrentExecutor) then
+  Result :=not FCurrentExecutor.IsTerminated
+ else
+  Result:=False;
 end;
 
 function TLazSqlXTabSheet.GetHasActiveData: Boolean;
 begin
-  Result:=FQuery.Active or FZQuery.Active;
+  Result:=FQuery.Active;
 end;
 
 function TLazSqlXTabSheet.GetSqlQuery: string;
 begin
- if FQuery.Active then
-   Result:=FQuery.SQL.Text
- else
-   if FZQuery.Active then
-     Result:=FZQuery.SQL.Text;
+  Result:=FQuery.SQL.Text;
 end;
 
 procedure TLazSqlXTabSheet.OnQueryEditorChange(Sender: TObject);
@@ -274,6 +287,8 @@ begin
    if Assigned(FOnTextScanNeeded) then
    FOnTextScanNeeded((Sender as TSynEdit).LineText);
  end;
+ if Assigned(FOnCaretPositionChanged) then
+ FOnCaretPositionChanged(FQueryEditor.CaretX,FQueryEditor.CaretY);
 end;
 
 procedure TLazSqlXTabSheet.OnQueryEditorKeyDown(Sender: TObject;
@@ -328,6 +343,8 @@ begin
     VK_OEM_PERIOD: //.
       InvokeSynCompleteKey;
   end;
+  if Assigned(FOnCaretPositionChanged) then
+  FOnCaretPositionChanged(FQueryEditor.CaretX,FQueryEditor.CaretY);
 end;
 
 procedure TLazSqlXTabSheet.OnQueryEditorPaste(Sender: TObject;
@@ -341,6 +358,7 @@ end;
 procedure TLazSqlXTabSheet.OnQyeryAfterPost(DataSet: TDataSet);
 var
   ds: TSQLQuery;
+  zq:TZQuery;
   I: integer;
 begin
   if (DataSet is TSQLQuery) then
@@ -348,10 +366,6 @@ begin
     ds := (DataSet as TSQLQuery);
     I := ds.RecNo;
     ds.UpdateMode:=upWhereKeyOnly;
-    if (FParent.DBInfo.DbType = dtOracle) and (FParent.DBInfo.DbEngineType=deSqlDB) then
-    begin
-      //generate update or delete statement
-    end;
     ds.ApplyUpdates;
     if not ds.Active then
     begin
@@ -360,6 +374,19 @@ begin
       ResizeDataGrid;
     end;
   end
+  else if (DataSet is TZQuery) then
+  begin
+    zq := (DataSet as TZQuery);
+    I:= zq.RecNo;
+    zq.ApplyUpdates;
+    if not zq.Active then
+    begin
+      zq.Open;
+      zq.RecNo:=I;
+      ResizeDataGrid();
+    end;
+  end;
+  FParent.FDBInfo.Commit;
 end;
 
 procedure TLazSqlXTabSheet.OnQueryAfterDelete(DataSet: TDataSet);
@@ -370,6 +397,10 @@ begin
   begin
     ds := (DataSet as TSQLQuery);
     ds.ApplyUpdates;
+  end else
+  if (DataSet is TZQuery) then
+  begin
+    (DataSet as TZQuery).ApplyUpdates;
   end;
 end;
 
@@ -385,11 +416,24 @@ begin
   FMessage:=AValue;
 end;
 
+procedure TLazSqlXTabSheet.SetOnCaretPositionChanged(
+ AValue: TLazSqlXCaretPositionChanged);
+begin
+ if FOnCaretPositionChanged=AValue then Exit;
+ FOnCaretPositionChanged:=AValue;
+end;
+
 procedure TLazSqlXTabSheet.SetOnExecutionFinished(AValue: TOnSqlExecThreadFinish
  );
 begin
   if FOnExecutionFinished=AValue then Exit;
   FOnExecutionFinished:=AValue;
+end;
+
+procedure TLazSqlXTabSheet.SetOnExecutionStopped(AValue: TNotifyEvent);
+begin
+ if FOnExecutionStopped=AValue then Exit;
+ FOnExecutionStopped:=AValue;
 end;
 
 procedure TLazSqlXTabSheet.SetOnLastWordChanged(AValue: TLazSqlXLastWordChanged
@@ -405,22 +449,11 @@ begin
   FOnTextScanNeeded:=AValue;
 end;
 
-procedure TLazSqlXTabSheet.SetQuery(AValue: TSQLQuery);
-begin
- if FQuery=AValue then Exit;
- FQuery:=AValue;
-end;
 
 procedure TLazSqlXTabSheet.SetQueryEditor(AValue: TSynEdit);
 begin
   if FQueryEditor=AValue then Exit;
   FQueryEditor:=AValue;
-end;
-
-procedure TLazSqlXTabSheet.SetZQuery(AValue: TZQuery);
-begin
-  if FZQuery=AValue then Exit;
-  FZQuery:=AValue;
 end;
 
 procedure TLazSqlXTabSheet.InternalOnExecutionFinished(Sender: TObject;
@@ -470,9 +503,9 @@ begin
 
     end;
   finally
-    FExecutionInProgress := False;
-    ResizeColumns;
 
+    ResizeColumns;
+    FCurrentExecutor := nil;
     if Assigned(FOnExecutionFinished) then
     FOnExecutionFinished(Self,FEditMode);
   end;
@@ -506,19 +539,14 @@ begin
   Caption := 'Query(' + FNumbering + ')';
   Name := 'QueryTab' + FNumbering;
 
-  FQuery := TSQLQuery.Create(nil);
+  FDbInfoNew := TAsDbConnectionInfo.Create;
+  FDbInfoNew.Assign(FParent.DBInfo);
+
+  FQuery := TAsQuery.Create(FDbInfoNew);
   FQuery.Name := 'qr' + FNumbering;
-  FQuery.AfterPost := @OnQyeryAfterPost;
-  FQuery.AfterDelete:=@OnQueryAfterDelete;
-  FTransaction := TSQLTransaction.Create(nil);
-  FQuery.Transaction := FTransaction;
-
-
-  FZQuery := TZQuery.Create(nil);
-  FZQuery.Name := 'FZQuery' + FNumbering;
 
   FDataSource := TDataSource.Create(nil);
-  FDataSource.DataSet := FQuery;
+  FDataSource.DataSet := FQuery.DataSet;
   FDataSource.Name := 'FDataSource' + FNumbering;
 
 
@@ -606,9 +634,14 @@ begin
    FTransaction.Free;
    FSplitter.Free;
    FErrorMemo.Free;
-   FZQuery.Free;
    FTopPanel.Free;
    FBottomPanel.Free;
+
+   try
+     FDbInfoNew.Free; //sorry for memleak (if)
+   except
+   end;
+
  inherited Destroy;
 end;
 
@@ -621,10 +654,11 @@ begin
   FErrorMemo.Visible:=True;
   FBottomPanel.Height:=200;
   FErrorMemo.Text := msg;
+  FErrorMemo.Font.Style:=[fsBold];
   if IsError then
-    FErrorMemo.Font.Color := clRed
+    FErrorMemo.Font.Color := clMaroon
   else
-    FErrorMemo.Font.Color := clGreen;
+    FErrorMemo.Font.Color := $00006200;
 
   FErrorMemo.Lines.Add('');
 end;
@@ -670,21 +704,39 @@ var
   sqlCommand: string;
   I: integer;
   CommandExecutor: TSqlExecThread;
+  c:Integer;
 begin
 
 
-  if FExecutionInProgress then
+  if ExecutionInProgress then
   begin
-    if not Assigned(FCurrentExecutor) then
+    if MessageDlg('Confirm', 'An execution is running. Would you like to stop current execution?',
+    mtConfirmation, mbYesNo, 0) = mrYes then
     begin
-      FExecutionInProgress := False;
-    end
-    else
-    if MessageDlg('Confirm',
-      'An execution is already running. Do you like to stop current execution?',
-      mtConfirmation, mbYesNo, 0) = mrYes then
-    begin
-      FCurrentExecutor.Terminate;
+      if not FCurrentExecutor.IsTerminated then
+      begin
+        FCurrentExecutor.Terminate;
+        if Assigned(FOnExecutionStopped) then
+        begin
+          while not FCurrentExecutor.IsTerminated do
+          begin
+
+          end;
+          FOnExecutionStopped(Self);
+          try
+            FQuery.Free;
+            FDbInfoNew.Free;
+          except //sorry for this memleak
+          end;
+
+          FDbInfoNew := TAsDbConnectionInfo.Create;
+          FDbInfoNew.Assign(FParent.DBInfo);
+          //assign new reference
+          FQuery := TAsQuery.Create(FDbInfoNew);
+          FDataSource.DataSet := FQuery.DataSet;
+        end;
+        FCurrentExecutor:=nil;
+      end;
     end;
     Exit;
   end;
@@ -711,24 +763,10 @@ begin
   end;
 
   try
-    case FParent.DBInfo.DbEngineType of
-      deSqlDB:
-      begin
-       CommandExecutor :=
-          TSqlExecThread.Create(Schema, FQuery, @InternalOnExecutionFinished);
-
-      end;
-      deZeos:
-      begin
-       CommandExecutor := TSqlExecThread.Create(Schema,
-          FZQuery, @InternalOnExecutionFinished);
-
-      end;
-    end;
+    CommandExecutor := TSqlExecThread.Create(Schema, FQuery, @InternalOnExecutionFinished);
     FEditMode := EditMode;
     FCurrentExecutor := CommandExecutor;
     CommandExecutor.ExecuteSQL(sqlCommand, EditMode);
-    FExecutionInProgress := True;
   except
     on e: Exception do
     begin
@@ -762,6 +800,12 @@ procedure TLazSqlXPageControl.SetOnDataGridDblClick(AValue: TNotifyEvent);
 begin
   if FOnDataGridDblClick=AValue then Exit;
   FOnDataGridDblClick:=AValue;
+end;
+
+procedure TLazSqlXPageControl.SetOnExecionStopped(AValue: TNotifyEvent);
+begin
+ if FOnExecutionStopped=AValue then Exit;
+ FOnExecutionStopped:=AValue;
 end;
 
 procedure TLazSqlXPageControl.SetOnExecutionFinished(AValue: TOnSqlExecThreadFinish);
@@ -1126,6 +1170,18 @@ begin
 
 end;
 
+procedure TLazSqlXPageControl.SetActiveTabPositionChanged(
+ AValue: TLazSqlXCaretPositionChanged);
+var
+ I: Integer;
+begin
+ FActiveTabPositionChanged:=AValue;
+ for I:=0 to PageCount-1 do
+ begin
+  Pages[I].OnCaretPositionChanged:=FActiveTabPositionChanged;
+ end;
+end;
+
 procedure TLazSqlXPageControl.SetDataGridPopUpMenu(AValue: TPopupMenu);
 begin
   if FDataGridPopUpMenu=AValue then Exit;
@@ -1389,6 +1445,8 @@ var
   I: integer;
   qe:TSynEdit;
 begin
+ if PageCount>0 then
+ begin
   qe := (ActivePage as TLazSqlXTabSheet).QueryEditor;
   if Trim(qe.Text) = EmptyStr then
   begin
@@ -1402,6 +1460,7 @@ begin
       ScanTableAliases(qe.Lines[I]);
     end;
   end;
+ end;
 end;
 
 constructor TLazSqlXPageControl.Create(AOwner: TComponent;
@@ -1423,7 +1482,7 @@ begin
   FSynComplete.ShowSizeDrag := True;
   FSynComplete.DoubleClickSelects := True;
   FSynComplete.OnPaintItem := @OnCompletionPaintItem;
-  FSynComplete.EndOfTokenChr := ' ';
+  FSynComplete.EndOfTokenChr := ' ()[]:,';
 
   FlstCompletionItemType:= TStringList.Create;
   FlstTableAlias:= TStringList.Create;
@@ -1454,9 +1513,6 @@ var
 begin
   Tab := TLazSqlXTabSheet.Create(Self);
   Tab.Parent:=Self;
-  Tab.ZQuery.Connection:=FZCon;
-  Tab.Query.DataBase:=FCon;
-  Tab.Query.Transaction:=FCon.Transaction;
 
   if Assigned(FHighlighter) then
   Tab.QueryEditor.Highlighter := FHighlighter;
@@ -1470,8 +1526,11 @@ begin
   Self.ActivePage := Tab;
 
   tab.OnExecutionFinished:=FOnExecutionFinished;
+  tab.OnExecutionStopped:=FOnExecutionStopped;
   tab.DataGrid.OnDblClick:=FOnDataGridDblClick;
   tab.OnTextScanNeeded:=@OnTextScanNeeded; {for autocomplete,fieldnames invoke}
+  tab.OnCaretPositionChanged:=FActiveTabPositionChanged;
+
   if Tab.QueryEditor<>nil then
   begin
   FSynComplete.AddEditor(Tab.QueryEditor);

@@ -73,6 +73,7 @@ object DatabaseClonerForm: TDatabaseClonerForm
       ClientHeight = 254
       ClientWidth = 581
       TabOrder = 0
+      OnClick = pnlMainClick
       object lblUseraname: TLabel
         Left = 12
         Height = 15
@@ -134,18 +135,6 @@ object DatabaseClonerForm: TDatabaseClonerForm
         ItemHeight = 15
         Style = csSimple
         TabOrder = 4
-      end
-      object cmbDatabase: TComboBox
-        Left = 8
-        Height = 23
-        Top = 261
-        Width = 397
-        AutoComplete = True
-        AutoCompleteText = [cbactEnabled, cbactEndOfLineComplete, cbactSearchAscending]
-        ItemHeight = 15
-        OnEnter = cmbDatabaseEnter
-        TabOrder = 6
-        Visible = False
       end
       object cmbDatabaseType: TComboBox
         Left = 12
