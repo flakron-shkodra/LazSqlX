@@ -52,6 +52,7 @@ type
     procedure SetFillDataTypesOnShow(AValue: Boolean);
     procedure SetTablename(AValue: string);
     procedure SetValidate(AValue: Boolean);
+    procedure UpdateGUI;
 
     { private declarations }
   public
@@ -83,41 +84,8 @@ implementation
 { TEditColumnForm }
 
 procedure TEditColumnForm.cmbDataTypesChange(Sender: TObject);
-var
-  dt:string;
 begin
-    if FDbType<> dtSQLite then
-    begin
-      lblPrecision.Visible:=False;
-      txtPrecision.Visible:=False;
-      lblLength.Visible:=False;
-      txtLength.Visible:=False;
-      chkIdentity.Visible:=False;
-
-      dt := lowercase(cmbDataTypes.Text);
-      if (dt='varchar') or (dt='nvarchar') or (dt='varchar2') or (dt='nvarchar2') then
-      begin
-        lblLength.Visible:=True;
-        txtLength.Visible:=True;
-      end else
-      if (dt='decimal') or (dt='float') then
-      begin
-          lblPrecision.Visible:=True;
-          txtPrecision.Visible:=True;
-          lblLength.Visible:=True;
-          txtLength.Visible:=True;
-      end;
-      chkIdentity.Visible := (dt='int') or (dt='numeric');
-    end;
-
-    if DbType=dtOracle then
-    begin
-      chkIdentity.Caption:='CREATE '+FTablename+'_SEQ (1,1)';
-    end else
-    begin
-      chkIdentity.Caption:='AUTOINC';
-    end;
-
+  UpdateGUI;
 end;
 
 procedure TEditColumnForm.btnApplyClick(Sender: TObject);
@@ -136,6 +104,7 @@ begin
     end;
     chkIdentity.Checked:=False;
     chkIdentity.Visible:=False;
+    UpdateGUI;
 end;
 
 function TEditColumnForm.GetAllowNull: Boolean;
@@ -197,6 +166,45 @@ begin
   FValidate:=AValue;
 end;
 
+procedure TEditColumnForm.UpdateGUI;
+var
+ dt: string;
+begin
+ if FDbType<> dtSQLite then
+ begin
+   lblPrecision.Visible:=False;
+   txtPrecision.Visible:=False;
+   lblLength.Visible:=False;
+   txtLength.Visible:=False;
+   chkIdentity.Visible:=False;
+
+   dt := lowercase(cmbDataTypes.Text);
+   if (dt='varchar') or (dt='nvarchar') or (dt='varchar2') or (dt='nvarchar2')
+    or (dt='character varying')
+   or (dt='character') then
+   begin
+     lblLength.Visible:=True;
+     txtLength.Visible:=True;
+   end else
+   if (dt='decimal') or (dt='float') or (dt='numeric') then
+   begin
+       lblPrecision.Visible:=True;
+       txtPrecision.Visible:=True;
+       lblLength.Visible:=True;
+       txtLength.Visible:=True;
+   end;
+   chkIdentity.Visible := (dt='int') or (dt='numeric');
+ end;
+
+ if DbType=dtOracle then
+ begin
+   chkIdentity.Caption:='CREATE '+FTablename+'_SEQ (1,1)';
+ end else
+ begin
+   chkIdentity.Caption:='AUTOINC';
+ end;
+end;
+
 function TEditColumnForm.ShowModal(aDbtype: TAsDatabaseType): TModalResult;
 begin
   FDbType:=aDbtype;
@@ -229,6 +237,7 @@ begin
    dtMySql:cmbDataTypes.Items.AddStrings(TLazSqlXResources.MySqlDataTypes);
    dtSQLite:cmbDataTypes.Items.AddStrings(TLazSqlXResources.SqliteDataTypes);
    dtFirebirdd:cmbDataTypes.Items.AddStrings(TLazSqlXResources.FirebirdDataTypes);
+   dtPostgreSql:cmbDataTypes.Items.AddStrings(TLazSqlXResources.PostgreSqlDataTypes);
   end;
 end;
 

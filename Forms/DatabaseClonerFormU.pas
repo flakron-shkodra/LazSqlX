@@ -65,6 +65,7 @@ type
     FTableInfos: TAsTableInfos;
     FDBInfo: TAsDbConnectionInfo;
     procedure WriteLog(Msg:string; LogType:TLogType);
+    procedure UpdateGUI(EnableControls:Boolean);
     { private declarations }
   public
     { public declarations }
@@ -79,6 +80,7 @@ var
   bmpMySqlType: TBitmap;
   bmpSqliteType: TBitmap;
   bmpFirebird: TBitmap;
+  bmpPostgreSql:TBitmap;
 
 implementation
 
@@ -112,6 +114,7 @@ begin
     2: cmb.Canvas.Draw(ARect.Left, ARect.Top, bmpMySqlType);
     3: cmb.Canvas.Draw(ARect.Left, ARect.Top, bmpSqliteType);
     4: cmb.Canvas.Draw(ARect.Left, ARect.Top, bmpFirebird);
+    5: cmb.Canvas.Draw(ARect.Left, ARect.Top, bmpPostgreSql);
   end;
 
   cmb.Canvas.Font.Size := 10;
@@ -207,7 +210,6 @@ procedure TDatabaseClonerForm.btnAcceptClick(Sender: TObject);
 var
   dbc: TAsDatabaseCloner;
   I: integer;
-  wt: TAsStringWrapType;
   destDb:string;
   connDb:string;
   dbi:TAsDbConnectionInfo;
@@ -215,10 +217,8 @@ var
   CanMake:boolean;
 begin
   try
-    pnlMain.Enabled:=False;
-    btnAccept.Enabled:=False;
-    btnCancel.Enabled:=False;
-    txtDestinationDbName.Enabled:=False;
+
+    UpdateGUI(False);
 
     destDb:= txtDestinationDbName.Text;
 
@@ -243,9 +243,10 @@ begin
     lst := TAsDbUtils.GetCatalogNames(dbi);
 
     try
+      CanMake:=True;
      case TAsDatabaseType(cmbDatabaseType.ItemIndex) of
        dtSQLite,dtFirebirdd,dtOracle: connDb:=destDb;
-       dtMsSql,dtMySql:
+       dtMsSql,dtMySql,dtPostgreSql:
        begin
          if lst.Count>0 then
          begin
@@ -262,6 +263,7 @@ begin
     if not CanMake then
     begin
       ShowMessage('Cannot make a database in that server');
+      UpdateGUI(true);
       Exit;
     end;
 
@@ -270,13 +272,6 @@ begin
     WriteLog('Starting...',ltInfo);
     WriteLog('',ltInfo);
 
-
-    case FDBInfo.DbType of
-      dtMsSql: wt := swtBrackets;
-      dtOracle: wt := swtQuotes;
-      else
-        wt := swtNone;
-    end;
 
 
     if txtPort.Visible then
@@ -309,7 +304,7 @@ begin
             Continue;
           end;
 
-         dbc.MakeTable(FTableInfos[I],false,True);
+         dbc.MakeTable(FTableInfos[I],false,true);
          pbProgressBar.StepIt;
          WriteLog('SUCCESS: Table [' + FTableInfos[I].Tablename + ']',ltInfo);
          Application.ProcessMessages;
@@ -379,10 +374,7 @@ begin
   finally
     pbProgressBar.Position:=0;
     lblProgress.Caption:='Progress';
-    pnlMain.Enabled:=True;
-    btnAccept.Enabled:=True;
-    btnCancel.Enabled:=True;
-    txtDestinationDbName.Enabled:=True;
+    UpdateGUI(True);
     dbc.Free;
     try
       dbi.Free;
@@ -400,12 +392,14 @@ begin
   bmpMySqlType := TBitmap.Create;
   bmpSqliteType := TBitmap.Create;
   bmpFirebird := TBitmap.Create;
+  bmpPostgreSql := TBitmap.Create;
 
   imgDatabaseTypes.GetBitmap(0, bmpSqlType);
   imgDatabaseTypes.GetBitmap(1, bmpOracleType);
   imgDatabaseTypes.GetBitmap(2, bmpMySqlType);
   imgDatabaseTypes.GetBitmap(3, bmpSqliteType);
   imgDatabaseTypes.GetBitmap(4,bmpFirebird);
+  imgDatabaseTypes.GetBitmap(5,bmpPostgreSql);
 
 
 end;
@@ -417,6 +411,7 @@ begin
   bmpOracleType.Free;
   bmpSqlType.Free;
   bmpFirebird.Free;
+  bmpPostgreSql.Free;
 end;
 
 procedure TDatabaseClonerForm.FormShow(Sender: TObject);
@@ -449,6 +444,14 @@ begin
   end;
 
   lstLog.ItemIndex:=lstLog.Count-1;
+end;
+
+procedure TDatabaseClonerForm.UpdateGUI(EnableControls: Boolean);
+begin
+pnlMain.Enabled:=EnableControls;
+  btnAccept.Enabled:=EnableControls;
+  btnCancel.Enabled:=EnableControls;
+  txtDestinationDbName.Enabled:=EnableControls;
 end;
 
 function TDatabaseClonerForm.ShowModal(dbInfo: TAsDbConnectionInfo;

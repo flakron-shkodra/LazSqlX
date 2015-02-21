@@ -122,7 +122,7 @@ begin
   cmbReferenceTables.Clear;
   lst := TStringList.Create;
   try
-    lst := TAsDbUtils.GetTablenames(FDBInfo,FSchema);
+    lst := TAsDbUtils.GetTablenames(FDBInfo);
     for I:=0 to lst.Count-1 do
     begin
       cmbReferenceTables.Items.Add(lst[I]);

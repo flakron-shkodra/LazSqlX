@@ -1215,7 +1215,8 @@ begin
  Height:= 550;
  Width:= (5 * FControlWidth) + (5 * FControlSpace) + 30;
 
- FDbInfo:=aDbInfo;
+ FDbInfo:=TAsDbConnectionInfo.Create(False,Self);
+ FDbInfo.Assign(aDbInfo);
  FTableInfo := aTableInfo;
  FSqlQuery:= 'Select * from '+FTableInfo.Tablename;
 
@@ -1397,7 +1398,7 @@ begin
         if f.ShowModal = mrOK then
         begin
           OpenForm:= True;
-          FSqlQuery:= TAsDbUtils.GetTopRecordsSelect(FDbInfo.DbType,FTableInfo.Tablename, se.Value);
+          FSqlQuery:= TAsDbUtils.GetTopRecordsSelect(FDbInfo.DbType,FSchema, FTableInfo.Tablename, se.Value);
         end;
        finally
          f.Free;

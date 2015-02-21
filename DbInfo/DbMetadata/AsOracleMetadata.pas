@@ -119,7 +119,8 @@ begin
  Result := TAsForeignKeys.Create;
 
  sql:=
- 'SELECT  a.owner schema, '+
+ 'SELECT  uc.constraint_name, '+
+        ' a.owner schema, '+
         ' a.table_name, '+
         ' a.column_name, '+
         ' uc.owner foreign_schema, '+
@@ -139,6 +140,7 @@ begin
     while not ds.EOF do
      begin
        fk := TAsForeignKey.Create;
+       fk.Constraint_Name:=Trim(ds.FieldByName('constraint_name').AsString);
        fk.Schema:=Trim(ds.FieldByName('SCHEMA').AsString);
        fk.Table_Name:=Trim(ds.FieldByName('TABLE_NAME').AsString);
        fk.Column_Name:= Trim(ds.FieldByName('COLUMN_NAME').AsString);

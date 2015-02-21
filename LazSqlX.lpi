@@ -26,10 +26,8 @@
     <VersionInfo>
       <UseVersionInfo Value="True"/>
       <AutoIncrementBuild Value="True"/>
-      <MajorVersionNr Value="4"/>
-      <MinorVersionNr Value="7"/>
-      <RevisionNr Value="2"/>
-      <BuildNr Value="1535"/>
+      <MajorVersionNr Value="5"/>
+      <BuildNr Value="1570"/>
       <StringTable ProductVersion=""/>
     </VersionInfo>
     <BuildModes Count="2">
@@ -106,7 +104,7 @@
         <PackageName Value="LCL"/>
       </Item9>
     </RequiredPackages>
-    <Units Count="52">
+    <Units Count="54">
       <Unit0>
         <Filename Value="LazSqlX.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -312,6 +310,7 @@
       <Unit31>
         <Filename Value="LoadingIndicator\LoadingIndicator.pas"/>
         <IsPartOfProject Value="True"/>
+        <UnitName Value="LoadingIndicator"/>
       </Unit31>
       <Unit32>
         <Filename Value="UtilClasses\csvdocument.pas"/>
@@ -407,6 +406,15 @@
         <IsPartOfProject Value="True"/>
         <UnitName Value="AsSqliteMetadata"/>
       </Unit51>
+      <Unit52>
+        <Filename Value="DbInfo\DbMetadata\AsPostgresMetadata.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="AsPostgresMetadata"/>
+      </Unit52>
+      <Unit53>
+        <Filename Value="Resources\PostgreSqlDataTypes.dt"/>
+        <IsPartOfProject Value="True"/>
+      </Unit53>
     </Units>
   </ProjectOptions>
   <CompilerOptions>

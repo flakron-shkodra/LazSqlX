@@ -340,11 +340,11 @@ begin
 
   if FDbInfo.DbType = dtMySql then
   begin
-    sql := ' ALTER TABLE '+FTablename +
+    sql := ' ALTER TABLE '+TAsDbUtils.SafeWrap(FDbInfo.DbType, FTablename) +
           ' DROP FOREIGN KEY '+lsvDependencies.Selected.Caption;
   end else
   begin
-    sql := '  ALTER TABLE '+FTablename +
+    sql := '  ALTER TABLE '+TAsDbUtils.SafeWrap(FDbInfo.DbType, FTablename) +
             ' DROP CONSTRAINT '+lsvDependencies.Selected.Caption ;
   end;
 
@@ -395,6 +395,10 @@ begin
     dtSQLite:
       begin
 
+      end;
+    dtPostgreSql:
+      begin
+        sql := 'DROP INDEX '+lsvIndexes.Selected.Caption;
       end;
   end;
 
@@ -499,6 +503,7 @@ begin
   EditColumnForm.ClearInputs;
   EditColumnForm.DbType := FDbInfo.DbType;
   EditColumnForm.FillDataTypesOnShow:=True;
+  EditColumnForm.chkPrimaryKey.Visible := FCreateNew;
 
   //sqlte only on primary key, so check if there's already one
   if FDbInfo.DbType = dtSQLite then
@@ -767,6 +772,9 @@ var
   I: integer;
   lst: TStringList;
 begin
+  //refreshed
+  FDbInfo.Close;
+  FDbInfo.Open;
 
     if not FCreateNew then
     begin
@@ -835,7 +843,8 @@ begin
       with lsvDependencies.Items.Add do
       begin
         ImageIndex := 1;
-        Caption := FWorkingTableInfo.ImportedKeys[I].ColumnName;
+        Caption := FWorkingTableInfo.ImportedKeys[I].ConstraintName;
+        SubItems.AddStrings(FWorkingTableInfo.ImportedKeys[I].ColumnName);
         SubItems.Add(FWorkingTableInfo.ImportedKeys[I].ForeignTableName);
         SubItems.Add(FWorkingTableInfo.ImportedKeys[I].ForeignColumnName);
 
@@ -913,7 +922,7 @@ begin
   end;
 
   FSchema := Schema;
-  actEditColumn.Visible := FDbInfo.DbType<> dtSQLite;
+  actEditColumn.Visible := not(FDbInfo.DbType in [dtSQLite,dtPostgreSql]);
 
   if not FCreateNew then
     PopulateInfo;

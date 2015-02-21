@@ -87,6 +87,7 @@ type
     bmpMySqlType: TBitmap;
     bmpSqliteType: TBitmap;
     bmpFirebird : TBitmap;
+    bmpPostgreSQL: TBitmap;
     bmpSqlDBEngine: TBitmap;
     bmpZeosEngine : TBitmap;
 
@@ -302,6 +303,7 @@ var
   c: TListBox;
   strDbType: string;
   aDbtype: TAsDatabaseType;
+  dbc: TAsDbConnectionInfo;
 begin
   c := (Control as TListBox);
 
@@ -334,16 +336,15 @@ begin
       c.Hint := '';
     end;
 
-    strDbType := TAsStringUtils.SplitString(c.Items[Index],':')[0];
-
-    aDbType := TAsDbUtils.DatabaseTypeFromString(strDbType);
-
-    case aDbtype of
+    dbc := TAsDbConnectionInfo(c.Items.Objects[Index]);
+    if dbc<> nil then
+    case dbc.DbType of
       dtMsSql: Draw(ARect.Left, ARect.Top,bmpSqlType);
       dtOracle: Draw(ARect.Left, ARect.Top,bmpOracleType);
       dtMySql: Draw(ARect.Left, ARect.Top,bmpMySqlType);
       dtSQLite: Draw(ARect.Left, ARect.Top,bmpSqliteType);
       dtFirebirdd: Draw(ARect.Left, ARect.Top,bmpFirebird);
+      dtPostgreSql: Draw(ARect.Left, ARect.Top,bmpPostgreSQL);
     end;
 
     Brush.Style := bsClear;
@@ -420,7 +421,7 @@ begin
   end else
   begin
      // Close form and pass on failure
-     Self.ModalResult := mrCancel;
+     Self.ModalResult := mrNone;
      ShowMessage('Invalid ConnectionString' + LineEnding + LastError);
   end;
 end;
@@ -432,12 +433,7 @@ begin
   lstRecentConnections.Clear;
   for I:=0 to RecentConnections.Count-1 do
   begin
-    lstRecentConnections.Items.Add
-      (
-      TAsDbUtils.DatabaseTypeAsString(RecentConnections[I].DbType, true)+':'+
-      RecentConnections[I].Server+'\'+
-      RecentConnections[I].Database
-      );
+    lstRecentConnections.Items.AddObject(RecentConnections[I].Server+'\'+RecentConnections[I].Database,RecentConnections[I])
   end;
 end;
 
@@ -519,6 +515,7 @@ begin
       txtPort.Visible := False;
       lblSever.Visible := False;
       cmbServerName.Visible := False;
+      cmbDbEngine.ItemIndex:=1;
     end;
     4: // Firebird
     begin
@@ -534,6 +531,21 @@ begin
       txtPort.Text:='3050';
       txtUserName.Text := 'SYSDBA';
       txtPassword.Text := '';
+    end;
+    5: //PostgreSQL
+    begin
+      lblUseraname.Visible := True;
+      txtUserName.Visible := True;
+      lblPassword.Visible := true;
+      txtPassword.Visible := true;
+      lblPort.Visible := True;
+      txtPort.Visible := True;
+      lblSever.Visible := True;
+      cmbServerName.Visible := True;
+      txtPort.Text:='5432';
+      txtUserName.Text := 'postgres';
+      txtPassword.Text := '';
+      cmbDbEngine.ItemIndex:=1;
     end;
   end;
 end;
@@ -562,6 +574,7 @@ begin
     2: cmb.Canvas.Draw(ARect.Left, ARect.Top, bmpMySqlType);
     3: cmb.Canvas.Draw(ARect.Left, ARect.Top, bmpSqliteType);
     4 :cmb.Canvas.Draw(ARect.Left, ARect.Top, bmpFirebird);
+    5 :cmb.Canvas.Draw(ARect.Left,ARect.Top,bmpPostgreSQL);
   end;
 
   cmb.Canvas.Font.Size := 10;
@@ -611,6 +624,7 @@ begin
   bmpMySqlType := TBitmap.Create;
   bmpSqliteType := TBitmap.Create;
   bmpFirebird := TBitmap.Create;
+  bmpPostgreSQL := TBitmap.Create;
 
   bmpSqlDBEngine:=TBitmap.Create;
   bmpZeosEngine := TBitmap.Create;
@@ -620,6 +634,7 @@ begin
   imgDatabaseTypes.GetBitmap(2, bmpMySqlType);
   imgDatabaseTypes.GetBitmap(3, bmpSqliteType);
   imgDatabaseTypes.GetBitmap(4, bmpFirebird);
+  imgDatabaseTypes.GetBitmap(5,bmpPostgreSQL);
 
   imgDbEngines.GetBitmap(0,bmpSqlDBEngine);
   imgDbEngines.GetBitmap(1,bmpZeosEngine);
@@ -637,6 +652,7 @@ begin
   bmpOracleType.Free;
   bmpSqlType.Free;
   bmpFirebird.Free;
+  bmpPostgreSQL.Free;
   RecentConnections.Free;
 end;
 

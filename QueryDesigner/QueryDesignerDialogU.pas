@@ -225,7 +225,7 @@ begin
   cmbDisplayMember.Color := clWindow;
   Height := 211;
 
-    lst := TAsDbUtils.GetTableNames(FDBInfo, FDBSchema);
+    lst := TAsDbUtils.GetTableNames(FDBInfo);
     try
       cmbForeignTable.Items.AddStrings(lst);
     finally
@@ -233,7 +233,7 @@ begin
     end;
 
 
-    lst := TAsDbUtils.GetColumnNames(FDBInfo, FSourceTable);
+    lst := TAsDbUtils.GetColumnNames(FDBInfo,FSourceTable);
     try
       cmbSourceField.Items.AddStrings(lst);
     finally

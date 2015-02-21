@@ -23,7 +23,8 @@ type
     dtOracle = 1,
     dtMySql = 2,
     dtSQLite = 3,
-    dtFirebirdd = 4
+    dtFirebirdd = 4,
+    dtPostgreSql = 5
    );
 
  TAsDatabaseEngineType =
@@ -67,6 +68,7 @@ type
    FDbType: TAsDatabaseType;
    FPassword: string;
    FPort: Integer;
+   FSchema: String;
    FServer: string;
    FUsername: string;
    FSqlCon:TSQLConnector;
@@ -83,6 +85,7 @@ type
    procedure SetPassword(AValue: string);
    procedure SetPort(AValue: Integer);
    procedure SetProperties(AValue: TStrings);
+   procedure SetSchema(AValue: String);
    procedure SetServer(AValue: string);
    procedure SetUsername(AValue: string);
    function GetConnectionsCreated:Boolean;
@@ -129,6 +132,8 @@ type
     property Connected:Boolean read GetIsConnected;
 
     property Properties:TStrings read GetProperties write SetProperties;
+
+    property Schema:String read FSchema write SetSchema;
 
   end;
 
@@ -212,6 +217,7 @@ type
 
   TAsForeignKey = class
   public
+    Constraint_Name:string;
     Schema:string;
     Table_Name:string;
     Column_Name:string;
@@ -304,10 +310,11 @@ type
     class function IsBlobGUID(aField: TField): boolean; experimental;
 
     {Returns an sql query limiting number of records depending dbtype}
-    class function GetTopRecordsSelect(dbtyp:TAsDatabaseType; TableName:string;NumberOfRecords:integer):string;overload;
+    class function GetTopRecordsSelect(dbtyp: TAsDatabaseType; Schema, TableName: string; NumberOfRecords: integer): string; overload;
 
     {Returns an sql query for a single column limiting number of records depending dbtype}
-    class function GetTopRecordsSelect(dbtyp:TAsDatabaseType; FieldName,TableName:string;NumberOfRecords:integer):string;overload;
+    class function GetTopRecordsSelect(dbtyp: TAsDatabaseType; Schema, TableName,
+     FieldName: string; NumberOfRecords: integer): string; overload;
 
     {Surrounds given expression with relevant symbols ie [],"",or '' according to db}
     class function SafeWrap(dbtyp:TAsDatabaseType; TableOrField:string):string;
@@ -340,31 +347,31 @@ type
     class function GetSchemas(DBInfo:TAsDbConnectionInfo):TStringList;
 
     {Gets db Tables for given scheme}
-    class function GetTablenames(DbInfo:TAsDbConnectionInfo; schema:string):TStringList;
+    class function GetTablenames(DbInfo:TAsDbConnectionInfo):TStringList;
 
     {Gets column names from db}
-    class function GetColumnNames(DbInfo:TAsDbConnectionInfo; TableName:string):TStringList;
+    class function GetColumnNames(DbInfo: TAsDbConnectionInfo; TableName: string): TStringList;
 
     {Gets primary keys of the given table}
-    class function GetPrimaryKeys(DbInfo:TAsDbConnectionInfo; Schema,TableName: string):TStringList;
+    class function GetPrimaryKeys(DbInfo:TAsDbConnectionInfo; TableName: string):TStringList;
 
     {Gets Foreign Keys of the giben table }
-    class function GetForeignKeys(DbInfo:TAsDbConnectionInfo; Schema,TableName: string):TAsForeignKeys;
+    class function GetForeignKeys(DbInfo:TAsDbConnectionInfo; TableName: string):TAsForeignKeys;
 
     {Gets basic column info for the given table}
-    class function GetColumns(DbInfo:TAsDbConnectionInfo; Schema,TableName:string):TAsColumns;
+    class function GetColumns(DbInfo:TAsDbConnectionInfo; TableName:string):TAsColumns;
 
     {Gets info about indexes of the given table}
-    class function GetIndexes(DbInfo:TAsDbConnectionInfo; Schema,TableName:string):TAsIndexes;
+    class function GetIndexes(DbInfo:TAsDbConnectionInfo; TableName:string):TAsIndexes;
 
     {Gets all string/text columns from the given table}
-    class function GetTextFields(DbInfo:TAsDbConnectionInfo; Schema,TableName:string):TStringList;
+    class function GetTextFields(DbInfo: TAsDbConnectionInfo; TableName: string): TStringList;
 
     {Gets basic trigger information about the given table}
-    class function GetTriggers(DbInfo:TAsDbConnectionInfo; Schema,TableName:string):TAsTriggers;
+    class function GetTriggers(DbInfo:TAsDbConnectionInfo; TableName:string):TAsTriggers;
 
     {Gets procedure names from the given dbInfo}
-    class function GetProcedureNames(DbInfo:TAsDbConnectionInfo; Schema:string):TStringList;
+    class function GetProcedureNames(DbInfo:TAsDbConnectionInfo):TStringList;
 
     {Gets paramteres a given procedure}
     class function GetProcedureParams(DbInfo:TAsDbConnectionInfo; ProcedureName:string):TAsProcedureParams;
@@ -385,7 +392,7 @@ uses
   AsOracleMetadata,
   AsMySqlMetadata,
   AsFirebirdMetadata,
-  AsSqliteMetadata;
+  AsSqliteMetadata, AsPostgresMetadata;
 
 { TAsRegExUtils }
 
@@ -593,6 +600,7 @@ begin
     deZeos:
      begin
        FZCon:=FDBInfo.ZeosConnection;
+       FZCon.AutoCommit:=False;
        FZQuery:=TZQuery.Create(Self);
        FZQuery.Connection:=FZCon;
        FZQuery.AfterPost:=@AfterPost;
@@ -695,7 +703,11 @@ begin
       FZQuery.Post;
       FZQuery.ApplyUpdates;
     end;
-    deSqlDB: FQuery.Post;
+    deSqlDB:
+    begin
+      FQuery.Post;
+      FCon.Transaction.CommitRetaining;
+    end;
  end;
 end;
 
@@ -796,6 +808,7 @@ begin
     dtMySql: Result := TAsMySqlMetadata.Create(DbInfo);
     dtFirebirdd: Result := TAsFirebirdMetadata.Create(DbInfo);
     dtSQLite: Result := TAsSqliteMetadata.Create(DbInfo);
+    dtPostgreSql: Result:=TAsPostgresMetadata.Create(DbInfo);
  end;
 end;
 
@@ -859,25 +872,27 @@ begin
   end;
 end;
 
-class function TAsDbUtils.GetTopRecordsSelect(dbtyp: TAsDatabaseType;
+class function TAsDbUtils.GetTopRecordsSelect(dbtyp: TAsDatabaseType; Schema,
  TableName: string; NumberOfRecords: integer): string;
 begin
- case dbtyp of
-  dtMsSql:Result :='SELECT TOP '+IntToStr(NumberOfRecords)+' * FROM ['+TableName+']';
-  dtOracle:Result := 'SELECT * FROM "'+TableName+'" WHERE ROWNUM <= '+IntToStr(NumberOfRecords);
-  dtMySql,dtSQLite: Result:='SELECT * FROM '+TableName+' LIMIT '+IntToStr(NumberOfRecords);
-  dtFirebirdd: Result:='SELECT FIRST '+IntToStr(NumberOfRecords)+' * FROM '+TableName;
+  case dbtyp of
+  dtMsSql:Result :='SELECT TOP '+IntToStr(NumberOfRecords)+' * FROM '+SafeWrap(dbtyp, Schema)+'.'+SafeWrap(dbtyp,TableName);
+  dtOracle:Result := 'SELECT * FROM '+SafeWrap(dbtyp,Schema)+'.'+SafeWrap(dbtyp,TableName)+' WHERE ROWNUM <= '+IntToStr(NumberOfRecords);
+  dtMySql,dtSQLite:Result:='SELECT * FROM '+SafeWrap(dbtyp,TableName)+' LIMIT '+IntToStr(NumberOfRecords);
+  dtPostgreSql: Result:='SELECT * FROM '+SafeWrap(dbtyp,Schema)+'.'+SafeWrap(dbtyp,TableName)+' LIMIT '+IntToStr(NumberOfRecords);
+  dtFirebirdd: Result:='SELECT FIRST '+IntToStr(NumberOfRecords)+' * FROM '+SafeWrap(dbtyp,TableName);
  end;
 end;
 
 class function TAsDbUtils.GetTopRecordsSelect(dbtyp: TAsDatabaseType;
- FieldName, TableName: string; NumberOfRecords: integer): string;
+ Schema, TableName,FieldName: string; NumberOfRecords: integer): string;
 begin
  case dbtyp of
-  dtMsSql:Result :='SELECT TOP '+IntToStr(NumberOfRecords)+' ['+FieldName+'] FROM ['+TableName+']';
-  dtOracle:Result := 'SELECT "'+FieldName+'" FROM "'+TableName+'" WHERE ROWNUM <= '+IntToStr(NumberOfRecords);
-  dtMySql,dtSQLite: Result:='SELECT '+FieldName+' FROM '+TableName+' LIMIT '+IntToStr(NumberOfRecords);
-  dtFirebirdd: Result:='SELECT FIRST '+IntToStr(NumberOfRecords)+' "'+FieldName+'" FROM '+TableName;
+  dtMsSql:Result :='SELECT TOP '+IntToStr(NumberOfRecords)+' '+FieldName+' FROM '+SafeWrap(dbtyp,Schema)+'.'+SafeWrap(dbtyp,TableName)+'';
+  dtOracle:Result := 'SELECT '+SafeWrap(dbtyp,FieldName)+' FROM '+SafeWrap(dbtyp,Schema)+'.'+SafeWrap(dbtyp,TableName)+' WHERE ROWNUM <= '+IntToStr(NumberOfRecords);
+  dtMySql,dtSQLite:Result:='SELECT '+SafeWrap(dbtyp,FieldName)+' FROM '+SafeWrap(dbtyp,TableName)+' LIMIT '+IntToStr(NumberOfRecords);
+  dtPostgreSql: Result:='SELECT '+SafeWrap(dbtyp,FieldName)+' FROM '+SafeWrap(dbtyp,Schema)+'.'+SafeWrap(dbtyp,TableName)+' LIMIT '+IntToStr(NumberOfRecords);
+  dtFirebirdd: Result:='SELECT FIRST '+IntToStr(NumberOfRecords)+' '+SafeWrap(dbtyp,FieldName)+' FROM '+SafeWrap(dbtyp,TableName);
  end;
 end;
 
@@ -887,7 +902,7 @@ begin
  case dbtyp of
   dtMsSql,dtSQLite:Result:='['+TableOrField+']';
   dtMySql:Result:='`'+TableOrField+'`';
-  dtOracle,dtFirebirdd:Result:='"'+TableOrField+'"';
+  dtOracle,dtFirebirdd,dtPostgreSql:Result:='"'+TableOrField+'"';
  end;
 end;
 
@@ -914,31 +929,21 @@ begin
     dtMsSql: Result:='MSSQLServer';
     dtOracle:Result:='Oracle';
     dtMySql:Result:='MySQL 5.0';
+    dtPostgreSql:Result:='PostgreSQL';
   end;
 end;
 
 class function TAsDbUtils.DatabaseTypeAsString(DbType: TAsDatabaseType;
  ALowerCase: Boolean): string;
-var
-  s:string;
 begin
-  if DbType in [dtMsSql,dtMySql,dtOracle,dtSQLite,dtFirebirdd] then
-  begin
-  s := GetEnumName(TypeInfo(DbType),Integer(DbType));
-  if ALowerCase then
-  Result := LowerCase(Copy(s,3,Length(s)))
-  else
-  Result := (Copy(s,3,Length(s)));
-  end else
-  begin
-    Result := '';
-  end;
-
   case DbType of
-    dtFirebirdd : Result := Result+'-2.5';
-    dtSQLite : Result := Result+'-3';
+    dtFirebirdd : Result := 'firebirdd-2.5';
+    dtSQLite : Result := 'sqlite-3';
+    dtMsSql: Result:='mssql';
+    dtOracle:Result:='oracle';
+    dtMySql:Result:='mysql';
+    dtPostgreSql:Result:='postgresql-9';
   end;
-
 end;
 
 class function TAsDbUtils.DatabaseTypeFromString(DbTypeString: string
@@ -953,7 +958,7 @@ begin
     s := GetEnumName(TypeInfo(TAsDatabaseType),I);
     s := Copy(s,3,Length(s));
 
-    if lowercase(s) = lowercase(TAsStringUtils.RemoveChars(DbTypeString,['-','3','2','.','5'])) then
+    if lowercase(s) = lowercase(TAsStringUtils.RemoveChars(DbTypeString,['-','3','2','.','5','9'])) then
     begin
       Result := TAsDatabaseType(I);
       Break;
@@ -982,7 +987,10 @@ begin
   Result:='SQLite3'
   else
   if (p='mysql') then
-  Result := 'MySQL 5.5';
+  Result := 'MySQL 5.5'
+  else
+  if (p='postgresql-9') then
+  Result := 'postgresql';
 end;
 
 class function TAsDbUtils.CheckSqlSyntax(SqlCommand: string; out
@@ -1049,21 +1057,21 @@ begin
   end;
 end;
 
-class function TAsDbUtils.GetTablenames(DbInfo: TAsDbConnectionInfo;
- schema: string): TStringList;
+class function TAsDbUtils.GetTablenames(DbInfo: TAsDbConnectionInfo
+  ): TStringList;
 var
  md:TAsDbMetadata;
 begin
   md := MakeEngine(DbInfo);
   try
-    Result := md.GetTablenames(schema);
+    Result := md.GetTablenames(DbInfo.Schema);
   finally
     DisposeEngine(DbInfo,md);
   end;
 end;
 
 class function TAsDbUtils.GetColumnNames(DbInfo: TAsDbConnectionInfo;
- TableName: string): TStringList;
+  TableName: string): TStringList;
 var
  ds:TAsQuery;
  I: Integer;
@@ -1072,7 +1080,7 @@ begin
   try
      ds := TAsQuery.Create(DbInfo);
      try
-      ds.Open(GetTopRecordsSelect(DbInfo.DbType,TableName,1));
+      ds.Open(GetTopRecordsSelect(DbInfo.DbType,DbInfo.Schema ,TableName,1));
       for I:=0 to ds.FieldCount-1 do
        begin
         Result.Add(ds.Fields[I].FieldName);
@@ -1089,61 +1097,61 @@ begin
   end;
 end;
 
-class function TAsDbUtils.GetPrimaryKeys(DbInfo: TAsDbConnectionInfo; Schema,
- TableName: string): TStringList;
+class function TAsDbUtils.GetPrimaryKeys(DbInfo: TAsDbConnectionInfo;
+  TableName: string): TStringList;
 var
  md:TAsDbMetadata;
 begin
   md := MakeEngine(DbInfo);
   try
-    Result := md.GetPrimaryKeys(schema,TableName);
+    Result := md.GetPrimaryKeys(DbInfo.Schema,TableName);
   finally
      DisposeEngine(DbInfo,md);
   end;
 
 end;
 
-class function TAsDbUtils.GetForeignKeys(DbInfo: TAsDbConnectionInfo; Schema,
- TableName: string): TAsForeignKeys;
+class function TAsDbUtils.GetForeignKeys(DbInfo: TAsDbConnectionInfo;
+  TableName: string): TAsForeignKeys;
 var
  md:TAsDbMetadata;
 begin
   md := MakeEngine(DbInfo);
   try
-    Result := md.GetForeignKeys(schema,TableName);
+    Result := md.GetForeignKeys(DbInfo.Schema,TableName);
   finally
      DisposeEngine(DbInfo,md);
   end;
 end;
 
-class function TAsDbUtils.GetColumns(DbInfo: TAsDbConnectionInfo; Schema,
- TableName: string): TAsColumns;
+class function TAsDbUtils.GetColumns(DbInfo: TAsDbConnectionInfo;
+  TableName: string): TAsColumns;
 var
  md:TAsDbMetadata;
 begin
   md := MakeEngine(DbInfo);
   try
-    Result := md.GetColumns(schema,TableName);
+    Result := md.GetColumns(DbInfo.Schema,TableName);
   finally
      DisposeEngine(DbInfo,md);
   end;
 end;
 
-class function TAsDbUtils.GetIndexes(DbInfo: TAsDbConnectionInfo; Schema,
- TableName: string): TAsIndexes;
+class function TAsDbUtils.GetIndexes(DbInfo: TAsDbConnectionInfo;
+  TableName: string): TAsIndexes;
 var
  md:TAsDbMetadata;
 begin
   md := MakeEngine(DbInfo);
   try
-    Result := md.GetIndexes(schema,TableName);
+    Result := md.GetIndexes(DbInfo.Schema,TableName);
   finally
      DisposeEngine(DbInfo,md);
   end;
 end;
 
-class function TAsDbUtils.GetTextFields(DbInfo: TAsDbConnectionInfo; Schema,
- TableName: string): TStringList;
+class function TAsDbUtils.GetTextFields(DbInfo: TAsDbConnectionInfo;
+  TableName: string): TStringList;
 var
   ds:TAsQuery;
   I: Integer;
@@ -1153,7 +1161,7 @@ begin
  ds := TAsQuery.Create(DbInfo);
  try
   try
-    ds.Open(GetTopRecordsSelect(DbInfo.DbType,TableName,1));
+    ds.Open(GetTopRecordsSelect(DbInfo.DbType,DbInfo.Schema,TableName,1));
     for I:=0 to ds.FieldCount-1 do
     begin
       if ds.Fields[I].DataType in [ftString,ftWideString] then
@@ -1167,27 +1175,27 @@ begin
 
 end;
 
-class function TAsDbUtils.GetTriggers(DbInfo: TAsDbConnectionInfo; Schema,
- TableName: string): TAsTriggers;
+class function TAsDbUtils.GetTriggers(DbInfo: TAsDbConnectionInfo;
+  TableName: string): TAsTriggers;
 var
  md:TAsDbMetadata;
 begin
   md := MakeEngine(DbInfo);
   try
-    Result := md.GetTriggers(schema,TableName);
+    Result := md.GetTriggers(DbInfo.Schema,TableName);
   finally
    DisposeEngine(DbInfo,md);
   end;
 end;
 
-class function TAsDbUtils.GetProcedureNames(DbInfo: TAsDbConnectionInfo;
- Schema: string): TStringList;
+class function TAsDbUtils.GetProcedureNames(DbInfo: TAsDbConnectionInfo
+  ): TStringList;
 var
  md:TAsDbMetadata;
 begin
   md := MakeEngine(DbInfo);
   try
-    Result := md.GetProcedureNames(schema);
+    Result := md.GetProcedureNames(DbInfo.Schema);
   finally
    DisposeEngine(DbInfo,md);
   end;
@@ -1380,6 +1388,12 @@ begin
  end;
 end;
 
+procedure TAsDbConnectionInfo.SetSchema(AValue: String);
+begin
+  if FSchema=AValue then Exit;
+  FSchema:=AValue;
+end;
+
 procedure TAsDbConnectionInfo.SetServer(AValue: string);
 begin
  FServer:=AValue;
@@ -1444,6 +1458,7 @@ begin
   FUsername:=TAsDbConnectionInfo(Source).Username;
   FPassword:=TAsDbConnectionInfo(Source).Password;
   FPort:=TAsDbConnectionInfo(Source).Port;
+  FSchema:= TAsDbConnectionInfo(Source).Schema;
   if TAsDbConnectionInfo(Source).SqlConnection <> nil then
   begin
       if FSqlCon<>nil then

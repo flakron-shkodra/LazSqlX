@@ -1,0 +1,35 @@
+bigint
+bigserial
+bit
+bit varying
+boolean
+box
+bytea
+character varying
+character
+cidr
+circle
+date
+double precision
+inet
+integer
+interval
+line
+lseg
+macaddr
+money
+numeric
+path
+point
+polygon
+real
+smallint
+serial
+text
+time
+timestamp
+tsquery
+tsvector
+txid_snapshot
+uuid
+xml

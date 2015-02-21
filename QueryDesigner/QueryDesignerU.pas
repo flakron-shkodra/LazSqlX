@@ -1172,7 +1172,7 @@ var
 begin
 
   try
-    lst := TAsDbUtils.GetTablenames(FDbInfo,FSchema);
+    lst := TAsDbUtils.GetTablenames(FDbInfo);
 
 
     if QueryDesignerTables = nil then

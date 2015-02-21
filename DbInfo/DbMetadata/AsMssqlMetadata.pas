@@ -118,7 +118,8 @@ begin
  Result := TAsForeignKeys.Create;
 
  sql:=
- 'SELECT t.table_schema [SCHEMA], '+
+ 'SELECT Object_name(constraint_object_id) CONSTRAINT_NAME, '+
+  ' t.table_schema [SCHEMA], '+
   ' OBJECT_NAME(fkc.parent_object_id) TABLE_NAME,'+
   ' c.NAME COLUMN_NAME,'+
   ' t1.table_schema FOREIGN_SCHEMA,'+

@@ -63,10 +63,10 @@ object DesignTableForm: TDesignTableForm
     Height = 478
     Top = 37
     Width = 692
-    ActivePage = tabFields
+    ActivePage = tabDependencies
     Anchors = [akTop, akLeft, akRight, akBottom]
     Images = ilTableInfoImages
-    TabIndex = 0
+    TabIndex = 1
     TabOrder = 0
     object tabFields: TTabSheet
       Caption = 'Fields'
@@ -155,8 +155,12 @@ object DesignTableForm: TDesignTableForm
         Align = alClient
         Columns = <        
           item
-            Caption = 'Column'
+            Caption = 'Constraint'
             ImageIndex = 1
+            Width = 150
+          end        
+          item
+            Caption = 'Local Column'
             Width = 150
           end        
           item

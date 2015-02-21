@@ -26,6 +26,7 @@ type
     MySqlDataTypes:TStringList;static;
     SqliteDataTypes:TStringList;static;
     FirebirdDataTypes:TStringList;static;
+    PostgreSqlDataTypes:TStringList;static;
     SqlReservedKeywords:TStringList;static;
     FileTypeDetector:TStringList;static;
     LoadingGif:TMemoryStream;static;
@@ -38,6 +39,7 @@ type
 
 const
 
+  POSTGRESQL_TYPES_FILENAME='PostgreSqlDataTypes.dt';
   FIREBIRD_TYPES_FILENAME = 'FirebirdDataTypes.dt';
   MSSQL_TYPES_FILENAME='MSSqlDataTypes.dt';
   MYSQL_TYPES_FILENAME = 'MySqlDataTypes.dt';
@@ -115,8 +117,11 @@ initialization
    TLazSqlXResources.OracleDataTypes := TStringList.Create;
    TLazSqlXResources.SqliteDataTypes := TStringList.Create;
    TLazSqlXResources.FirebirdDataTypes := TStringList.Create;
+   TLazSqlXResources.PostgreSqlDataTypes := TStringList.Create;
+
    TLazSqlXResources.FileTypeDetector := TStringList.Create;
    TLazSqlXResources.LoadingGif := TMemoryStream.Create;
+
 
    if FileExists(DefPath+SQL_KEYWORDS_FILENAME) then
     TLazSqlXResources.SqlReservedKeywords.LoadFromFile(DefPath+SQL_KEYWORDS_FILENAME);
@@ -138,6 +143,12 @@ initialization
   if FileExists(DefPath+FIREBIRD_TYPES_FILENAME) then
   TLazSqlXResources.FirebirdDataTypes.LoadFromFile(DefPath+FIREBIRD_TYPES_FILENAME);
 
+  if FileExists(DefPath+POSTGRESQL_TYPES_FILENAME) then
+  TLazSqlXResources.PostgreSqlDataTypes.LoadFromFile(DefPath+POSTGRESQL_TYPES_FILENAME);
+
+  if FileExists(DefPath+FIREBIRD_TYPES_FILENAME) then
+  TLazSqlXResources.FirebirdDataTypes.LoadFromFile(DefPath+FIREBIRD_TYPES_FILENAME);
+
   if FileExists(DefPath+FILETYPE_DETECTOR_FILENAME) then
   TLazSqlXResources.FileTypeDetector.LoadFromFile(DefPath+FILETYPE_DETECTOR_FILENAME);
 
@@ -151,6 +162,7 @@ initialization
 
 
 finalization
+  TLazSqlXResources.PostgreSqlDataTypes.Free;
   TLazSqlXResources.SqlReservedKeywords.Free;
   TLazSqlXResources.MsSqlDataTypes.Free;
   TLazSqlXResources.OracleDataTypes.Free;

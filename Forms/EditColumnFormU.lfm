@@ -9,7 +9,7 @@ object EditColumnForm: TEditColumnForm
   ClientWidth = 320
   OnShow = FormShow
   Position = poScreenCenter
-  LCLVersion = '1.0.10.0'
+  LCLVersion = '1.2.6.0'
   object btnApply: TBitBtn
     Left = 160
     Height = 22
@@ -111,9 +111,9 @@ object EditColumnForm: TEditColumnForm
     TabOrder = 0
     object lblColumnName: TLabel
       Left = 14
-      Height = 16
+      Height = 15
       Top = 11
-      Width = 33
+      Width = 32
       Caption = 'Name'
       ParentColor = False
     end
@@ -126,9 +126,9 @@ object EditColumnForm: TEditColumnForm
     end
     object lblColumnType: TLabel
       Left = 14
-      Height = 16
+      Height = 15
       Top = 58
-      Width = 54
+      Width = 53
       Caption = 'Data Type'
       ParentColor = False
     end
@@ -152,17 +152,17 @@ object EditColumnForm: TEditColumnForm
     end
     object lblLength: TLabel
       Left = 14
-      Height = 16
+      Height = 15
       Top = 108
-      Width = 38
+      Width = 37
       Caption = 'Length'
       ParentColor = False
     end
     object lblPrecision: TLabel
       Left = 161
-      Height = 16
+      Height = 15
       Top = 108
-      Width = 49
+      Width = 48
       Caption = 'Precision'
       ParentColor = False
     end

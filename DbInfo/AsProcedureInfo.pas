@@ -364,6 +364,10 @@ begin
           begin
             Result := 'execute procedure '+procName+' '+ValuesOnly;
           end;
+          dtPostgreSql:
+          begin
+            Result := 'select '+procName+'('+ValuesOnly+')';
+          end;
         end;
 
       except

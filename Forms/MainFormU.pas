@@ -71,7 +71,8 @@ type
     actFindReplace: TAction;
     actClearSessionHistory: TAction;
     actAbout: TAction;
-    actHelp: TAction;
+    actChmHelp: TAction;
+    actPdfHelp: TAction;
     actRefreshProcedures: TAction;
     actOpen: TAction;
     actPrint: TAction;
@@ -94,7 +95,9 @@ type
     GridPrinter: TFrPrintGrid;
     imgLogo: TImage;
     itmDataIporter: TMenuItem;
-    mitHelpShow: TMenuItem;
+    mitSep13: TMenuItem;
+    mitHelpPDF: TMenuItem;
+    mitHelpCHM: TMenuItem;
     MenuItem4: TMenuItem;
     mitClearSession: TMenuItem;
     mitPrint: TMenuItem;
@@ -287,13 +290,14 @@ type
     procedure actGridCopyRowsAsInsertExecute(Sender: TObject);
     procedure actGridCopyRowsWithHeadersExecute(Sender: TObject);
     procedure actDataImporterExecute(Sender: TObject);
-    procedure actHelpExecute(Sender: TObject);
+    procedure actChmHelpExecute(Sender: TObject);
     procedure actNewTabExecute(Sender: TObject);
     procedure actExportJSONExecute(Sender: TObject);
     procedure actExportRTFExecute(Sender: TObject);
     procedure actNewTableExecute(Sender: TObject);
     procedure actOpenExecute(Sender: TObject);
     procedure actOpenTableExecute(Sender: TObject);
+    procedure actPdfHelpExecute(Sender: TObject);
     procedure actPrintExecute(Sender: TObject);
     procedure actQueryDesignerExecute(Sender: TObject);
     procedure actRefreshProceduresExecute(Sender: TObject);
@@ -649,6 +653,7 @@ begin
           xmldoc.DocumentElement.AppendChild(ServerNode);
          end;
 
+         if FPageControl.Tag=0 then
          for I:=0 to FPageControl.PageCount-1 do
          begin
            QueryElement := xmldoc.CreateElement(FPageControl.Pages[I].Name);
@@ -1072,7 +1077,7 @@ var
   cs:TAsColumns;
 begin
   try
-    cs := TAsDbUtils.GetColumns(FDBInfo,cmbSchema.Text, lstTables.Items[lstTables.ItemIndex]);
+    cs := TAsDbUtils.GetColumns(FDBInfo,lstTables.Items[lstTables.ItemIndex]);
   finally
     cs.Free;
   end;
@@ -1166,6 +1171,7 @@ begin
         actNewTabExecute(nil);
       end;
       FillSchemas;
+      FDBInfo.Schema:=cmbSchema.Text;
       FillTables;
       FillProcedures;
       pgcLeft.ActivePageIndex := 0;
@@ -1354,10 +1360,19 @@ begin
   end;
 
 
-  if FDBInfo.DbType = dtOracle then
-    cmbSchema.ItemIndex := cmbSchema.Items.IndexOf(FDBInfo.UserName)
+  case FDBInfo.DbType of
+    dtMsSql:cmbSchema.ItemIndex := cmbSchema.Items.IndexOf('dbo');
+    dtOracle: cmbSchema.ItemIndex := cmbSchema.Items.IndexOf(FDBInfo.UserName);
+    dtPostgreSql:cmbSchema.ItemIndex := cmbSchema.Items.IndexOf('public');
   else
     cmbSchema.ItemIndex := 0;
+  end;
+
+  if cmbSchema.ItemIndex<0 then
+  begin
+    if cmbSchema.Items.Count>0 then
+    cmbSchema.ItemIndex:=0;
+  end;
 end;
 
 procedure TMainForm.FillTables;
@@ -1367,7 +1382,7 @@ begin
 
   try
     lstTables.Clear;
-    list := TAsDbUtils.GetTablenames(FDBInfo, cmbSchema.Items[cmbSchema.ItemIndex]);
+    list := TAsDbUtils.GetTablenames(FDBInfo);
     lstTables.Items.AddStrings(list);
 
     FPageControl.Tables.Clear;
@@ -1391,7 +1406,7 @@ begin
   if FDBInfo.DbType=dtSQLite then exit;
   lstProcedures.Clear;
   try
-    lst := TAsDbUtils.GetProcedureNames(FDBInfo,cmbSchema.Text);
+    lst := TAsDbUtils.GetProcedureNames(FDBInfo);
     lstProcedures.Items.AddStrings(lst);
     if lstProcedures.Count > 0 then
       lstProcedures.ItemIndex := 0;
@@ -1449,13 +1464,19 @@ begin
       begin
         qr.SQL.Text := 'SELECT ROUTINE_DEFINITION FROM INFORMATION_SCHEMA.ROUTINES ' +
           ' WHERE ROUTINE_SCHEMA = ''' + FDBInfo.Database +
-          ''' AND ROUTINE_TYPE = ''PROCEDURE'' AND ROUTINE_NAME = "' + procname + '";';
+          ''' AND ROUTINE_TYPE = ''PROCEDURE'' AND ROUTINE_NAME = ''' + procname + ''';';
       end;
       dtFirebirdd:
       begin
         qr.SQL.Text :=
           'SELECT r.RDB$PROCEDURE_SOURCE FROM RDB$PROCEDURES r where r.RDB$PROCEDURE_NAME=''' + procname
           + '''';
+      end;
+      dtPostgreSql:
+      begin
+         qr.SQL.Text := 'SELECT ROUTINE_DEFINITION FROM INFORMATION_SCHEMA.ROUTINES ' +
+          ' WHERE ROUTINE_SCHEMA = ''' + cmbSchema.Text +
+          ''' AND (ROUTINE_TYPE = ''PROCEDURE'' or ROUTINE_TYPE = ''FUNCTION'' ) AND SPECIFIC_NAME = ''' + procname + ''';';
       end;
     end;
 
@@ -1478,11 +1499,17 @@ begin
 end;
 
 procedure TMainForm.ExecuteQuery(IsTableData: boolean);
+var
+  strActiveTablename:string;
 begin
  actExecute.ImageIndex:=61;
  actExecute.Hint:='Stop execution';
  FLoadingIndicator.StartAnimation;
- FPageControl.ActiveTab.RunQuery(IsTableData,cmbSchema.Text,lstTables.Items[lstTables.ItemIndex] );
+
+ if lstTables.Count>0 then
+  strActiveTablename := lstTables.Items[lstTables.ItemIndex];
+
+ FPageControl.ActiveTab.RunQuery(IsTableData,cmbSchema.Text,strActiveTablename);
 end;
 
 procedure TMainForm.EditSpecialField(Sender: TObject);
@@ -1730,6 +1757,11 @@ begin
  ExecuteQuery(True);
 end;
 
+procedure TMainForm.actPdfHelpExecute(Sender: TObject);
+begin
+  OpenDocument(ChangeFileExt(Application.ExeName,'.pdf'));
+end;
+
 procedure TMainForm.actPrintExecute(Sender: TObject);
 var
   p:TAsSqlParser;
@@ -1760,6 +1792,7 @@ begin
     begin
       actNewTab.Execute;
       FPageControl.ActiveTab.QueryEditor.Lines.AddStrings(QueryDesignerForm.SQLQuery);
+      FPageControl.ScanNeeded;
     end;
   end;
 end;
@@ -2210,7 +2243,7 @@ begin
   end;
 end;
 
-procedure TMainForm.actHelpExecute(Sender: TObject);
+procedure TMainForm.actChmHelpExecute(Sender: TObject);
 begin
  OpenDocument(ChangeFileExt(Application.ExeName,'.chm'));
 end;
@@ -2341,8 +2374,10 @@ end;
 
 procedure TMainForm.cmbSchemaChange(Sender: TObject);
 begin
-  FillTables;
-  FillProcedures;
+   FDBInfo.Schema:=cmbSchema.Text;
+   FillTables;
+   FillProcedures;
+
 end;
 
 procedure TMainForm.EditSelectAll1Execute(Sender: TObject);
@@ -2503,6 +2538,7 @@ begin
  end;
  sbMain.Panels[3].Text:=FPageControl.ActiveTab.Message;
  sbMain.Panels[2].Text:= '';
+ FPageControl.ScanNeeded;
 end;
 
 end.

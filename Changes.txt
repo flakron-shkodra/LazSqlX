@@ -1,3 +1,8 @@
+v.5.0.0.1570
+
+-PostgreSQL support
+-BugGixes
+
 v.4.7.2.1535
 
 New:
@@ -93,8 +98,5 @@ Code:
 -Fix: DataImporter's Import was always true, even if failed
 -Other minor fixes 
 
-Next:
-alter,add,create,drop column/table to be handled similarly as with IAsDbMetadata coding style: an interface then classes that implement that
-
 Help:
- RunProcedure Dialog: help needed about oracle procedure execution through TSQLQuery or TZQuery they both fail by default an)
+ RunProcedure Dialog: help needed about oracle procedure execution through TSQLQuery or TZQuery they both fail by default)

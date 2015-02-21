@@ -20,13 +20,14 @@ type
   private
     FDbInfo:TAsDbConnectionInfo;
     FDestDbName : string;
+    function GetFieldTypeAs(ftype:TFieldType):String;
   public
     constructor Create(DestDBInfo:TAsDbConnectionInfo; DestDbName:string);
     {get sql script for create}
     function GetCreateScript(Info:TAsTableInfo;CreateConstraints: boolean; OverrideDefaultTypes: boolean):string;
     {Create table}
     procedure MakeTable(info: TAsTableInfo; CreateConstraints:boolean=true; OverrideDefaultTypes: boolean = False);
-    {Create constraints for Info}
+    {Create constra0ints for Info}
     procedure CreateConstraints(info:TAsTableInfo);
     {Create constraincts for all importedKeys in tableInfos}
     procedure CreateConstraintsForAll(infos:TAsTableInfos);
@@ -53,6 +54,112 @@ uses Utils;
 
 
 
+function TAsDatabaseCloner.GetFieldTypeAs(ftype: TFieldType): String;
+begin
+
+  case FDbInfo.DbType of
+  dtMsSql:
+         begin
+           case ftype of
+             ftCurrency,ftBCD,ftFloat: Result:='decimal';
+             ftMemo:Result := 'text';
+             ftWideMemo: Result := 'ntext';
+             ftWideString: Result:='nvarchar';
+             ftBlob,ftOraBlob: Result:='blob';
+             ftBoolean:Result:='bit';
+             ftDate,ftDateTime:Result:='datetime';
+             ftInteger,ftSmallint,ftLargeint: Result:='int' ;
+             ftAutoInc:Result:='int identity';
+             ftBytes,ftVarBytes: Result:='binary'
+             else
+             Result:='varchar';
+           end;
+         end;
+
+  dtOracle:
+          begin
+             case ftype of
+               ftCurrency,ftBCD,ftFloat: Result:='decimal';
+               ftWideMemo: Result := 'ntext';
+               ftWideString: Result:='nvarchar2';
+               ftBlob,ftOraBlob: Result :='blob';
+               ftBoolean:Result:='numeric';
+               ftDate,ftDateTime:Result:='date';
+               ftInteger,ftSmallint: Result:='numeric' ;
+               ftBytes,ftVarBytes: Result:='binary';
+               else
+               Result:='varchar2';
+             end;
+           end;
+  dtMySql:
+         begin
+           case ftype of
+             ftCurrency,ftBCD,ftFloat: Result:='decimal';
+             ftWideMemo: Result := 'text';
+             ftWideString: Result:='varchar';
+             ftBlob,ftOraBlob: Result:='blob';
+             ftBoolean:Result:='int';
+             ftDate,ftDateTime:Result:='varchar';
+             ftInteger,ftSmallint: Result:='int' ;
+             ftAutoInc:Result:='int unsigned auto_increment';
+             ftBytes,ftVarBytes: Result:='blob';
+             else
+             Result:='varchar';
+           end;
+         end;
+
+  dtSQLite:
+         begin
+           case ftype of
+              ftCurrency,ftBCD,ftFloat: Result:='real';
+              ftWideMemo: Result := 'text';
+              ftWideString: Result:='text';
+              ftBlob,ftOraBlob: Result:='blob';
+              ftBoolean:Result:='integer';
+              ftDate,ftDateTime:Result:='text';
+              ftInteger: Result:='integer' ;
+              ftBytes,ftVarBytes: Result:='blob';
+              else
+              Result:='text';
+            end;
+         end;
+  dtFirebirdd:
+             begin
+              case ftype of
+               ftCurrency,ftBCD,ftFloat: Result:='decimal';
+               ftWideMemo: Result := 'text';
+               ftWideString: Result:='varchar';
+               ftBlob,ftOraBlob: Result:='blob';
+               ftBoolean:Result:='int';
+               ftDate,ftDateTime:Result:='varchar';
+               ftInteger,ftAutoInc, ftSmallint: Result:='int' ;
+               ftBytes,ftVarBytes: Result:='blob';
+               else
+               Result:='varchar';
+             end;
+           end;
+  dtPostgreSql:
+            begin
+            case ftype of
+             ftCurrency,ftBCD,ftFloat: Result:='numeric';
+             ftWideMemo: Result := 'text';
+             ftWideString: Result:='character varying';
+             ftBlob,ftOraBlob:
+                begin
+                  Result:='bytea';
+                end;
+
+             ftBoolean:Result:='boolean';
+             ftDate,ftDateTime:Result:='date';
+             ftInteger,ftSmallint: Result:='bigint' ;
+             ftAutoInc:Result:='bigserial';
+             ftBytes,ftVarBytes: Result:='bytea';
+             else
+             Result:='character varying';
+             end;
+            end;
+  end;
+end;
 
 constructor TAsDatabaseCloner.Create(DestDBInfo: TAsDbConnectionInfo;
  DestDbName: string);
@@ -72,9 +179,10 @@ var
   HasPK: boolean;
   len:Integer;
   fname:string;
+  strDefaulType,strNewType:string;
 begin
 
-  sql := 'CREATE TABLE ' + info.Tablename + ' ( ' ;
+  sql := 'CREATE TABLE ' + info.Tablename + ' (' ;
 
 
   for I := 0 to info.AllFields.Count - 1 do
@@ -83,30 +191,30 @@ begin
     if not OverrideDefaultTypes then
       sql := sql + info.AllFields[I].FieldName + ' ' + info.AllFields[I].FieldType
     else
-      sql := sql + info.AllFields[I].GetCompatibleFieldName(FDbInfo.DbType)+ ' ' +  info.AllFields[I].GetFieldTypeAs(FDbInfo.DbType);
+      sql := sql + info.AllFields[I].GetCompatibleFieldName(FDbInfo.DbType)+ ' ' +  GetFieldTypeAs(info.AllFields[I].DataType);
 
     len := info.AllFields[I].Length;
 
     if len >2000 then
     len :=2000;
 
+    strDefaulType:= info.AllFields[I].FieldType;
+    if OverrideDefaultTypes then
+      strNewType:= lowercase(GetFieldTypeAs(info.AllFields[I].DataType))
+    else
+      strNewType:=strDefaulType;
 
-
-
-    if (lowercase(info.AllFields[I].GetFieldTypeAs(FDbInfo.DbType)) = 'varchar') or
-      (lowercase(info.AllFields[I].GetFieldTypeAs(FDbInfo.DbType)) = 'nvarchar') or
-      (LowerCase(info.AllFields[I].GetFieldTypeAs(FDbInfo.DbType)) = 'varchar2') or
-      (LowerCase(info.AllFields[I].GetFieldTypeAs(FDbInfo.DbType)) = 'nvarchar2') then
+    if (strNewType = 'varchar') or (strNewType = 'nvarchar') or (strNewType = 'varchar2') or
+      (strNewType = 'nvarchar2') or (strNewType='character varying') then
       begin
         if len>0 then
-          sql := sql + '( ' + IntToStr(len) + ')'
+          sql := sql + '(' + IntToStr(len) + ')'
         else
           sql := sql + '(50)';
       end;
 
 
-    if (info.AllFields[I].GetFieldTypeAs(FDbInfo.DbType) = 'decimal') or
-      (info.AllFields[I].GetFieldTypeAs(FDbInfo.DbType) = 'float') then
+      if (strNewType = 'decimal') or (strNewType = 'float') then
       begin
 
         if info.AllFields[I].Precision=0 then
@@ -123,16 +231,6 @@ begin
         sql := sql + '( ' + IntToStr(len) + ',' +
         IntToStr(info.AllFields[I].Precision) + ')';
       end;
-
-    if info.AllFields[I].IsIdentity then
-    begin
-
-      case FDbInfo.DbType of
-        dtMsSql: sql := sql + ' IDENTITY ';
-        dtMySql: sql := sql + ' unsigned auto_increment ';
-      end;
-
-    end;
 
     if not info.AllFields[I].AllowNull then
     begin
@@ -156,33 +254,44 @@ begin
     if FDbInfo.DbType in [dtOracle, dtMySql,dtFirebirdd] then
       sql := sql + ' CONSTRAINT ' + info.Tablename + '_PK ';
 
+    if FDbInfo.DbType<>dtPostgreSql then
+    begin
     sql := sql + ' PRIMARY KEY (';
 
-
-    for I := 0 to info.PrimaryKeys.Count - 1 do
-    begin
-
-      if I>15 then
+      for I := 0 to info.PrimaryKeys.Count - 1 do
       begin
-        sql := Copy(sql, 1, Length(sql) - 1);
-        break;
-      end;
 
-      sql := sql + info.PrimaryKeys[I].GetCompatibleFieldName(FDbInfo.DbType) +
-        LoopSeperator[integer(I < info.PrimaryKeys.Count - 1)];
-
-      if FDbInfo.DbType = dtSQLite then
-      begin
-        if info.PrimaryKeys.Count > 1 then
+        if I>15 then
         begin
           sql := Copy(sql, 1, Length(sql) - 1);
+          break;
         end;
-        sql := sql + ' ASC';
-        break;
-      end;
 
+        sql := sql + info.PrimaryKeys[I].GetCompatibleFieldName(FDbInfo.DbType) +
+          LoopSeperator[integer(I < info.PrimaryKeys.Count - 1)];
+
+        if FDbInfo.DbType = dtSQLite then
+        begin
+          if info.PrimaryKeys.Count > 1 then
+          begin
+            sql := Copy(sql, 1, Length(sql) - 1);
+          end;
+          sql := sql + ' ASC';
+          break;
+        end;
+      end;
     end;
     sql := sql + ' )';
+
+    if FDbInfo.DbType=dtPostgreSql then
+    begin
+      sql := sql +';' + LineEnding;
+      for I:= 0 to info.PrimaryKeys.Count-1 do
+      begin
+        sql := sql + ' ALTER TABLE ONLY '+Info.Tablename+' ADD CONSTRAINT '+ info.Tablename+'_'+info.PrimaryKeys[I].FieldName+' PRIMARY KEY ('+Info.PrimaryKeys[I].FieldName+');'+LineEnding;
+        break;//only one primary key
+      end;
+    end;
 
   end;
 
@@ -194,26 +303,25 @@ begin
       begin
         sql := sql + ',';
       end;
-      if FDbInfo.DbType<>dtFirebirdd then
+      if FDbInfo.DbType<>dtPostgreSql then
       begin
-      Sql := Sql + ' CONSTRAINT fk_' + info.ImportedKeys[I].ForeignTableName +
-        info.ImportedKeys[I].GetCompatibleForeignColumnName(FDbInfo.DbType) +
+      Sql := Sql + ' CONSTRAINT ' + TAsDbUtils.SafeWrap(FDbInfo.DbType,'fk_'+ info.ImportedKeys[I].ForeignTableName + info.ImportedKeys[I].ForeignColumnName) +
         ' FOREIGN KEY (' + info.ImportedKeys[I].GetCompatibleColumnName(FDbInfo.DbType) + ') ' +
         ' REFERENCES ' + info.ImportedKeys[I].ForeignTableName +
         '(' + info.ImportedKeys[I].GetCompatibleForeignColumnName(FDbInfo.DbType) + ') ';
 
       end else
       begin
-        Sql := Sql + ' CONSTRAINT fk_' + info.ImportedKeys[I].ForeignTableName +
-        info.ImportedKeys[I].GetCompatibleForeignColumnName(FDbInfo.DbType) +
-        ' FOREIGN KEY (' + info.ImportedKeys[I].GetCompatibleColumnName(FDbInfo.DbType) + ') ' +
-        ' REFERENCES ' + info.ImportedKeys[I].ForeignTableName +
-        '(' + info.ImportedKeys[I].GetCompatibleForeignColumnName(FDbInfo.DbType) + ') ';
+        sql :=sql+LineEnding+ ' ALTER TABLE ' +Info.Tablename + ' ADD FOREIGN KEY ('+ TAsDbUtils.SafeWrap(FDbInfo.DbType, info.ImportedKeys[I].ColumnName)+') ' +
+        ' REFERENCES '+info.ImportedKeys[I].ForeignTableName+'('+TAsDbUtils.SafeWrap(FDbInfo.DbType, info.ImportedKeys[I].ForeignColumnName)+');';
       end;
+
+
 
     end;
 
 
+  if FDbInfo.DbType <> dtPostgreSql then
   sql := sql + ')';
 
   if FDbInfo.DbType = dtMySql then
@@ -242,11 +350,19 @@ begin
 
   for I:=0 to info.ImportedKeys.Count-1 do
   begin
+    if FDbInfo.DbType <> dtPostgreSql then
+    begin
      sql := ' ALTER TABLE ' +info.Tablename +
               ' ADD FOREIGN KEY ('+info.ImportedKeys[I].ColumnName+') ' +
               ' REFERENCES '+info.ImportedKeys[I].ForeignTableName+'('+info.ImportedKeys[I].ForeignColumnName+')';
 
-     TAsDbUtils.ExecuteQuery(sql,FDbInfo);
+    end else
+    begin
+      sql := 'ALTER TABLE ONLY '+info.Tablename+' ADD CONSTRAINT '+info.ImportedKeys[I].Tablename+'_'+
+      info.ImportedKeys[I].ForeignTableName+'_'+info.ImportedKeys[I].ForeignColumnName+' FOREIGN KEY ('+info.ImportedKeys[I].ColumnName+') '+
+      ' REFERENCES '+info.ImportedKeys[I].ForeignTableName+'('+info.ImportedKeys[I].ForeignColumnName+')';
+    end;
+    TAsDbUtils.ExecuteQuery(sql,FDbInfo);
   end;
 end;
 
@@ -285,16 +401,22 @@ begin
       wt := swtNone;
   end;
 
-
-
   dbname:= TAsDbUtils.SafeWrap(FDbInfo.DbType, FDestDbName);
 
-  if FDbInfo.DbType in [dtMsSql,dtMySql] then
+  if FDbInfo.DbType in [dtMsSql,dtMySql,dtPostgreSql] then
   begin
     sql := 'CREATE DATABASE ' + dbname;
     TAsDbUtils.ExecuteQuery(sql,FDbInfo);
-    sql := 'USE '+dbname;
-    TAsDbUtils.ExecuteQuery(sql,FDbInfo);
+    if FDbInfo.DbType=dtPostgreSql then
+    begin
+      FDbInfo.Close;
+      FDbInfo.Database:=TAsStringUtils.RemoveChars(dbname,['"']);
+      FDbInfo.Open;
+    end else
+    begin
+      sql := 'USE '+dbname;
+      TAsDbUtils.ExecuteQuery(sql,FDbInfo);
+    end;
     FDbInfo.Database:=dbname;
   end else
   if FDbInfo.DbType in [dtSQLite,dtFirebirdd] then

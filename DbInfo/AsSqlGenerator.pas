@@ -110,7 +110,7 @@ begin
     FprocNames.Prefix := UpperCase(FprocNames.Prefix);
   end;
   FAsQuery := TAsQuery.Create(DbConInfo);
-  FlstExistingProcedures := TAsDbUtils.GetProcedureNames(FDBConInfo,FSchema);
+  FlstExistingProcedures := TAsDbUtils.GetProcedureNames(FDBConInfo);
 
 end;
 
@@ -150,7 +150,7 @@ begin
 
   FspPrefix := UpperCase(Prefix);
 
-  lstStoredProcs := TAsDbUtils.GetProcedureNames(FDBConInfo,FSchema);
+  lstStoredProcs := TAsDbUtils.GetProcedureNames(FDBConInfo);
 
 
   WriteLog('===============STORED PROCEDURE GENERATION BEGIN===============');
@@ -250,34 +250,39 @@ function TAsSqlGenerator.GenerateStoredProcedure(AsTableInfo: TAsTableInfo;
 var
   lstAll: TStringList;
   lst: TStringList;
+  spCreateWord:string;
 begin
   lstAll := TStringList.Create;
+    case FDBConInfo.DbType of
+     dtMsSql,dtMySql,dtFirebirdd: spCreateWord:=' CREATE ';
+     dtOracle,dtPostgreSql:spCreateWord := ' CREATE OR REPLACE ';
+    end;
 
     if QueryType = qtAll then
     begin
-      lst := GetCreateSql(AsTableInfo, qtSelect);
+      lst := GetCreateSql(AsTableInfo, qtSelect,spCreateWord);
       lstAll.AddStrings(lst);
       lst.Free;
 
-      lst := GetCreateSql(AsTableInfo, qtSelectItem);
+      lst := GetCreateSql(AsTableInfo, qtSelectItem,spCreateWord);
       lstAll.AddStrings(lst);
       lst.Free;
 
-      lst := GetCreateSql(AsTableInfo, qtInsert);
+      lst := GetCreateSql(AsTableInfo, qtInsert,spCreateWord);
       lstAll.AddStrings(lst);
       lst.Free;
 
-      lst := GetCreateSql(AsTableInfo, qtUpdate);
+      lst := GetCreateSql(AsTableInfo, qtUpdate,spCreateWord);
       lstAll.AddStrings(lst);
       lst.Free;
 
-      lst := GetCreateSql(AsTableInfo, qtDelete);
+      lst := GetCreateSql(AsTableInfo, qtDelete,spCreateWord);
       lstAll.AddStrings(lst);
       lst.Free;
     end
     else
     begin
-      lst := GetCreateSql(AsTableInfo, QueryType);
+      lst := GetCreateSql(AsTableInfo, QueryType,spCreateWord);
       lstAll.AddStrings(lst);
       lst.Free;
     end;
@@ -346,8 +351,8 @@ begin
     end;
     dtMySql:
     begin
-      SqlOpenBr := '';
-      SqlCloseBr := '';
+      SqlOpenBr := '`';
+      SqlCloseBr := '`';
       SqlTable := '';
       SqlTable := AsTableInfo.Tablename;
       SqlDot := '.';
@@ -364,8 +369,17 @@ begin
     end;
     dtFirebirdd:
     begin
-      SqlOpenBr := '';
-      SqlCloseBr := '';
+      SqlOpenBr := '"';
+      SqlCloseBr := '"';
+      SqlTable := AsTableInfo.Tablename;
+      SqlDot := '.';
+      SqlParamChar := ':';
+      SqlFromDot := '';
+    end;
+    dtPostgreSql:
+    begin
+      SqlOpenBr := '"';
+      SqlCloseBr := '"';
       SqlTable := AsTableInfo.Tablename;
       SqlDot := '.';
       SqlParamChar := ':';
@@ -581,7 +595,7 @@ begin
 
 
   FspPrefix := Prefix;
-  lstStoredProcs := TAsDbUtils.GetProcedureNames(FDBConInfo,FSchema);
+  lstStoredProcs := TAsDbUtils.GetProcedureNames(FDBConInfo);
 
   WriteLog('===============STORED PROCEDURE GENERATION BEGIN===============');
 
@@ -962,6 +976,30 @@ begin
       SqlEnd := 'END';
 
     end;
+    dtPostgreSql:
+    begin
+      SqlOpenBr := '"';
+      SqlCloseBr := '"';
+      SqlBeginProc := SqlSpKeyword + 'FUNCTION ';
+      if QueryType in [qtInsert,qtUpdate,qtDelete] then
+      begin
+        SqlAsProc := 'RETURNS void AS ';
+        SqlBegin := '$BODY$'+LineEnding+'declare '+LineEnding+'BEGIN';
+      end
+      else
+      begin
+        SqlAsProc := 'RETURNS refcursor AS ';
+        SqlBegin := '$BODY$'+LineEnding+'declare ref refcursor;'+LineEnding+'BEGIN';
+      end;
+
+      SqlParamChar := 'P';
+      SqlPreParam := '';
+      SqlPostParam := '';
+      SqlTablename := AsTableInfo.Tablename;
+      SqlDot := '.';
+
+      SqlEnd := 'END'+LineEnding+'$BODY$'+LineEnding+'LANGUAGE plpgsql VOLATILE';
+    end;
   end;
 
   if (AsTableInfo.PrimaryKeys.Count = 0) and not (QueryType in [qtSelect, qtInsert]) then
@@ -1079,18 +1117,16 @@ begin
       r.Add(SqlBeginProc + AsTableInfo.Schema + '.' + FspPrefix + '' +
         AsTableInfo.TableName + '' + FprocNames.pnSelect);
 
-      if FDBConInfo.DbType = dtOracle then
-      begin
-        r[r.Count - 1] :=
-          r[r.Count - 1] + ' (' + EC + 'RESULT' + EC + 'OUT' + EC +
-          'SYS_REFCURSOR' + EC + ')';
+      case FDBConInfo.DbType of
+        dtOracle :r[r.Count - 1] :=r[r.Count - 1] + ' (' + EC + 'RESULT' + EC + 'OUT' + EC +'SYS_REFCURSOR' + EC + ')';
+        dtPostgreSql: r.Add('()');
       end;
 
       r.Add(SqlAsProc + EC + SqlBegin);
 
-      if FDBConInfo.DbType = dtOracle then
-      begin
-        r.Add('OPEN' + EC + 'RESULT' + EC + 'FOR');
+      case FDBConInfo.DbType of
+        dtOracle: r.Add('OPEN' + EC + 'RESULT' + EC + 'FOR');
+        dtPostgreSql: r.Add( 'OPEN ref FOR ');
       end;
 
       r.Add('SELECT' + EC);
@@ -1114,10 +1150,11 @@ begin
 
       r.Add(') ' + SqlAsProc + ' ' + SqlBegin);
 
-      if FDBConInfo.DbType = dtOracle then
-      begin
-        r.Add('OPEN' + EC + 'RESULT' + EC + 'FOR');
+      case FDBConInfo.DbType of
+        dtOracle: r.Add('OPEN' + EC + 'RESULT' + EC + 'FOR');
+        dtPostgreSql: r.Add( 'OPEN ref FOR ');
       end;
+
       r.Add('SELECT' + EC);
       r.Add(tmpSelect.Text);
       r.Add('FROM' + EC + SqlOpenBr + AsTableInfo.schema + SqlCloseBr +
@@ -1216,6 +1253,7 @@ begin
     dtMySql: if (QueryType <> qtSelect) then
         r[r.Count - 1] := r[r.Count - 1] + ';';
     dtOracle: r[r.Count - 1] := r[r.Count - 1] + ';';
+    dtPostgreSql: r[r.Count - 1] := r[r.Count - 1] + ';'+LineEnding+'RETURN ref;';
   end;
 
 

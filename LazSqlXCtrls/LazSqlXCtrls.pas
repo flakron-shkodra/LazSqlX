@@ -356,52 +356,16 @@ begin
 end;
 
 procedure TLazSqlXTabSheet.OnQyeryAfterPost(DataSet: TDataSet);
-var
-  ds: TSQLQuery;
-  zq:TZQuery;
-  I: integer;
 begin
-  if (DataSet is TSQLQuery) then
-  begin
-    ds := (DataSet as TSQLQuery);
-    I := ds.RecNo;
-    ds.UpdateMode:=upWhereKeyOnly;
-    ds.ApplyUpdates;
-    if not ds.Active then
-    begin
-      ds.Open;
-      ds.RecNo := I;
-      ResizeDataGrid;
-    end;
-  end
-  else if (DataSet is TZQuery) then
-  begin
-    zq := (DataSet as TZQuery);
-    I:= zq.RecNo;
-    zq.ApplyUpdates;
-    if not zq.Active then
-    begin
-      zq.Open;
-      zq.RecNo:=I;
-      ResizeDataGrid();
-    end;
-  end;
-  FParent.FDBInfo.Commit;
+ FQuery.ApplyUpdates;
+ FDbInfoNew.Commit;
 end;
 
+
 procedure TLazSqlXTabSheet.OnQueryAfterDelete(DataSet: TDataSet);
-var
- ds: TSQLQuery;
 begin
-  if (DataSet is TSQLQuery) then
-  begin
-    ds := (DataSet as TSQLQuery);
-    ds.ApplyUpdates;
-  end else
-  if (DataSet is TZQuery) then
-  begin
-    (DataSet as TZQuery).ApplyUpdates;
-  end;
+ FQuery.ApplyUpdates;
+ FDbInfoNew.Commit;
 end;
 
 procedure TLazSqlXTabSheet.SetDataGrid(AValue: TDBGrid);
@@ -544,6 +508,8 @@ begin
 
   FQuery := TAsQuery.Create(FDbInfoNew);
   FQuery.Name := 'qr' + FNumbering;
+  FQuery.DataSet.AfterPost:=@OnQyeryAfterPost;
+  FQuery.DataSet.AfterDelete:=@OnQueryAfterDelete;
 
   FDataSource := TDataSource.Create(nil);
   FDataSource.DataSet := FQuery.DataSet;
@@ -838,10 +804,7 @@ procedure TLazSqlXPageControl.OnCompletionExecute(Sender: TObject);
       if (typ = 'FIELD') then
       begin
         if TAsStringUtils.ContainsChar(S, ' ') then
-          case DbInfo.DbType of
-            dtMsSql: s := '[' + s + ']';
-            dtOracle: s := '"' + s + '"';
-          end;
+         S :=TAsDbUtils.SafeWrap(FDBInfo.DbType,S);
       end;
 
       FSynComplete.ItemList.Add(s);
@@ -861,7 +824,7 @@ begin
   FSynComplete.ItemList.Clear;
   FlstCompletionItemType.Clear;
 
-  tbl := TAsStringUtils.RemoveChars(FSynComplete.CurrentString, ['"', '[', ']']);
+  tbl := TAsStringUtils.RemoveChars(FSynComplete.CurrentString, ['"', '[', ']','`']);
 
   lstVars := TStringList.Create;
   GetVariables( (ActivePage as TLazSqlXTabSheet).QueryEditor.Text, lstVars);
@@ -1038,11 +1001,8 @@ procedure TLazSqlXPageControl.OnCompletionSearchPos(var Posi: integer);
     begin
       if (typ = 'FIELD') then
       begin
-        if TAsStringUtils.ContainsChar(S, ' ') then
-          case DbInfo.DbType of
-            dtMsSql: s := '[' + s + ']';
-            dtOracle: s := '"' + s + '"';
-          end;
+         if TAsStringUtils.ContainsChar(S, ' ') then
+         S :=TAsDbUtils.SafeWrap(FDBInfo.DbType,S);
       end;
       FSynComplete.ItemList.Add(s);
       FlstCompletionItemType.Add(typ);
@@ -1062,7 +1022,7 @@ begin
   FlstCompletionItemType.Clear;
   lstVars := TStringList.Create;
   GetVariables((ActivePage as TLazSqlXTabSheet).QueryEditor.Text, lstVars);
-  tbl := TAsStringUtils.RemoveChars(FSynComplete.CurrentString, ['"', '[', ']']);
+  tbl := TAsStringUtils.RemoveChars(FSynComplete.CurrentString, ['"', '[', ']','`']);
   if tbl = '' then
   begin
     FSynComplete.ItemList.AddStrings(FTables);
@@ -1245,22 +1205,7 @@ begin
 
   try
 
-
-    case DbInfo.DbType of
-      dtMsSql, dtOracle, dtFirebirdd:
-      begin
-        lst := TStringList.Create;
-        FCon.GetFieldNames(table, lst);
-      end;
-      dtMySql:
-      begin
-       lst := TStringList.Create;
-       FZCon.GetColumnNames(table, '', lst);
-      end;
-      dtSQLite: lst := TAsDbUtils.GetColumnNames(DbInfo, table);
-    end;
-
-
+    lst := TAsDbUtils.GetColumnNames(FDBInfo,table);
 
     for I := 0 to lst.Count - 1 do
     begin
@@ -1331,7 +1276,6 @@ begin
   Added := True;
   CurrentStringLine := CurrentLine;
 
-
   if Trim(CurrentStringLine) <> EmptyStr then
     try
       try
@@ -1343,8 +1287,7 @@ begin
 
         for J := 0 to lstDel.Count - 1 do
         begin
-          currentString := TAsStringUtils.RemoveChars(lstDel[J],
-            ['[', ']', '"']);
+          currentString := TAsStringUtils.RemoveChars(lstDel[J],['[', ']', '"','`']);
           //get rid of [Tablename]
 
           tblIndex := FTables.IndexOf(currentString);
@@ -1381,8 +1324,7 @@ begin
         for I := 0 to lstBracketWords.Count - 1 do
         begin
 
-          currentString := TAsStringUtils.RemoveChars(lstBracketWords[I],
-            ['[', ']', '"']);  //get rid of [Tablename]
+          currentString := TAsStringUtils.RemoveChars(lstBracketWords[I],['[', ']', '"','`']);  //get rid of [Tablename]
           tblIndex := FTables.IndexOf(currentString);
 
           if tblIndex > -1 then
@@ -1445,15 +1387,12 @@ var
   I: integer;
   qe:TSynEdit;
 begin
+ FlstAlias.Clear;
+ FlstTableAlias.Clear;
  if PageCount>0 then
  begin
   qe := (ActivePage as TLazSqlXTabSheet).QueryEditor;
-  if Trim(qe.Text) = EmptyStr then
-  begin
-    FlstAlias.Clear;
-    FlstTableAlias.Clear;
-  end
-  else
+  if Trim(qe.Text) <> EmptyStr then
   begin
     for I := 0 to qe.Lines.Count - 1 do
     begin

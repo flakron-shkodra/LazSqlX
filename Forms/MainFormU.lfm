@@ -1,12 +1,12 @@
 object MainForm: TMainForm
-  Left = 444
-  Height = 652
-  Top = 224
-  Width = 1089
+  Left = 255
+  Height = 561
+  Top = 116
+  Width = 844
   Anchors = [akTop, akLeft, akRight, akBottom]
   Caption = 'SQL X Query '
-  ClientHeight = 632
-  ClientWidth = 1089
+  ClientHeight = 541
+  ClientWidth = 844
   KeyPreview = True
   Menu = ApplicationMainMenu
   OnClose = FormClose
@@ -20,7 +20,7 @@ object MainForm: TMainForm
     Left = 0
     Height = 24
     Top = 0
-    Width = 1089
+    Width = 844
     Caption = 'tlbMain'
     Color = clMenuBar
     Images = ApplicationImages
@@ -152,21 +152,21 @@ object MainForm: TMainForm
   end
   object pnlMain: TPanel
     Left = 0
-    Height = 585
+    Height = 494
     Top = 24
-    Width = 1089
+    Width = 844
     Align = alClient
     Anchors = [akTop, akLeft, akBottom]
-    ClientHeight = 585
-    ClientWidth = 1089
+    ClientHeight = 494
+    ClientWidth = 844
     Color = clWindow
     ParentColor = False
     TabOrder = 1
     object imgLogo: TImage
       Left = 215
-      Height = 583
+      Height = 492
       Top = 1
-      Width = 873
+      Width = 628
       Align = alClient
       Center = True
       Picture.Data = {
@@ -1961,11 +1961,11 @@ object MainForm: TMainForm
     end
     object pnlTables: TPanel
       Left = 1
-      Height = 583
+      Height = 492
       Top = 1
       Width = 209
       Align = alLeft
-      ClientHeight = 583
+      ClientHeight = 492
       ClientWidth = 209
       TabOrder = 0
       Visible = False
@@ -1982,7 +1982,7 @@ object MainForm: TMainForm
       end
       object pgcLeft: TPageControl
         Left = 1
-        Height = 558
+        Height = 467
         Top = 24
         Width = 207
         ActivePage = tabTables
@@ -1991,11 +1991,11 @@ object MainForm: TMainForm
         TabOrder = 1
         object tabTables: TTabSheet
           Caption = 'Tables'
-          ClientHeight = 530
+          ClientHeight = 439
           ClientWidth = 199
           object lstTables: TListBox
             Left = 0
-            Height = 506
+            Height = 415
             Top = 24
             Width = 199
             Align = alClient
@@ -2085,7 +2085,7 @@ object MainForm: TMainForm
     end
     object Splitter2: TSplitter
       Left = 210
-      Height = 583
+      Height = 492
       Top = 1
       Width = 5
     end
@@ -2093,8 +2093,8 @@ object MainForm: TMainForm
   object sbMain: TStatusBar
     Left = 0
     Height = 23
-    Top = 609
-    Width = 1089
+    Top = 518
+    Width = 844
     Panels = <    
       item
         Text = 'Not connected'
@@ -2115,7 +2115,7 @@ object MainForm: TMainForm
   object pnlIndicator: TPanel
     Left = 201
     Height = 20
-    Top = 611
+    Top = 520
     Width = 21
     Anchors = [akLeft, akBottom]
     BevelOuter = bvNone
@@ -2807,8 +2807,8 @@ object MainForm: TMainForm
     end
     object mitHelp: TMenuItem
       Caption = 'Help'
-      object mitHelpShow: TMenuItem
-        Action = actHelp
+      object mitHelpCHM: TMenuItem
+        Action = actChmHelp
         Bitmap.Data = {
           36040000424D3604000000000000360000002800000010000000100000000100
           2000000000000004000064000000640000000000000000000000FFFFFF00FFFF
@@ -2845,6 +2845,12 @@ object MainForm: TMainForm
           FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
           FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00
         }
+      end
+      object mitHelpPDF: TMenuItem
+        Action = actPdfHelp
+      end
+      object mitSep13: TMenuItem
+        Caption = '-'
       end
       object mitAbout: TMenuItem
         Action = actAbout
@@ -3691,11 +3697,17 @@ object MainForm: TMainForm
       ImageIndex = 60
       OnExecute = actAboutExecute
     end
-    object actHelp: TAction
+    object actChmHelp: TAction
       Category = 'Help'
-      Caption = 'Help'
+      Caption = 'Help (CHM)'
       ImageIndex = 59
-      OnExecute = actHelpExecute
+      OnExecute = actChmHelpExecute
+    end
+    object actPdfHelp: TAction
+      Category = 'Help'
+      Caption = 'Help (PDF)'
+      ImageIndex = 59
+      OnExecute = actPdfHelpExecute
     end
   end
   object OpenDialog: TOpenDialog

@@ -144,7 +144,6 @@ type
   function WebControlPrefix:string;
   function WinControlPrefix:string;
   function WinControlName:string;
-  function GetFieldTypeAs(db:TAsDatabaseType):String;
   function GetCompatibleFieldName(AsDbType: TAsDatabaseType): string;
   procedure Assign(Source: TPersistent); override;
  published
@@ -828,152 +827,6 @@ begin
   Result := WinControlPrefix+CSharpName;
 end;
 
-function TAsFieldInfo.GetFieldTypeAs(db: TAsDatabaseType): String;
-begin
-
-if DataType=ftUnknown then
-begin
- Result := FieldType;
-end
-else
-case db of
- dtMsSql:
- begin
-    case DataType of
-      ftCurrency,ftBCD,ftFloat: Result:='decimal';
-      ftMemo:Result := 'text';
-      ftWideMemo: Result := 'ntext';
-      ftWideString: Result:='nvarchar';
-      ftBlob,ftOraBlob:
-          begin
-           Result:='blob';
-           if TAsDbUtils.IsBlobGUID(FFieldRef) then
-           begin
-             Result:='varchar';
-           end else
-           begin
-            Result :='blob';
-           end;
-         end;
-      ftBoolean:Result:='bit';
-      ftDate,ftDateTime:Result:='datetime';
-      ftInteger,ftSmallint,ftLargeint,ftAutoInc: Result:='int' ;
-      ftBytes,ftVarBytes: Result:='binary'
-      else
-      Result:='varchar';
-    end;
- end;
-
- dtOracle:
- begin
-    case DataType of
-      ftCurrency,ftBCD,ftFloat: Result:='decimal';
-      ftWideMemo: Result := 'ntext';
-      ftWideString: Result:='nvarchar2';
-      ftBlob,ftOraBlob:
-        begin
-           Result:='blob';
-           if TAsDbUtils.IsBlobGUID(FFieldRef) then
-           begin
-             Result:='varchar';
-           end else
-           begin
-            Result :='blob';
-           end;
-         end;
-      ftBoolean:Result:='numeric';
-      ftDate,ftDateTime:Result:='date';
-      ftInteger,ftSmallint: Result:='numeric' ;
-      ftBytes,ftVarBytes: Result:='binary';
-      else
-      Result:='varchar2';
-    end;
- end;
-
- dtMySql:
- begin
-    case DataType of
-      ftCurrency,ftBCD,ftFloat: Result:='decimal';
-      ftWideMemo: Result := 'text';
-      ftWideString: Result:='varchar';
-      ftBlob,ftOraBlob:
-         begin
-           Result:='blob';
-           if TAsDbUtils.IsBlobGUID(FFieldRef) then
-           begin
-             Result:='varchar';
-           end else
-           begin
-            Result :='blob';
-           end;
-         end;
-
-      ftBoolean:Result:='int';
-      ftDate,ftDateTime:Result:='varchar';
-      ftAutoInc, ftInteger,ftSmallint: Result:='int' ;
-      ftBytes,ftVarBytes: Result:='blob';
-      else
-      Result:='varchar';
-    end;
-
-
-
- end;
- dtSQLite:
- begin
-   case DataType of
-      ftCurrency,ftBCD,ftFloat: Result:='real';
-      ftWideMemo: Result := 'text';
-      ftWideString: Result:='text';
-      ftBlob,ftOraBlob:
-        begin
-           Result:='blob';
-           if TAsDbUtils.IsBlobGUID(FFieldRef) then
-           begin
-             Result:='varchar';
-           end else
-           begin
-            Result :='blob';
-           end;
-         end;
-      ftBoolean:Result:='integer';
-      ftDate,ftDateTime:Result:='text';
-      ftInteger: Result:='integer' ;
-      ftBytes,ftVarBytes: Result:='blob';
-      else
-      Result:='text';
-    end;
- end;
- dtFirebirdd:
-    begin
-     case DataType of
-      ftCurrency,ftBCD,ftFloat: Result:='decimal';
-      ftWideMemo: Result := 'text';
-      ftWideString: Result:='varchar';
-      ftBlob,ftOraBlob:
-         begin
-           Result:='blob';
-           if TAsDbUtils.IsBlobGUID(FFieldRef) then
-           begin
-             Result:='varchar';
-           end else
-           begin
-            Result :='blob';
-           end;
-         end;
-
-      ftBoolean:Result:='int';
-      ftDate,ftDateTime:Result:='varchar';
-      ftInteger,ftAutoInc, ftSmallint: Result:='int' ;
-      ftBytes,ftVarBytes: Result:='blob';
-      else
-      Result:='varchar';
-    end;
-    end;
-end;
-
-end;
-
 function TAsFieldInfo.GetCompatibleFieldName(AsDbType:TAsDatabaseType): string;
 var
  o,c:string;
@@ -1441,17 +1294,18 @@ begin
   ConstraintInfos.Clear;
 
   try
-    fks := TAsDbUtils.GetForeignKeys(FDBinfo,Schema,Tablename);
+    fks := TAsDbUtils.GetForeignKeys(FDBinfo,Tablename);
     for fk in fks do
     begin
      ci := ConstraintInfos.Add;
+     ci.ConstraintName:=fk.Constraint_Name;
      ci.ColumnName:=fk.Column_Name;
      ci.Tablename:=fk.Table_Name;
      ci.ForeignSchema:=fk.Foreign_Schema;
      ci.ForeignTableName:=fk.Foreign_Table;
      ci.ForeignColumnName:=fk.Foreign_Column;
      try
-      lst := TAsDbUtils.GetTextFields(FDBinfo,Schema,ci.ForeignTableName);
+      lst := TAsDbUtils.GetTextFields(FDBinfo,ci.ForeignTableName);
       if lst.Count>0 then
       begin
         ci.ForeignFirstTextField:= lst[0];
@@ -1477,7 +1331,7 @@ begin
  indexInfos.Clear;
 
  try
-  lst := TAsDbUtils.GetIndexes(FDBinfo,Schema,Tablename);
+  lst := TAsDbUtils.GetIndexes(FDBinfo,Tablename);
   for i in lst do
   begin
    inf := indexInfos.Add;
@@ -1501,7 +1355,7 @@ begin
  TriggerInfos.Clear;
 
  try
-  ts := TAsDbUtils.GetTriggers(FDBinfo,Schema,Tablename);
+  ts := TAsDbUtils.GetTriggers(FDBinfo,Tablename);
   for t in ts do
   begin
    c := TriggerInfos.Add;
@@ -1648,7 +1502,7 @@ begin
      table.TableNameAsControlName:=GetTableNameAsControl(Tablename);
 
      lstIdentity := TStringList.Create;
-     lstPKs := TAsDbUtils.GetPrimaryKeys(FDBinfo,Schema,Tablename);
+     lstPKs := TAsDbUtils.GetPrimaryKeys(FDBinfo,Tablename);
 
      if FDBinfo.DbType=dtSQLite then Schema:='';
      if FDBinfo.DbType = dtSQLite then Schema:='';
@@ -1658,7 +1512,7 @@ begin
      ii:=table.Indexes;
      tis := table.Triggers;
 
-     columns := TAsDbUtils.GetColumns(FDBinfo,Schema,Tablename);
+     columns := TAsDbUtils.GetColumns(FDBinfo,Tablename);
 
      GetImportedKeyInfos(Schema,Tablename,iks);
 
@@ -1698,7 +1552,7 @@ begin
       end;
 
       try
-        ds.Open(TAsDbUtils.GetTopRecordsSelect(FDBinfo.DbType,field.FieldName, Tablename,1));
+        ds.Open(TAsDbUtils.GetTopRecordsSelect(FDBinfo.DbType,Schema,Tablename, field.FieldName,1));
 
         field.DataType := ds.Fields[0].DataType;
         field.FieldRef := ds.Fields[0];
@@ -2130,31 +1984,21 @@ var
  o,c:string;
 begin
  case AsDbType of
-  dtMsSql:
+  dtMsSql,dtSQLite:
    begin
      o:='[';
      c:=']';
    end;
-  dtOracle:
+  dtOracle,dtFirebirdd, dtPostgreSql:
       begin
      o:='"';
      c:='"';
    end;
   dtMySql:
        begin
-     o:='';
-     c:='';
+     o:='`';
+     c:='`';
    end;
-  dtSQLite:
-     begin
-     o:='[';
-     c:=']';
-   end;
-  dtFirebirdd:
-     begin
-     o:='"';
-     c:='"';
-     end;
  end;
  Result:=o+ForeignColumnName+c;
 end;

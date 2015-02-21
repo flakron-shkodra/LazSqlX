@@ -350,7 +350,7 @@ var
 begin
   fn :=StringReplace( StringReplace(aFieldName,'[','',[rfReplaceAll]),']','',[rfReplaceAll]);
   try
-    cols := TAsDbUtils.GetColumns(FDBInfo,aSchema,aTable);
+    cols := TAsDbUtils.GetColumns(FDBInfo,aTable);
     for c in cols do
     begin
       if CompareText(Trim(c.Column_Name),aFieldName)=0 then
@@ -439,7 +439,7 @@ begin
       OrderPos := TIntegerList.Create;
       GroupPos := TIntegerList.Create;
 
-      AllTablenames := TAsDbUtils.GetTablenames(FDBInfo,FSchema);
+      AllTablenames := TAsDbUtils.GetTablenames(FDBInfo);
 
       // would be delimiting with whitespace and comma
       DelimitedList.Delimiter := ',';

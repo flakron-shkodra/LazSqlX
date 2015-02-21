@@ -106,7 +106,8 @@ var
 begin
  Result := TAsForeignKeys.Create;
 
- sql:='SELECT  '''+Schema+''' as SCHEMA, '+
+ sql:='SELECT drc.rdb$constraint_name as CONSTRAINT_NAME,'+
+        ''''+Schema+''' as SCHEMA, '+
         ' drc.rdb$relation_name as TABLE_NAME, '+
         ' dis.rdb$field_name AS COLUMN_NAME, '+
         ''''+Schema+''' as FOREIGN_SCHEMA, '+
@@ -127,6 +128,7 @@ begin
     while not ds.EOF do
      begin
        fk := TAsForeignKey.Create;
+       fk.Constraint_Name:=Trim(ds.FieldByName('CONSTRAINT_NAME').AsString);
        fk.Schema:=Trim(ds.FieldByName('SCHEMA').AsString);
        fk.Table_Name:=Trim(ds.FieldByName('TABLE_NAME').AsString);
        fk.Column_Name:= Trim(ds.FieldByName('COLUMN_NAME').AsString);
