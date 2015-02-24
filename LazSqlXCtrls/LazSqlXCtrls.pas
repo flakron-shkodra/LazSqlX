@@ -647,7 +647,7 @@ end;
 
 procedure TLazSqlXTabSheet.CheckSyntax;
 var
-  error: TAsSqlSyntaxError=nil;
+  error: TAsSyntaxError=nil;
 begin
   try
     if TAsDbUtils.CheckSqlSyntax(FQueryEditor.Text, error) then

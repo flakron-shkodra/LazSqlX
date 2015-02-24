@@ -126,6 +126,7 @@ type
     procedure SetGroupByClause(AValue: string);
     procedure SetOrderByClause(AValue: string);
     procedure SetTopCount(AValue: Integer);
+    function IsReserved(aKeyWord:String):Boolean;
   public
     constructor Create(Schema: string; DbInfo: TAsDbConnectionInfo);
     destructor Destroy; override;
@@ -148,6 +149,16 @@ type
 
   const
   LoopSeperator: array [0 .. 1] of char = (' ',',');
+   SQL_FROM_WORD = 'FROM ';
+  SQL_WHERE_WORD = 'WHERE ';
+  SQL_AND_WORD = 'AND ';
+  SQL_SELECT_WORD = 'SELECT ';
+  SQL_INSERT_WORD = 'INSERT ';
+  SQL_UPDATE_WORD = 'UPDATE ';
+  SQL_JOIN_WORD = 'JOIN ';
+  SQL_TOP_WORD ='TOP ';
+  SQL_ORDER_WORD='ORDER ';
+  SQL_GROUP_WORD ='GROUP ';
 
 
 implementation
@@ -514,7 +525,7 @@ begin
             if I < DelimitedList.Count - 1 then
             begin
               Table.TableAlias := DelimitedList[I + 1];
-              if TLazSqlXResources.IsReserved(Table.TableAlias)  then
+              if  IsReserved(Table.TableAlias)  then
               Table.TableAlias:='';
             end;
 
@@ -565,7 +576,7 @@ begin
             if I < DelimitedList.Count - 1 then
             begin
               Table.TableAlias := DelimitedList[I + 1];
-              if TLazSqlXResources.IsReserved(Table.TableAlias) then
+              if IsReserved(Table.TableAlias) then
               Table.TableAlias:='';
 
               Table.JoinKeyword:= LastJoinKeyword;
@@ -583,7 +594,7 @@ begin
                     if Table.JoinTableAlias = Table.TableAlias then
                       Table.JoinTableAlias := SplitString( SplitString( Table.JoinCondition,'=')[1],'.')[0];
 
-                    if TLazSqlXResources.IsReserved(Table.JoinTableAlias) then
+                    if IsReserved(Table.JoinTableAlias) then
                     begin
                       if Table.JoinTableAlias=FSchema then
                       Table.JoinTableAlias:='';
@@ -690,7 +701,7 @@ begin
               end
               else
               begin
-                if (not TLazSqlXResources.IsReserved(DelimitedList[I])) and (TAsStringUtils.IsNumber(DelimitedList[I])) then
+                if (not IsReserved(DelimitedList[I])) and (TAsStringUtils.IsNumber(DelimitedList[I])) then
                 begin
                   FErrorList.Add('Column [' + DelimitedList[I] + '] doesn''t exist');
                   Result := False;
@@ -776,6 +787,11 @@ procedure TAsSqlParser.SetTopCount(AValue: Integer);
 begin
   if FTopCount=AValue then Exit;
   FTopCount:=AValue;
+end;
+
+function TAsSqlParser.IsReserved(aKeyWord: String): Boolean;
+begin
+ Result := TLazSqlXResources.SqlReservedKeywords.IndexOf(Trim(Uppercase(aKeyword)))>-1
 end;
 
 constructor TAsSqlParser.Create(Schema: string; DbInfo: TAsDbConnectionInfo);

@@ -195,6 +195,9 @@ begin
       FQuery.PacketRecords:=-1;
       try
        FQuery.Open;
+       FExecutionTime := Time - t1;
+       FRecordCount := FQuery.RecordCount;
+       FIsSelect:= True;
       except on E:Exception do
        begin
          if (E.Message=ErrorMsg_ZeosNoResultSet) or (E.Message=ErrorMsg_SqlDBNoResultSet) then
@@ -207,15 +210,9 @@ begin
        end;
       end;
 
-      if FIsSelect then
-      begin
-       FExecutionTime := Time - t1;
-       FRecordCount := FQuery.RecordCount;
-       FIsSelect:= True;
-       FMessage := 'Execution time [' + TimeToStr(Time-t1) + '] Records [' +IntToStr(FRecordCount) + ']';
-      end;
-
     end;
+    FExecutionTime:= Time-t1;
+    FMessage := 'Execution time [' + TimeToStr(Time-t1) + '] Records [' +IntToStr(FRecordCount) + ']';
 
    except
      on e: Exception do

@@ -1,3 +1,7 @@
+v.5.0.0.1572
+-Fix when generating/running query for running stored procedures when procedure had parameters of type Date
+-Fix: display proper info after query finished execution (DataGrid with resultset or Message that query executed successfully when there's no resultset)
+
 v.5.0.0.1570
 
 -PostgreSQL support

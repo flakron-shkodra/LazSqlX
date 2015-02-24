@@ -36,9 +36,9 @@ type
 
 
 
- { TAsSqlSyntaxError }
+ { TAsSyntaxError }
 
- TAsSqlSyntaxError = class
+ TAsSyntaxError = class
  private
    FMessage:string;
    procedure SetMessage(AValue: string);
@@ -61,14 +61,14 @@ type
 
   { TAsDbConnectionInfo }
 
-  TAsDbConnectionInfo = class(TComponent)
+  TAsDbConnectionInfo = class(TPersistent)
   private
    FDatabase: string;
    FDbEngine: TAsDatabaseEngineType;
    FDbType: TAsDatabaseType;
    FPassword: string;
    FPort: Integer;
-   FSchema: String;
+   FSchema: string;
    FServer: string;
    FUsername: string;
    FSqlCon:TSQLConnector;
@@ -93,11 +93,12 @@ type
     //function ToZeosConnection:TZConnection;
     {creates a new instance of SqlDbConnector according to properties of this class}
     //function ToSqlConnector:TSQLConnector;
+    procedure AssignProperties;
   public
     {Constructor: CreateConnections set to false when sqlcon and zcon not needed to be created, for instance for RecentConnections}
-    constructor Create(CreateConnections:Boolean=true; AOwner:TComponent=nil);
+    constructor Create(CreateConnections: Boolean=True);
     destructor Destroy;override;
-    {returns a string made up of all properties, is used for RecentConnections}
+    {returns a string made up of all properties, used for save/load and then parse recent connections to external file }
     function ToFullString:string;
 
     procedure Assign(Source: TPersistent); override;
@@ -158,6 +159,12 @@ type
     FZQuery:TZQuery;
     FQuery:TSQLQuery;
     FDBInfo:TAsDbConnectionInfo;
+    function GetAfterDelete: TDataSetNotifyEvent;
+    function GetAfterRefresh: TDataSetNotifyEvent;
+    function GetAfterSave: TDataSetNotifyEvent;
+    function GetAfterScroll: TDataSetNotifyEvent;
+    function GetBeforeDelete: TDataSetNotifyEvent;
+    function GetBeforeSave: TDataSetNotifyEvent;
     function GetDataSet: TDataSet;
     function GetEof: Boolean;
     function GetField(Index: Integer): TField;
@@ -165,54 +172,70 @@ type
     function GetFilter: string;
     function GetFiltered: Boolean;
     function GetFilterOption: TFilterOptions;
+    function GetIndexname: string;
     function GetIsActive: Boolean;
     function GetPacketRecord: Integer;
+    function GetRecNo: Integer;
     function GetRecordCount: Integer;
-    function GetRecordNumber: Integer;
     function GetRowsAffected: Integer;
     function GetSQL: TStrings;
     function GetState: TDataSetState;
-    procedure SetDbInfo(AValue: TAsDbConnectionInfo);
+    procedure SetAfterDelete(AValue: TDataSetNotifyEvent);
+    procedure SetAfterRefresh(AValue: TDataSetNotifyEvent);
+    procedure SetAfterSave(AValue: TDataSetNotifyEvent);
+    procedure SetAfterScroll(AValue: TDataSetNotifyEvent);
+    procedure SetBeforeDelete(AValue: TDataSetNotifyEvent);
+    procedure SetBeforeSave(AValue: TDataSetNotifyEvent);
     procedure SetFilter(AValue: string);
     procedure SetFiltered(AValue: Boolean);
     procedure SetFilterOption(AValue: TFilterOptions);
     procedure AfterDelete(DataSet: TDataSet);
     procedure AfterPost(DataSet: TDataSet);
+    procedure SetIndexName(AValue: string);
     procedure SetPackedRecord(AValue: Integer);
-    procedure SetRecordNumber(AValue: Integer);
+    procedure SetRecNo(AValue: Integer);
+    procedure SetSort(AValue: string);
   public
-    constructor Create(dbInfo:TAsDbConnectionInfo);
-    destructor Destroy;override;
-    procedure Open(sql:string);overload;
-    procedure Open;
-    procedure Close;
-    procedure Next;
-    procedure First;
-    procedure Last;
-    procedure Prior;
-    procedure Insert;
-    procedure Post;
-    procedure Refresh;
-    procedure ExecSQL;
-    procedure Edit;
-    procedure ApplyUpdates;
-    procedure Cancel;
-    function FieldByName(FieldName:string):TField;
-    property DataSet:TDataSet read GetDataSet;
-    property DbInfo:TAsDbConnectionInfo read FDBInfo write SetDbInfo;
-    property EOF:Boolean read GetEof;
-    property Fields[Index:Integer]:TField read GetField;
-    property FieldCount:Integer read GetFieldCount;
-    property SQL:TStrings read GetSQL;
-    property Active:Boolean read GetIsActive;
-    property State:TDataSetState read GetState;
-    property FilterOptions:TFilterOptions read GetFilterOption write SetFilterOption;
-    property Filtered:Boolean read GetFiltered write SetFiltered;
-    property Filter:string read GetFilter write SetFilter;
-    property PacketRecords:Integer read GetPacketRecord write SetPackedRecord;
-    property RowsAffected:Integer read GetRowsAffected;
-    property RecordCount:Integer read GetRecordCount;
-    property RecNo:Integer read GetRecordNumber write SetRecordNumber;
+   constructor Create(dbInfo:TAsDbConnectionInfo);
+   destructor Destroy;override;
+   procedure Open(sql:string);overload;
+   procedure Open;
+   procedure Close;
+   procedure Next;
+   procedure First;
+   procedure Last;
+   procedure Prior;
+   procedure Insert;
+   procedure Post;
+   procedure Refresh;
+   procedure ExecSQL;
+   procedure Edit;
+   procedure ApplyUpdates;
+   procedure AddIndex(const AName, AFields : string; AOptions : TIndexOptions; const ADescFields: string = ''; const ACaseInsFields: string = '');
+   function GetFieldNames:TStringList;
+   function FieldByName(FieldName:string):TField;
+   property Active:Boolean read GetIsActive;
+   property DataSet:TDataSet read GetDataSet;
+   property EOF:Boolean read GetEof;
+   property Fields[Index:Integer]:TField read GetField;
+   property FieldCount:Integer read GetFieldCount;
+   property SQL:TStrings read GetSQL;
+   property State:TDataSetState read GetState;
+   property FilterOptions:TFilterOptions read GetFilterOption write SetFilterOption;
+   property Filtered:Boolean read GetFiltered write SetFiltered;
+   property Filter:string read GetFilter write SetFilter;
+   property OnBeforeSave:TDataSetNotifyEvent read GetBeforeSave write SetBeforeSave;
+   property OnAfterSave:TDataSetNotifyEvent read GetAfterSave write SetAfterSave;
+   property OnBeforeDelete:TDataSetNotifyEvent read GetBeforeDelete write SetBeforeDelete;
+   property OnAfterDelete:TDataSetNotifyEvent read GetAfterDelete write SetAfterDelete;
+   property OnAfterScroll:TDataSetNotifyEvent read GetAfterScroll write SetAfterScroll;
+   property OnAfterRefresh:TDataSetNotifyEvent read GetAfterRefresh write SetAfterRefresh;
+   property RecNo:Integer read GetRecNo write SetRecNo;
+   property IndexName:string read GetIndexname write SetIndexName;
+   property PacketRecords:Integer read GetPacketRecord write SetPackedRecord;
+   property RowsAffected:Integer read GetRowsAffected;
+   property RecordCount:Integer read GetRecordCount;
+
   end;
 
   TAsForeignKey = class
@@ -270,10 +293,9 @@ type
 
   TAsProcedureParams = specialize TFPGObjectList<TAsProcedureParam>;
 
-
   { IAsDbMetadata }
 
-  IAsDbMetadata = interface
+  IAsDbMetadata = interface (IInterface)
     function GetSchemas:TStringList;
     function GetTablenames(schema:string):TStringList;
     function GetPrimaryKeys(Schema,TableName: string):TStringList;
@@ -286,7 +308,7 @@ type
     function GetCatalogNames:TStringList;
   end;
 
-  TAsDbMetadata = class (TInterfacedObject,IInterface)
+   TAsDbMetadata = class (TInterfacedObject,IInterface)
     function GetSchemas:TStringList;virtual;abstract;
     function GetTablenames(schema:string):TStringList;virtual;abstract;
     function GetPrimaryKeys(Schema,TableName: string):TStringList;virtual;abstract;
@@ -299,22 +321,22 @@ type
     function GetCatalogNames:TStringList;virtual;abstract;
   end;
 
- { TAsDbUtils }
+  { TAsDbUtils }
 
  TAsDbUtils = object
   private
+   
     class function MakeEngine(DbInfo:TAsDbConnectionInfo):TAsDbMetadata;
     class procedure DisposeEngine(dbinfo:TAsDbConnectionInfo; a:TAsDbMetadata);
   public
     {this was supposed to 'know' the difference between GUID percieved as BLOB and a real BLOB}
-    class function IsBlobGUID(aField: TField): boolean; experimental;
+    class function IsBlobGUID(var aField: TField): boolean;experimental;
 
     {Returns an sql query limiting number of records depending dbtype}
-    class function GetTopRecordsSelect(dbtyp: TAsDatabaseType; Schema, TableName: string; NumberOfRecords: integer): string; overload;
+    class function GetTopRecordsSelect(dbtyp:TAsDatabaseType; Schema,TableName:string;NumberOfRecords:integer):string;overload;
 
     {Returns an sql query for a single column limiting number of records depending dbtype}
-    class function GetTopRecordsSelect(dbtyp: TAsDatabaseType; Schema, TableName,
-     FieldName: string; NumberOfRecords: integer): string; overload;
+    class function GetTopRecordsSelect(dbtyp:TAsDatabaseType; Schema,TableName,FieldName:string;NumberOfRecords:integer):string;overload;
 
     {Surrounds given expression with relevant symbols ie [],"",or '' according to db}
     class function SafeWrap(dbtyp:TAsDatabaseType; TableOrField:string):string;
@@ -337,7 +359,7 @@ type
     class function ZeosProtocolToSqlDbConnectorType(ZeosProtocol:string):string;
 
     {Checks syntax using TSQLParser}
-    class function CheckSqlSyntax(SqlCommand:string; out Error:TAsSqlSyntaxError):Boolean;
+    class function CheckSqlSyntax(SqlCommand:string; out Error:TAsSyntaxError):Boolean;
 
 
     {Executes SQL Command using SQLDB or ZEOS Engine and given DBConnectionInfo}
@@ -410,6 +432,7 @@ begin
     r := TRegExpr.Create;
     r.InputString := InputStr;
     r.Expression := RegEx;
+    r.LineSeparators:=#13#10;
     r.Compile;
     if r.Exec(InputStr) then
       repeat
@@ -426,33 +449,19 @@ end;
 
 procedure TAsQuery.AfterDelete(DataSet: TDataSet);
 begin
-   case FDBInfo.DbEngineType of
-    deZeos:
-    begin
-      FZQuery.ApplyUpdates;
-      FZCon.Commit;
-    end;
-    deSqlDB:
-    begin
-      FQuery.ApplyUpdates(0);
-      FCon.Transaction.CommitRetaining;
-    end;
-  end;
+  ApplyUpdates;
 end;
 
 procedure TAsQuery.AfterPost(DataSet: TDataSet);
 begin
+  ApplyUpdates;
+end;
+
+procedure TAsQuery.SetIndexName(AValue: string);
+begin
   case FDBInfo.DbEngineType of
-    deZeos:
-    begin
-      FZQuery.ApplyUpdates;
-      FZCon.Commit;
-    end;
-    deSqlDB:
-    begin
-      FQuery.ApplyUpdates(0);
-      FCon.Transaction.CommitRetaining;
-    end;
+   deZeos:FZQuery.IndexFieldNames := AValue;
+   deSqlDB:FQuery.IndexName := AValue;
   end;
 end;
 
@@ -464,12 +473,18 @@ begin
  end;
 end;
 
-procedure TAsQuery.SetRecordNumber(AValue: Integer);
+
+procedure TAsQuery.SetRecNo(AValue: Integer);
 begin
  case FDBInfo.DbEngineType of
-   deZeos:FZQuery.RecNo:=AValue;
-   deSqlDB:FQuery.RecNo:=AValue;
+   deZeos : FZQuery.RecNo:=AValue;
+   deSqlDB : FQuery.RecNo:=AValue;
  end;
+end;
+
+procedure TAsQuery.SetSort(AValue: string);
+begin
+
 end;
 
 function TAsQuery.GetDataSet: TDataSet;
@@ -477,6 +492,54 @@ begin
  case FDBInfo.DbEngineType of
    deZeos:Result:=FZQuery;
    deSqlDB:Result:=FQuery;
+ end;
+end;
+
+function TAsQuery.GetAfterSave: TDataSetNotifyEvent;
+begin
+ case FDBInfo.DbEngineType of
+   deZeos:Result:=FZQuery.AfterPost;
+   deSqlDB:Result:=FQuery.AfterPost;
+ end;
+end;
+
+function TAsQuery.GetAfterScroll: TDataSetNotifyEvent;
+begin
+ case FDBInfo.DbEngineType of
+   deZeos:Result:=FZQuery.AfterScroll;
+   deSqlDB:Result:=FQuery.AfterScroll;
+ end;
+end;
+
+function TAsQuery.GetAfterDelete: TDataSetNotifyEvent;
+begin
+ case FDBInfo.DbEngineType of
+   deZeos:Result:=FZQuery.AfterDelete;
+   deSqlDB:Result:=FQuery.AfterDelete;
+ end;
+end;
+
+function TAsQuery.GetAfterRefresh: TDataSetNotifyEvent;
+begin
+  case FDBInfo.DbEngineType of
+   deZeos:Result:=FZQuery.AfterRefresh;
+   deSqlDB:Result:=FQuery.AfterRefresh;
+  end;
+end;
+
+function TAsQuery.GetBeforeDelete: TDataSetNotifyEvent;
+begin
+ case FDBInfo.DbEngineType of
+   deZeos:Result:=FZQuery.BeforeDelete;
+   deSqlDB:Result:=FQuery.BeforeDelete;
+ end;
+end;
+
+function TAsQuery.GetBeforeSave: TDataSetNotifyEvent;
+begin
+ case FDBInfo.DbEngineType of
+   deZeos:Result:=FZQuery.BeforePost;
+   deSqlDB:Result:=FQuery.BeforePost;
  end;
 end;
 
@@ -512,6 +575,14 @@ begin
  Result := DataSet.FilterOptions;
 end;
 
+function TAsQuery.GetIndexname: string;
+begin
+  case FDBInfo.DbEngineType of
+   deZeos:Result := TAsStringUtils.SplitString(FZQuery.IndexFieldNames,',')[0];
+   deSqlDB:Result := FQuery.IndexName;
+  end;
+end;
+
 function TAsQuery.GetIsActive: Boolean;
 begin
  case FDBInfo.DbEngineType of
@@ -528,19 +599,19 @@ begin
  end;
 end;
 
+function TAsQuery.GetRecNo: Integer;
+begin
+  case FDBInfo.DbEngineType of
+   deZeos : Result :=  FZQuery.RecNo;
+   deSqlDB : Result := FQuery.RecNo;
+ end;
+end;
+
 function TAsQuery.GetRecordCount: Integer;
 begin
  case FDBInfo.DbEngineType of
    deZeos:FZQuery.RecordCount;
    deSqlDB:FQuery.RecordCount;
- end;
-end;
-
-function TAsQuery.GetRecordNumber: Integer;
-begin
- case FDBInfo.DbEngineType of
-   deZeos:Result := FZQuery.RecNo;
-   deSqlDB:Result:=FQuery.RecNo;
  end;
 end;
 
@@ -565,16 +636,53 @@ begin
  Result := DataSet.State;
 end;
 
-procedure TAsQuery.SetDbInfo(AValue: TAsDbConnectionInfo);
+procedure TAsQuery.SetAfterDelete(AValue: TDataSetNotifyEvent);
 begin
-  if AValue.DbEngineType=FDBInfo.DbEngineType then
-  begin
-    FDBInfo:=AValue;
-    case FDBInfo.DbEngineType of
-      deZeos:FZCon:=FDBInfo.ZeosConnection;
-      deSqlDB:FCon := FDBInfo.SqlConnection;
-    end;
+ case FDBInfo.DbEngineType of
+   deZeos : FZQuery.AfterDelete:=AValue;
+   deSqlDB : FQuery.AfterDelete:=AValue;
+ end;
+end;
+
+procedure TAsQuery.SetAfterRefresh(AValue: TDataSetNotifyEvent);
+begin
+  case FDBInfo.DbEngineType of
+   deZeos:FZQuery.AfterRefresh := AValue;
+   deSqlDB:FQuery.AfterRefresh := AValue;
   end;
+end;
+
+
+procedure TAsQuery.SetAfterSave(AValue: TDataSetNotifyEvent);
+begin
+ case FDBInfo.DbEngineType of
+   deZeos : FZQuery.AfterPost:=AValue;
+   deSqlDB : FQuery.AfterPost:=AValue;
+ end;
+end;
+
+procedure TAsQuery.SetAfterScroll(AValue: TDataSetNotifyEvent);
+begin
+ case FDBInfo.DbEngineType of
+   deZeos:FZQuery.AfterScroll := AValue;
+   deSqlDB:FQuery.AfterScroll:= AValue;
+ end;
+end;
+
+procedure TAsQuery.SetBeforeDelete(AValue: TDataSetNotifyEvent);
+begin
+ case FDBInfo.DbEngineType of
+   deZeos : FZQuery.BeforeDelete:=AValue;
+   deSqlDB : FQuery.BeforeDelete:=AValue;
+ end;
+end;
+
+procedure TAsQuery.SetBeforeSave(AValue: TDataSetNotifyEvent);
+begin
+ case FDBInfo.DbEngineType of
+   deZeos : FZQuery.BeforePost:=AValue;
+   deSqlDB : FQuery.BeforePost:=AValue;
+ end;
 end;
 
 procedure TAsQuery.SetFilter(AValue: string);
@@ -596,26 +704,19 @@ constructor TAsQuery.Create(dbInfo: TAsDbConnectionInfo);
 begin
  inherited Create(nil);
   FDBInfo:=dbInfo;
-  case FDBInfo.DbEngineType of
-    deZeos:
-     begin
-       FZCon:=FDBInfo.ZeosConnection;
-       FZCon.AutoCommit:=False;
-       FZQuery:=TZQuery.Create(Self);
-       FZQuery.Connection:=FZCon;
-       FZQuery.AfterPost:=@AfterPost;
-       FZQuery.AfterDelete:=@AfterDelete;
-     end;
-     deSqlDB:
-      begin
-        FCon:=FDBInfo.SqlConnection;
-        FQuery:=TSQLQuery.Create(Self);
-        FQuery.DataBase:=FCon;
-        FQuery.PacketRecords:=-1;
-        FQuery.AfterPost:=@AfterPost;
-        FQuery.AfterDelete:=@AfterDelete;
-      end;
-  end;
+
+  FZCon:=FDBInfo.ZeosConnection;
+  FZQuery:=TZQuery.Create(Self);
+  FZQuery.Connection:=FZCon;
+  FZQuery.AfterPost:= @AfterPost;
+  FZQuery.AfterDelete:=@AfterDelete;
+
+  FCon:=FDBInfo.SqlConnection;
+  FQuery:=TSQLQuery.Create(Self);
+  FQuery.DataBase:=FCon;
+  FQuery.PacketRecords:=-1;
+  FQuery.AfterPost:=@AfterPost;
+  FQuery.AfterDelete:=@AfterDelete;
 
 end;
 
@@ -743,17 +844,35 @@ end;
 procedure TAsQuery.ApplyUpdates;
 begin
  case FDBInfo.DbEngineType of
-    deSqlDB:FQuery.ApplyUpdates;
-    deZeos:FZQuery.ApplyUpdates;
+  deSqlDB:
+      begin
+       FQuery.ApplyUpdates;
+       FCon.Transaction.CommitRetaining;
+      end;
+  deZeos:
+  begin
+    FZQuery.ApplyUpdates;
+    FZCon.Commit;
+  end;
  end;
 
 end;
 
-procedure TAsQuery.Cancel;
+procedure TAsQuery.AddIndex(const AName, AFields: string;
+ AOptions: TIndexOptions; const ADescFields: string;
+ const ACaseInsFields: string);
 begin
- case FDBInfo.DbEngineType of
-    deZeos:FZQuery.Cancel;
-    deSqlDB:FQuery.Cancel;
+
+end;
+
+function TAsQuery.GetFieldNames: TStringList;
+var
+ I: Integer;
+begin
+ Result := TStringList.Create;
+ for I:=0 to FieldCount-1 do
+ begin
+  Result.Add(Fields[I].FieldName);
  end;
 end;
 
@@ -762,34 +881,38 @@ begin
  Result := DataSet.FieldByName(FieldName);
 end;
 
-{ TAsSqlSyntaxError }
+{ TAsSyntaxError }
 
-procedure TAsSqlSyntaxError.SetMessage(AValue: string);
+procedure TAsSyntaxError.SetMessage(AValue: string);
 var
- lst:TStringList;
+ lst,lst2:TStringList;
  strLineNo,strPosNo:string;
 begin
- if FMessage=AValue then Exit;
+
  FMessage:=AValue;
- if AnsiStartsText('Error',FMessage) then
+ lst := TStringList.Create;
+ lst2 := TStringList.Create;
+ if AnsiContainsText(FMessage,'Error') then
  begin
  try
   strLineNo:=EmptyStr;
   strPosNo:=EmptyStr;
+  TAsRegExUtils.RunRegex(FMessage,'\([^\=\n\r]*\)',lst);
+  lst2.DelimitedText:=lst.Text;
 
-  lst := TStringList.Create;
-  lst.DelimitedText:=FMessage;
-  if lst.Count>=3 then
+  if lst2.Count>0 then
   begin
-    strLineNo :=TAsStringUtils.ExtractNumbers(lst[2]);
-    if lst.Count >= 4 then
-    strPosNo:=TAsStringUtils.ExtractNumbers(lst[4]);
+  {(14:54)}
+    strLineNo:= StringReplace( TAsStringUtils.SplitString(lst2[0],':')[0],'(','',[rfReplaceAll]);
+    strPosNo:= StringReplace( TAsStringUtils.SplitString(lst2[0],':')[1],')','',[rfReplaceAll]);
+    Line := 0;
+    Position := 0;
+    TryStrToInt(strLineNo,Line);
+    TryStrToInt(strPosNo,Position)
   end;
 
-  TryStrToInt(strLineNo,Line);
-  TryStrToInt(strPosNo,Position);
-
  finally
+   lst2.Free;
    lst.Free;
  end;
 
@@ -808,7 +931,7 @@ begin
     dtMySql: Result := TAsMySqlMetadata.Create(DbInfo);
     dtFirebirdd: Result := TAsFirebirdMetadata.Create(DbInfo);
     dtSQLite: Result := TAsSqliteMetadata.Create(DbInfo);
-    dtPostgreSql: Result:=TAsPostgresMetadata.Create(DbInfo);
+    dtPostgreSql: Result := TAsPostgresMetadata.Create(DbInfo);
  end;
 end;
 
@@ -816,22 +939,15 @@ class procedure TAsDbUtils.DisposeEngine(dbinfo: TAsDbConnectionInfo;
  a: TAsDbMetadata);
 begin
  a.Free;
- //case DBInfo.DbType of
- //   dtMsSql : TAsMssqlMetadata(a).Free;
- //   dtOracle : TAsOracleMetadata(a).Free;
- //   dtMySql : TAsMySqlMetadata(a).Free;
- //   dtFirebirdd : TAsFirebirdMetadata(a).Free;
- //   dtSQLite : TAsSqliteMetadata(a).Free;
- //end;
 end;
 
-class function TAsDbUtils.IsBlobGUID(aField: TField): boolean;
+class function TAsDbUtils.IsBlobGUID(var aField: TField): boolean;
 var
   m: TMemoryStream;
   b: TBlobField;
   f:TFieldType;
 begin
-  Assert(assigned(aField));
+
   if aField<>nil then
   begin
     try
@@ -994,7 +1110,7 @@ begin
 end;
 
 class function TAsDbUtils.CheckSqlSyntax(SqlCommand: string; out
- Error: TAsSqlSyntaxError): Boolean;
+ Error: TAsSyntaxError): Boolean;
 var
   i: integer;
   Script:TStringList;
@@ -1015,7 +1131,7 @@ begin
         Result:=True;
       except on E:Exception do
         begin
-          Error := TAsSqlSyntaxError.Create;
+          Error := TAsSyntaxError.Create;
           Error.Message:=E.Message;
           Result:=False;
         end;
@@ -1419,10 +1535,34 @@ begin
   Result := (FZCon<>nil) and (FSqlCon<>nil);
 end;
 
-constructor TAsDbConnectionInfo.Create(CreateConnections: Boolean;
- AOwner: TComponent);
+procedure TAsDbConnectionInfo.AssignProperties;
 begin
- inherited Create(AOwner);
+  if GetConnectionsCreated then
+ begin
+  FSqlCon.UserName:=FUsername;
+  FSqlCon.HostName:= FServer;
+  FSqlCon.Password:=FPassword;
+  FSqlCon.ConnectorType:= TAsDbUtils.DatabaseTypeAsConnectorType(FDbType);
+  FSqlCon.DatabaseName:= FDatabase;
+
+  FZCon.User:=FUsername;
+  FZCon.HostName:=FServer;
+  FZCon.Port:=FPort;
+  FZCon.Password:=FPassword;
+  FZCon.Protocol := TAsDbUtils.DatabaseTypeAsString(FDbType, True);
+
+   case FDBType of
+       dtOracle: FZCon.Database := TAsDbUtils.GetOracleDescriptor(Self);
+       dtMsSql: FZCon.Database := TAsStringUtils.WrapString(Database,TAsStringWrapType.swtBrackets);
+   else
+       FZCon.Database := FDatabase;
+   end;
+ end;
+end;
+
+constructor TAsDbConnectionInfo.Create(CreateConnections: Boolean);
+begin
+ inherited Create;
  FConnectionsCreated:= CreateConnections;
 
  if CreateConnections then
@@ -1464,7 +1604,7 @@ begin
       if FSqlCon<>nil then
       FSqlCon.Free;
 
-      FSqlCon := TSQLConnector.Create(Self);
+      FSqlCon := TSQLConnector.Create(nil);
 
     FSqlCon.HostName := TAsDbConnectionInfo(Source).SqlConnection.HostName;
     FSqlCon.ConnectorType:=TAsDbConnectionInfo(Source).SqlConnection.ConnectorType;
@@ -1479,7 +1619,7 @@ begin
     if FZCon<>nil then
     FZCon.Free;
 
-    FZCon := TZConnection.Create(Self);
+    FZCon := TZConnection.Create(nil);
 
     FZCon.HostName := TAsDbConnectionInfo(Source).Server;
     FZCon.User:=TAsDbConnectionInfo(Source).Username;
@@ -1500,6 +1640,7 @@ end;
 
 procedure TAsDbConnectionInfo.Open;
 begin
+ AssignProperties;
  case FDbEngine of
    deSqlDB:FSqlCon.Open;
    deZeos:FZCon.Connect;

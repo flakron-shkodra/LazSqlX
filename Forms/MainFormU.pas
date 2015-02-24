@@ -1427,7 +1427,7 @@ begin
 
   try
   ProcInfo := TAsProcedureInfo.Create(FDBInfo);
-    s := ProcInfo.GetRunProcedureText(procname);
+    s := ProcInfo.GetRunProcedureText(procname,true);
     if s <> EmptyStr then
     begin
       actNewTab.Execute;

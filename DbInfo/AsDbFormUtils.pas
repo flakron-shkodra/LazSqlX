@@ -1215,7 +1215,7 @@ begin
  Height:= 550;
  Width:= (5 * FControlWidth) + (5 * FControlSpace) + 30;
 
- FDbInfo:=TAsDbConnectionInfo.Create(False,Self);
+ FDbInfo:=TAsDbConnectionInfo.Create(False);
  FDbInfo.Assign(aDbInfo);
  FTableInfo := aTableInfo;
  FSqlQuery:= 'Select * from '+FTableInfo.Tablename;
@@ -1300,6 +1300,7 @@ begin
   ClearEditControls;
   FDataObject.Destroy;
   FRefDataObjects.Destroy;
+  FDbInfo.Free;
  inherited Destroy;
 end;
 

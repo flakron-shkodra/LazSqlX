@@ -66,6 +66,7 @@ TAsProcedureNames = object
     function GetSql(Ident: integer; AsTableInfo: TAsTableInfo;
       QueryType: TQueryType): TStringList;
   public
+    constructor Create(DbConInfo:TAsDbConnectionInfo);overload;
     constructor Create(DbConInfo:TAsDbConnectionInfo;ProcedureNames: TAsProcedureNames); overload;
     destructor Destroy;override;
     procedure Generate(Tables: TAsTableInfos; QueryTypes: TQueryTypes;
@@ -583,6 +584,13 @@ begin
   tmpSelectInsert.Free;
   Result := r;
   strTest := StringReplace(Result.Text,'[]','',[rfReplaceAll]);
+end;
+
+constructor TAsSqlGenerator.Create(DbConInfo: TAsDbConnectionInfo);
+begin
+  FDBConInfo := DbConInfo;
+  FAsQuery := TAsQuery.Create(DbConInfo);
+  FlstExistingProcedures := TAsDbUtils.GetProcedureNames(FDBConInfo);
 end;
 
 procedure TAsSqlGenerator.Generate(Tables: TAsTableInfos; QueryTypes: TQueryTypes;

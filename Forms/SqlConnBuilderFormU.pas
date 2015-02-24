@@ -422,7 +422,7 @@ begin
   begin
      // Close form and pass on failure
      Self.ModalResult := mrNone;
-     ShowMessage('Invalid ConnectionString' + LineEnding + LastError);
+     ShowMessage('Cannot connect to server/database' + LineEnding + LastError);
   end;
 end;
 

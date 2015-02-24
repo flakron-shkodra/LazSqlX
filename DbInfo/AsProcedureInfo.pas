@@ -24,7 +24,7 @@ type
     function GetFieldType(SqlType: string): TFieldType;
   public
     constructor Create(aDbInfo:TAsDbConnectionInfo);
-    function GetRunProcedureText(procName: string; ShowGUI:Boolean=true): string;
+    function GetRunProcedureText(procName: string; ShowGUI: Boolean): string;
   end;
 
 
@@ -108,6 +108,8 @@ var
   p:TAsProcedureParam;
   paramType:TFieldType;
   ShouldContinue:Boolean;
+  sVal: String;
+  fs:TFormatSettings;
 begin
 
 
@@ -227,6 +229,7 @@ begin
           begin
             ctl := TFloatSpinEdit.Create(frm);
             (ctl as TFloatSpinEdit).MaxValue:=9999999;
+            (ctl as TFloatSpinEdit).MinValue:=-9999999;
           end;
         ftBoolean: ctl := TCheckBox.Create(frm);
         else
@@ -288,6 +291,7 @@ begin
            dtMsSql: equalOp:=' = ';
            dtMySql: equalOp:=' = ';
            dtSQLite: equalOp:=' = ';
+           dtPostgreSql: equalOp:='';
          end;
 
          ctl := frm.FindChildControl(paramName) as TWinControl;
@@ -302,10 +306,15 @@ begin
            else
            if (ctl is TDateEdit) then
            begin
-
+             fs.ShortDateFormat:='yyyy-MM-dd';
              sqlExecSp := sqlExecSp + prmPrefix + paramName + equalOp
                +''''+DateToStr((ctl as TDateEdit).Date,dateFormat) + '''';
-             ValuesOnly:=''''+ValuesOnly+DateToStr((ctl as TDateEdit).Date)+'''';
+             sVal :=''''+DateToStr((ctl as TDateEdit).Date)+'''';
+             if FDbInfo.DbType = dtOracle then
+             begin
+              sVal := 'TO_DATE('''+DateToStr((ctl as TDateEdit).Date,fs)+''','''+fs.ShortDateFormat+''')';
+             end;
+             ValuesOnly:=ValuesOnly+sVal;
            end
            else
            if (ctl is TFloatSpinEdit) then
