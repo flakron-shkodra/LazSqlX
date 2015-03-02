@@ -1,4 +1,4 @@
-LazSqlX is a small tool for database management for MySql,MsSql,Firebird,Oracle and Sqlite
+LazSqlX is a small tool for database management for MySql,MsSql,Firebird,Oracle,Sqlite and Postgres
 
 In order to compile the sources followings are needed
 

@@ -93,6 +93,8 @@ type
     CsvExporter: TCSVExporter;
     FindDialog1: TFindDialog;
     GridPrinter: TFrPrintGrid;
+    trvProcedures: TTreeView;
+    TreeViewImages: TImageList;
     imgLogo: TImage;
     itmDataIporter: TMenuItem;
     mitSep13: TMenuItem;
@@ -157,6 +159,7 @@ type
     sep22: TToolButton;
     ToolButton1: TToolButton;
     ToolButton2: TToolButton;
+    trvTables: TTreeView;
     txtSearchTable: TEdit;
     EditCopy1: TEditCopy;
     EditCut1: TEditCut;
@@ -165,8 +168,6 @@ type
     EditSelectAll1: TEditSelectAll;
     EditUndo1: TEditUndo;
     ApplicationImages: TImageList;
-    lstTables: TListBox;
-    lstProcedures: TListBox;
     mitHelp: TMenuItem;
     mitAbout: TMenuItem;
     mitTabExportToSqlInsert: TMenuItem;
@@ -321,9 +322,6 @@ type
     procedure FormShow(Sender: TObject);
     procedure GridPrinterGetValue(const ParName: String; var ParValue: Variant);
     procedure lstTablesDblClick(Sender: TObject);
-    procedure lstTablesDrawItem(Control: TWinControl; Index: integer;
-      ARect: TRect; State: TOwnerDrawState);
-    procedure mitAboutClick(Sender: TObject);
     procedure mitOpenDataClick(Sender: TObject);
     procedure mitRefreshTablesClick(Sender: TObject);
     procedure OnCaretPosition(Line, Column: Integer);
@@ -338,6 +336,9 @@ type
       const Rect: TRect);
     procedure ToolButton1Click(Sender: TObject);
     procedure ToolButton2Click(Sender: TObject);
+    procedure trvTablesChange(Sender: TObject; Node: TTreeNode);
+    procedure trvTablesExpanding(Sender: TObject; Node: TTreeNode;
+     var AllowExpansion: Boolean);
     procedure txtSearchprocChange(Sender: TObject);
     procedure txtSearchprocEnter(Sender: TObject);
     procedure txtSearchprocExit(Sender: TObject);
@@ -387,6 +388,9 @@ type
     procedure DoSelectiveConnect;
     function GetDbInfo: TAsDbConnectionInfo;
 
+    {Gets field name as FieldName(type(length), allow null)}
+    function GetFieldNameForTreeView(f:TCollectionItem):string;
+
     {Updates GUI controls based on status connected/disconnected}
     procedure UpdateGUI(aIsConnected: boolean);
 
@@ -433,10 +437,10 @@ type
     procedure FindText(aText: string);
 
     {QuickSearch table list}
-    procedure QuickSearchTables;
+    procedure QuickSearchTables(StartIndex: Integer=0);
 
     {QuickSearch Procedures}
-    procedure QuickSearchProcedure;
+    procedure QuickSearchProcedure(StartIndex: Integer=0);
 
     {Resizes active tab's gridColumns to the specified width}
     procedure ResizeGridColumns(ColumnWidth: integer = 100);
@@ -946,37 +950,32 @@ begin
 
 end;
 
-procedure TMainForm.QuickSearchTables;
+procedure TMainForm.QuickSearchTables(StartIndex:Integer=0);
 var
-  sPos: integer;
+ I: Integer;
 begin
-  if (lstTables.Count < 1) or (lstTables.ItemIndex < 0) then
-    exit;
-  if (FQuickSearchLastWord = txtSearchTable.Text) then
-    sPos := lstTables.ItemIndex
-  else
-    sPos := 0;
-
-  lstTables.ItemIndex := TControlUtils.FindItem(lstTables.Items, txtSearchTable.Text, sPos);
-  FQuickSearchLastWord := txtSearchTable.Text;
+  for I:=StartIndex to trvTables.Items.Count -1 do
+  begin
+    if AnsiContainsText(trvTables.Items[I].Text,txtSearchTable.Text) then
+    begin
+     trvTables.Items[I].Selected:= True;
+    end;
+  end;
 end;
 
-procedure TMainForm.QuickSearchProcedure;
+procedure TMainForm.QuickSearchProcedure(StartIndex:Integer=0);
 var
-  sPos: integer;
+ I: Integer;
 begin
-  if (lstProcedures.Count < 1) or (lstProcedures.ItemIndex < 0) then
-    exit;
-
-  if (FQuickSearchLastWord = txtSearchproc.Text) then
-    sPos := lstProcedures.ItemIndex
-  else
-    sPos := 0;
-
-  lstProcedures.ItemIndex := TControlUtils.FindItem(
-    lstProcedures.Items, txtSearchproc.Text, sPos);
-  FQuickSearchLastWord := txtSearchproc.Text;
+  for I:=StartIndex to trvProcedures.Items.Count -1 do
+  begin
+    if AnsiContainsText(trvProcedures.Items[I].Text,txtSearchproc.Text) then
+    begin
+     trvProcedures.Items[I].Selected:= True;
+    end;
+  end;
 end;
+
 
 procedure TMainForm.ResizeGridColumns(ColumnWidth: integer);
 var
@@ -1060,9 +1059,8 @@ var
  ti:TAsTableInfos;
 begin
  ti := TAsTableInfos.Create(nil,FDBInfo);
-
  try
-  frm := TAsDbForm.Create(FDBInfo,cmbSchema.Text,ti.Add(cmbSchema.Text,lstTables.Items[lstTables.ItemIndex]));
+  frm := TAsDbForm.Create(FDBInfo,cmbSchema.Text,ti.Add(cmbSchema.Text,trvTables.Selected.Text));
   frm.OpenData;
   frm.CloseData;
  finally
@@ -1077,10 +1075,99 @@ var
   cs:TAsColumns;
 begin
   try
-    cs := TAsDbUtils.GetColumns(FDBInfo,lstTables.Items[lstTables.ItemIndex]);
+    cs := TAsDbUtils.GetColumns(FDBInfo,trvTables.Selected.Text);
   finally
     cs.Free;
   end;
+end;
+
+procedure TMainForm.trvTablesChange(Sender: TObject; Node: TTreeNode);
+begin
+ if  Node.Level=0 then
+  trvTables.PopupMenu := TablesPopupMenu
+ else
+   trvTables.PopupMenu := nil;
+end;
+
+procedure TMainForm.trvTablesExpanding(Sender: TObject; Node: TTreeNode;
+ var AllowExpansion: Boolean);
+
+var
+  tis:TAsTableInfos;
+  ti:TAsTableInfo;
+  tn,nkeys,nfkeys,nIndexes,nTriggers: TTreeNode;
+  I: Integer;
+  fstr:string;
+  f: TAsFieldInfo;
+begin
+
+ if Node.Level>0 then
+ Exit;
+
+ try
+
+   tis :=  TAsTableInfos.Create(nil,FDBInfo);
+   ti := tis.Add(cmbSchema.Text,Node.Text);
+   Node.DeleteChildren;
+   for I:=0 to ti.AllFields.Count-1 do
+   begin
+     f := ti.AllFields[I];
+     tn := trvTables.Items.AddChild(Node,GetFieldNameForTreeView(f));
+     if f.IsPrimaryKey then
+      tn.ImageIndex:= 1
+     else
+     if f.IsReference then
+      tn.ImageIndex:= 2
+     else
+      tn.ImageIndex:=3;
+
+     tn.SelectedIndex:=tn.ImageIndex;
+   end;
+
+     nkeys := trvTables.Items.AddChild(Node,'Keys');
+     nkeys.ImageIndex:=6;
+     nkeys.SelectedIndex:=nkeys.ImageIndex;
+     for I:=0 to ti.PrimaryKeys.Count-1 do
+     begin
+       tn := trvTables.Items.AddChild(nkeys,GetFieldNameForTreeView(ti.PrimaryKeys[I]));
+       tn.ImageIndex:= 1;
+       tn.SelectedIndex:=tn.ImageIndex;
+     end;
+
+     nfkeys := trvTables.Items.AddChild(Node,'Foreign Keys');
+     nfkeys.ImageIndex:=6;
+     nfkeys.SelectedIndex:=nfkeys.ImageIndex;
+     for I:=0 to ti.ImportedKeys.Count-1 do
+     begin
+       tn := trvTables.Items.AddChild(nfkeys,GetFieldNameForTreeView(ti.ImportedKeys[I]));
+       tn.ImageIndex:= 2;
+       tn.SelectedIndex:=tn.ImageIndex;
+     end;
+
+     nIndexes := trvTables.Items.AddChild(Node,'Indexes');
+     nIndexes.ImageIndex:=6;
+     nIndexes.SelectedIndex:=nIndexes.ImageIndex;
+     for I:=0 to ti.Indexes.Count-1 do
+     begin
+       tn := trvTables.Items.AddChild(nIndexes,GetFieldNameForTreeView(ti.Indexes[I]));
+       tn.ImageIndex:= 5;
+       tn.SelectedIndex:=tn.ImageIndex;
+     end;
+
+     nTriggers := trvTables.Items.AddChild(Node,'Triggers');
+     nTriggers.ImageIndex:=6;
+     nTriggers.SelectedIndex:=nTriggers.ImageIndex;
+     for I:=0 to ti.Triggers.Count-1 do
+     begin
+       tn := trvTables.Items.AddChild(nTriggers,GetFieldNameForTreeView(ti.Triggers[I]));
+       tn.ImageIndex:= 4;
+       tn.SelectedIndex:=tn.ImageIndex;
+     end;
+
+
+ finally
+   tis.Free;
+ end;
 end;
 
 procedure TMainForm.txtSearchprocChange(Sender: TObject);
@@ -1141,8 +1228,7 @@ begin
   DoDisconnect;
   if SqlConnBuilderForm.ShowModal(FDBInfo) = mrOk then
   begin
-
-    lstTables.Clear;
+    trvTables.Items.Clear;
     QueryDesignerForm.Clear;
 
     FDBInfo.ZeosConnection.Properties.Text := SqlConnBuilderForm.txtAdvancedProperties.Text;
@@ -1206,8 +1292,8 @@ begin
     pnlTables.Visible := True;
     FPageControl.Visible := True;
     pnlMain.Color := clDefault;
-    lstTables.PopupMenu := TablesPopupMenu;
-    lstProcedures.PopupMenu := StoredProcedurePopUp;
+    trvTables.PopupMenu := TablesPopupMenu;
+    trvProcedures.PopupMenu := StoredProcedurePopUp;
     actNewTab.Enabled := True;
     tabProcedures.TabVisible := FDBInfo.DbType <> dtSQLite;
     mitGenerateSP.Visible := tabProcedures.TabVisible;
@@ -1240,6 +1326,41 @@ end;
 function TMainForm.GetDbInfo: TAsDbConnectionInfo;
 begin
  Result := FDBInfo;
+end;
+
+function TMainForm.GetFieldNameForTreeView(f: TCollectionItem): string;
+var
+  fi:TAsFieldInfo;
+  ik:TAsImportedKeyInfo;
+  idx:TAsIndexInfo;
+  tri:TAsTriggerInfo;
+begin
+  if f is TAsFieldInfo then
+  begin
+     fi := f as TAsFieldInfo;
+     Result := fi.FieldName +' ('+fi.FieldType+' ('+IntToStr(fi.Length)+',';
+     if fi.AllowNull then
+      Result := Result+'null'
+     else
+      Result := Result+' not null';
+    Result := Result + '))';
+  end else
+  if f is TAsImportedKeyInfo then
+  begin
+    ik := f as TAsImportedKeyInfo;
+    Result := ik.ColumnName +' ('+ik.ForeignTableName+'('+ik.ForeignColumnName+'))';
+  end else
+  if f is TAsIndexInfo then
+  begin
+    idx := f as TAsIndexInfo;
+    Result := idx.INDEX_Name+' ('+idx.Column_Name+', '+idx.ASC_OR_DESC+')';
+  end else
+  if f is TAsTriggerInfo then
+  begin
+    tri := f as TAsTriggerInfo;
+    Result := tri.Name+' ('+tri.Event+')';
+  end;
+
 end;
 
 procedure TMainForm.DoDisconnect;
@@ -1286,7 +1407,7 @@ begin
       if (exporter is TSQLExporter) then
       begin
         se := exporter as TSQLExporter;
-        tblName := InputBox('Input', 'Tablename', lstTables.Items[lstTables.ItemIndex]);
+        tblName := InputBox('Input', 'Tablename', trvTables.Selected.Text);
         se.FormatSettings.TableName := tblName;
 
         se.ExportFields.Clear;
@@ -1327,12 +1448,12 @@ var
   frm:TAsDbForm;
   ti:TAsTableInfos;
 begin
- if lstTables.ItemIndex>-1 then
+ if trvTables.Selected<>nil then
  begin
   ti := TAsTableInfos.Create(nil,FDBInfo);
   try
     try
-      ti.AddTable(cmbSchema.Text,lstTables.Items[lstTables.ItemIndex],False);
+      ti.AddTable(cmbSchema.Text,trvTables.Selected.Text);
       frm := TAsDbForm.Create(FDBInfo,cmbSchema.Text,ti[0]);
       frm.ShowModal(FormFilter);
       frm.CloseData;
@@ -1378,13 +1499,20 @@ end;
 procedure TMainForm.FillTables;
 var
   list: TStringList;
+  I: Integer;
+  tn,tc: TTreeNode;
 begin
 
   try
-    lstTables.Clear;
     list := TAsDbUtils.GetTablenames(FDBInfo);
-    lstTables.Items.AddStrings(list);
-
+    trvTables.Items.Clear;
+    for I:=0 to list.Count-1 do
+    begin
+      tn := trvTables.Items.Add(nil,list[I]);
+      tn.ImageIndex:= 0;
+      tn.SelectedIndex:=0;
+      tc := trvTables.Items.AddChild(tn,'');
+    end;
     FPageControl.Tables.Clear;
     FPageControl.Tables.AddStrings(list);
 
@@ -1392,9 +1520,8 @@ begin
     list.Free;
   end;
 
-  if lstTables.Count > 0 then
-    lstTables.ItemIndex := 0;
-
+  if trvTables.Items.Count > 0 then
+    trvTables.Items[0].Selected:=True;
 
 
 end;
@@ -1402,14 +1529,19 @@ end;
 procedure TMainForm.FillProcedures;
 var
   lst: TStringList;
+  s: String;
+  n: TTreeNode;
 begin
   if FDBInfo.DbType=dtSQLite then exit;
-  lstProcedures.Clear;
+  trvProcedures.Items.Clear;
   try
     lst := TAsDbUtils.GetProcedureNames(FDBInfo);
-    lstProcedures.Items.AddStrings(lst);
-    if lstProcedures.Count > 0 then
-      lstProcedures.ItemIndex := 0;
+    for s in lst do
+    begin
+      n := trvProcedures.Items.AddChild(nil,s);
+      n.ImageIndex:=10;
+      n.SelectedIndex:=10;
+    end;
   finally
     lst.Free;
   end;
@@ -1506,9 +1638,11 @@ begin
  actExecute.Hint:='Stop execution';
  FLoadingIndicator.StartAnimation;
 
- if lstTables.Count>0 then
-  strActiveTablename := lstTables.Items[lstTables.ItemIndex];
+ if trvTables.Selected<>nil then
+  if trvTables.Selected.Level=0 then
+  strActiveTablename := trvTables.Selected.Text;
 
+ if strActiveTablename<>'' then
  FPageControl.ActiveTab.RunQuery(IsTableData,cmbSchema.Text,strActiveTablename);
 end;
 
@@ -1684,11 +1818,11 @@ begin
   FvarIcon := TBitmap.Create;
   FfieldIcon := TBitmap.Create;
 
-  ApplicationImages.GetBitmap(18, FtableIcon);
-  ApplicationImages.GetBitmap(45, FfunctionIcon);
-  ApplicationImages.GetBitmap(4, FfieldIcon);
-  ApplicationImages.GetBitmap(37, FvarIcon);
-  ApplicationImages.GetBitmap(20, FprocedureIcon);
+  TreeViewImages.GetBitmap(0, FtableIcon);
+  TreeViewImages.GetBitmap(10, FfunctionIcon);
+  TreeViewImages.GetBitmap(3, FfieldIcon);
+  TreeViewImages.GetBitmap(8, FvarIcon);
+  TreeViewImages.GetBitmap(9, FprocedureIcon);
 
   ApplicationImages.GetBitmap(46, ArrowImageLeft);
   ApplicationImages.GetBitmap(47, ArrowImageRight);
@@ -1811,8 +1945,8 @@ end;
 
 procedure TMainForm.actRunStoredProcedureExecute(Sender: TObject);
 begin
-  if lstProcedures.ItemIndex > -1 then
-    RunProcedure(lstProcedures.Items[lstProcedures.ItemIndex]);
+  if trvProcedures.Selected<>nil then
+    RunProcedure(trvProcedures.Selected.Text);
 end;
 
 procedure TMainForm.actExecuteExecute(Sender: TObject);
@@ -1860,7 +1994,7 @@ begin
     try
       DoDisconnect;
       try
-        TAsDbUtils.ExecuteQuery('DROP TABLE ' + lstTables.Items[lstTables.ItemIndex],FDBInfo);
+        TAsDbUtils.ExecuteQuery('DROP TABLE ' + trvTables.Selected.Text,FDBInfo);
       finally
         DoSelectiveConnect;
         FillTables;
@@ -1884,9 +2018,9 @@ end;
 
 procedure TMainForm.actDesignTableExecute(Sender: TObject);
 begin
-  if lstTables.ItemIndex > -1 then
+  if trvTables.Selected <> nil then
     begin
-      DesignTableForm.Showmodal(FDBInfo, cmbSchema.Text, lstTables.Items[lstTables.ItemIndex]);
+      DesignTableForm.Showmodal(FDBInfo, cmbSchema.Text, trvTables.Selected.Text);
     end;
 end;
 
@@ -1906,6 +2040,7 @@ var
   I: integer;
   db: string;
   lstErrors: TStringList;
+  lst:TStringList;
 begin
   try
     lstErrors := TStringList.Create;
@@ -1914,30 +2049,31 @@ begin
       ProgressForm.Show;
       Application.ProcessMessages;
 
+      lst := TAsDbUtils.GetTablenames(FDBInfo);
+
       infos := TAsTableInfos.Create(nil,FDBInfo);
 
+      ProgressForm.MaxProgress := lst.Count;
 
-      ProgressForm.MaxProgress := lstTables.Count;
-
-      for I := 0 to lstTables.Count - 1 do
+      for I := 0 to lst.Count - 1 do
       begin
 
         try
           //skip sequential tables for ORA
           if FDBInfo.DbType = dtOracle then
-            if AnsiContainsStr(lstTables.Items[I], '_SEQ') then
+            if AnsiContainsStr(lst[I], '_SEQ') then
               Continue;
 
-          infos.AddTable(cmbSchema.Items[cmbSchema.ItemIndex], lstTables.Items[I]);
+          infos.AddTable(cmbSchema.Items[cmbSchema.ItemIndex], lst[I]);
         except
           on e: Exception do
           begin
-            lstErrors.Add(lstTables.Items[I]);
+            lstErrors.Add(lst[I]);
           end;
         end;
 
         ProgressForm.Message :=
-          'Extracting Table Informations [' + lstTables.Items[I] + '] ... ';
+          'Extracting Table Informations [' + lst[I] + '] ... ';
         ProgressForm.StepProgress;
         Application.ProcessMessages;
       end;
@@ -1963,6 +2099,7 @@ begin
   finally
     lstErrors.Free;
     infos.Free;
+    lst.Free;
   end;
 end;
 
@@ -1985,9 +2122,12 @@ procedure TMainForm.actCopyRunProcedureTextExecute(Sender: TObject);
 var
   pi:TAsProcedureInfo;
 begin
+ if trvProcedures.Selected=nil then
+ exit;
+
   pi := TAsProcedureInfo.Create(FDBInfo);
   try
-    Clipboard.AsText:=pi.GetRunProcedureText(lstProcedures.Items[lstProcedures.ItemIndex],false);
+    Clipboard.AsText:=pi.GetRunProcedureText(trvProcedures.Selected.Text,false);
   finally
     pi.Free;
   end;
@@ -2044,18 +2184,20 @@ end;
 
 procedure TMainForm.actGenerateAllprocExecute(Sender: TObject);
 begin
-  if lstTables.ItemIndex > -1 then
+  if trvTables.Selected<>nil then
   begin
-    GenerateSqlQuery(lstTables.Items[lstTables.ItemIndex], TQueryType(
+   if trvTables.Selected.Level=0 then
+    GenerateSqlQuery(trvTables.Selected.Text, TQueryType(
       (Sender as TAction).Tag), True);
   end;
 end;
 
 procedure TMainForm.actGenerateAllQueryExecute(Sender: TObject);
 begin
-  if lstTables.ItemIndex > -1 then
+  if trvTables.Selected<>nil then
   begin
-    GenerateSqlQuery(lstTables.Items[lstTables.ItemIndex], TQueryType(
+   if trvTables.Selected.Level=0 then
+    GenerateSqlQuery(trvTables.Selected.Text, TQueryType(
       (Sender as TAction).Tag), False);
   end;
 end;
@@ -2067,9 +2209,15 @@ var
   t: TAsTableInfo;
 begin
 
+ if trvTables.Selected=nil then
+ Exit;
+
+ if trvTables.Selected.Level>0 then
+ Exit;
+
   dbc := TAsDatabaseCloner.Create(FDBInfo, FDBInfo.Database);
   ti := TAsTableInfos.Create(nil,FDBInfo);
-  t := ti.Add(cmbSchema.Text, lstTables.Items[lstTables.ItemIndex]);
+  t := ti.Add(cmbSchema.Text, trvTables.Selected.Text);
   try
     if actNewTab.Execute then
       FPageControl.ActiveTab.QueryEditor.Lines.Add(dbc.GetCreateScript(t, True, False));
@@ -2082,90 +2230,100 @@ end;
 
 procedure TMainForm.actGenerateDeleteProcExecute(Sender: TObject);
 begin
-  if lstTables.ItemIndex > -1 then
+  if trvTables.Selected<>nil then
   begin
-    GenerateSqlQuery(lstTables.Items[lstTables.ItemIndex], TQueryType(
+   if trvTables.Selected.Level=0 then
+    GenerateSqlQuery(trvTables.Selected.Text, TQueryType(
       (Sender as TAction).Tag), True);
   end;
 end;
 
 procedure TMainForm.actGenerateDeleteQueryExecute(Sender: TObject);
 begin
-  if lstTables.ItemIndex > -1 then
+  if trvTables.Selected<>nil then
   begin
-    GenerateSqlQuery(lstTables.Items[lstTables.ItemIndex], TQueryType(
+   if trvTables.Selected.Level=0 then
+    GenerateSqlQuery(trvTables.Selected.Text, TQueryType(
       (Sender as TAction).Tag), False);
   end;
 end;
 
 procedure TMainForm.actGenerateInsertProcExecute(Sender: TObject);
 begin
-  if lstTables.ItemIndex > -1 then
+  if trvTables.Selected<>nil then
   begin
-    GenerateSqlQuery(lstTables.Items[lstTables.ItemIndex], TQueryType(
+   if trvTables.Selected.Level=0 then
+    GenerateSqlQuery(trvTables.Selected.Text, TQueryType(
       (Sender as TAction).Tag), True);
   end;
 end;
 
 procedure TMainForm.actGenerateInsertQueryExecute(Sender: TObject);
 begin
-  if lstTables.ItemIndex > -1 then
+  if trvTables.Selected<>nil then
   begin
-    GenerateSqlQuery(lstTables.Items[lstTables.ItemIndex], TQueryType(
+   if trvTables.Selected.Level=0 then
+    GenerateSqlQuery(trvTables.Selected.Text, TQueryType(
       (Sender as TAction).Tag), False);
   end;
 end;
 
 procedure TMainForm.actGenerateSelectItemProcExecute(Sender: TObject);
 begin
-  if lstTables.ItemIndex > -1 then
+  if trvTables.Selected<>nil then
   begin
-    GenerateSqlQuery(lstTables.Items[lstTables.ItemIndex], TQueryType(
+   if trvTables.Selected.Level=0 then
+    GenerateSqlQuery(trvTables.Selected.Text, TQueryType(
       (Sender as TAction).Tag), True);
   end;
 end;
 
 procedure TMainForm.actGenerateSelectItemQueryExecute(Sender: TObject);
 begin
-  if lstTables.ItemIndex > -1 then
+  if trvTables.Selected<>nil then
   begin
-    GenerateSqlQuery(lstTables.Items[lstTables.ItemIndex], TQueryType(
+   if trvTables.Selected.Level=0 then
+    GenerateSqlQuery(trvTables.Selected.Text, TQueryType(
       (Sender as TAction).Tag), False);
   end;
 end;
 
 procedure TMainForm.actGenerateSelectProcExecute(Sender: TObject);
 begin
-  if lstTables.ItemIndex > -1 then
+  if trvTables.Selected<>nil then
   begin
-    GenerateSqlQuery(lstTables.Items[lstTables.ItemIndex], TQueryType(
+   if trvTables.Selected.Level=0 then
+    GenerateSqlQuery(trvTables.Selected.Text, TQueryType(
       (Sender as TAction).Tag), True);
   end;
 end;
 
 procedure TMainForm.actGenerateSelectQueryExecute(Sender: TObject);
 begin
-  if lstTables.ItemIndex > -1 then
+  if trvTables.Selected<>nil then
   begin
-    GenerateSqlQuery(lstTables.Items[lstTables.ItemIndex], TQueryType(
+   if trvTables.Selected.Level=0 then
+    GenerateSqlQuery(trvTables.Selected.Text, TQueryType(
       (Sender as TAction).Tag), False);
   end;
 end;
 
 procedure TMainForm.actGenerateUpdateProcExecute(Sender: TObject);
 begin
-  if lstTables.ItemIndex > -1 then
+  if trvTables.Selected<>nil then
   begin
-    GenerateSqlQuery(lstTables.Items[lstTables.ItemIndex], TQueryType(
+   if trvTables.Selected.Level=0 then
+    GenerateSqlQuery(trvTables.Selected.Text, TQueryType(
       (Sender as TAction).Tag), True);
   end;
 end;
 
 procedure TMainForm.actGenerateUpdateQueryExecute(Sender: TObject);
 begin
-  if lstTables.ItemIndex > -1 then
+  if trvTables.Selected<>nil then
   begin
-    GenerateSqlQuery(lstTables.Items[lstTables.ItemIndex], TQueryType(
+   if trvTables.Selected.Level=0 then
+    GenerateSqlQuery(trvTables.Selected.Text, TQueryType(
       (Sender as TAction).Tag), False);
   end;
 end;
@@ -2219,26 +2377,35 @@ begin
 end;
 
 procedure TMainForm.actDataImporterExecute(Sender: TObject);
+var
+  lst:TStringList;
 begin
   with DataImporterDialog do
   begin
     cmbTablename.Clear;
-    cmbTablename.Items.AddStrings(lstTables.Items);
-    if lstTables.ItemIndex > -1 then
-      cmbTablename.ItemIndex := lstTables.ItemIndex;
+    lst := TAsDbUtils.GetTablenames(FDBInfo);
+    try
+      cmbTablename.Items.AddStrings(lst);
 
+      if trvTables.Selected<>nil then
+      if trvTables.Selected.Level=0 then
+        cmbTablename.ItemIndex:= lst.IndexOf(trvTables.Selected.Text);
 
-    if ShowModal = mrOk then
-    begin
-      if cmbTablename.ItemIndex > -1 then
+      if ShowModal = mrOk then
       begin
-        DoDisconnect;
-        DataImporterForm.ShowModal(FDbInfo,
-          cmbSchema.Text, cmbTablename.Items[cmbTablename.ItemIndex]);
-        DoSelectiveConnect;
-      end
-      else
-        ShowMessage('You have to select table where to import to');
+        if cmbTablename.ItemIndex > -1 then
+        begin
+          DoDisconnect;
+          DataImporterForm.ShowModal(FDbInfo,
+            cmbSchema.Text, cmbTablename.Items[cmbTablename.ItemIndex]);
+          DoSelectiveConnect;
+        end
+        else
+          ShowMessage('You have to select table where to import to');
+      end;
+
+    finally
+      lst.Free;
     end;
   end;
 end;
@@ -2307,11 +2474,10 @@ end;
 
 procedure TMainForm.actShowStoredProcedureTextExecute(Sender: TObject);
 begin
-  if lstProcedures.ItemIndex > -1 then
+  if trvProcedures.Selected<>nil then
   begin
     actNewTab.Execute;
-    FPageControl.ActiveTab.QueryEditor.Text := GetProcedureText(
-      lstProcedures.Items[lstProcedures.ItemIndex]);
+    FPageControl.ActiveTab.QueryEditor.Text := GetProcedureText(trvProcedures.Selected.Text);
   end;
 end;
 
@@ -2415,82 +2581,15 @@ end;
 
 
 procedure TMainForm.lstTablesDblClick(Sender: TObject);
-var
-  t: string;
 begin
-  t := lstTables.Items[lstTables.ItemIndex];
-  if TAsStringUtils.ContainsChar(t, ' ') then
-  begin
-    case FDBInfo.DbType of
-      dtMsSql: t := '[' + t + ']';
-      dtOracle: t := '"' + t + '"';
-    end;
-  end;
-  FPageControl.ActiveTab.QueryEditor.Lines.Add('SELECT * FROM ' + t + ' t');
-  FPageControl.ActiveTab.QueryEditor.Lines[FPageControl.ActiveTab.QueryEditor.Lines.Count - 1] :=
-    FPageControl.ActiveTab.QueryEditor.Lines[FPageControl.ActiveTab.QueryEditor.Lines.Count - 1] + ' ';
 end;
 
-procedure TMainForm.lstTablesDrawItem(Control: TWinControl; Index: integer;
-  ARect: TRect; State: TOwnerDrawState);
-var
-  c: TListBox;
-begin
-  c := (Control as TListBox);
-
-
-  with c.Canvas do
-  begin
-
-    if Odd(Index) then
-      Brush.Color := clWhite
-    else
-      Brush.Color := $00F9F9F9;
-
-
-    FillRect(ARect);
-
-    if (odSelected in State) then
-    begin
-      FrameRect(ARect);
-      GradientFill(ARect, clSilver, clGray, gdVertical);
-      //Font.Color := $0000CCFF;
-      Font.Color := clBlack;
-    end
-    else if (odFocused in State) then
-    begin
-      FrameRect(ARect);
-      GradientFill(ARect, clSilver, clGray, gdVertical);
-      Font.Color := clWhite;
-    end
-    else
-    begin
-      Font.Color := clBlack;
-      Brush.Color := clWhite;
-      c.Hint := '';
-    end;
-
-      if c.Name = 'lstTables' then
-        Draw(ARect.Left, ARect.Top, FtableIcon)
-      else
-        Draw(ARect.Left, ARect.Top, FfunctionIcon);
-
-
-    Brush.Style := bsClear;
-    TextOut(ARect.Left + 17, ARect.Top, c.Items[Index]);
-  end;
-end;
-
-
-procedure TMainForm.mitAboutClick(Sender: TObject);
-begin
-
-end;
 
 procedure TMainForm.mitOpenDataClick(Sender: TObject);
 begin
-  if lstTables.ItemIndex > -1 then
-    ExecuteQuery(True);
+  if trvTables.Selected<>nil then;
+    if trvTables.Selected.Level=0 then
+      ExecuteQuery(True);
 end;
 
 procedure TMainForm.mitRefreshTablesClick(Sender: TObject);

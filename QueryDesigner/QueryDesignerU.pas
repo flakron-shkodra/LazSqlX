@@ -430,7 +430,7 @@ var
   field: TAsFieldInfo;
   fieldPanel: TPanel;
   lblFieldCaption: TLabel;
-  ik: TImportedKeyInfo;
+  ik: TAsImportedKeyInfo;
   I: integer;
   tableWidth: integer;
 
@@ -706,7 +706,7 @@ procedure TQueryDesigner.OnFieldMouseDown(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: integer);
 var
   fi: TAsFieldInfo;
-  ik: TImportedKeyInfo;
+  ik: TAsImportedKeyInfo;
   ti :TAsTableInfo;
   fieldName: string;
   Tablename: string;
@@ -779,7 +779,7 @@ var
   selectFields:TStringList;
   ti: TAsTableInfo;
   foreignTi: TAsTableInfo;
-  ik: TImportedKeyInfo;
+  ik: TAsImportedKeyInfo;
   fi: TAsFieldInfo;
   I:Integer;
 begin
@@ -859,7 +859,7 @@ end;
 procedure TQueryDesigner.pbAreaPaint(Sender: TObject);
 var
   ti: TAsTableInfo;
-  ik: TImportedKeyInfo;
+  ik: TAsImportedKeyInfo;
 
   pnlSourceTable: TPanel;
   pnlSourceField: TPanel;

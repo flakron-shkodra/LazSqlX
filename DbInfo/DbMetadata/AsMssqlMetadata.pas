@@ -139,6 +139,7 @@ begin
      begin
        fk := TAsForeignKey.Create;
        fk.Schema:=Trim(ds.FieldByName('SCHEMA').AsString);
+       fk.Constraint_Name:= Trim(ds.FieldByName('CONSTRAINT_NAME').AsString);
        fk.Table_Name:=Trim(ds.FieldByName('TABLE_NAME').AsString);
        fk.Column_Name:= Trim(ds.FieldByName('COLUMN_NAME').AsString);
        fk.Foreign_Schema:= Trim(ds.FieldByName('FOREIGN_SCHEMA').AsString);

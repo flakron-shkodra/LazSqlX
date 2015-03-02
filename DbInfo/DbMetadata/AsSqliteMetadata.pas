@@ -50,7 +50,7 @@ var
  ds:TAsQuery;
 begin
   Result := TStringList.Create;
-   sql:='SELECT name from sqlite_master where type=''table''';
+   sql:='SELECT name from sqlite_master where type=''table'' order by name';
    ds :=  TAsQuery.Create(FDbInfo);
    try
     ds.Open(sql);
@@ -92,8 +92,51 @@ function TAsSqliteMetadata.GetForeignKeys(Schema, TableName: string
 var
   sql:string;
   fk:TAsForeignKey;
+  lst,lst2,lst3:TStringList;
+  ds:TAsQuery;
+  s,ln:string;
+  I: Integer;
 begin
  Result := TAsForeignKeys.Create;
+ lst := TStringList.Create;
+ lst2 := TStringList.Create;
+
+ ds := TAsQuery.Create(FDBInfo);
+ try
+    ds.Open('SELECT sql FROM sqlite_master WHERE type=''table'' and tbl_name='+QuotedStr(TableName));
+    if ds.RecordCount>0 then
+    begin
+      s := ds.Fields[0].AsString;
+      TAsRegExUtils.RunRegex(s, '(FOREIGN KEY.*?,)|(FOREIGN KEY.*?;)|(FOREIGN KEY.*?\)\))',lst);
+      for I:=0 to lst.Count-1 do
+      begin
+        fk := TAsForeignKey.Create;
+        fk.Schema:=Schema;
+        fk.Table_Name:=TableName;
+        ln := lst[I];
+        //get local column shoud return  KEY([Column])
+        TAsRegExUtils.RunRegex(lst[I],'(KEY.*?\))|(KEY .*?\))',lst2);
+        s := lst2.Text;
+        if s<>'' then
+        begin
+          fk.Column_Name:= Trim(StringReplace(TAsStringUtils.RemoveChars(s,['(',')','[',']']),'KEY','',[rfReplaceAll]));
+          TAsRegExUtils.RunRegex(lst[I],'(REFERENCES .*?\))',lst2); //get refernced column shoud return  REFERENCES TableName([Column])
+          s := StringReplace(lst2.Text,'REFERENCES','',[rfReplaceAll]); //should return TableName([Column])
+          fk.Foreign_Schema:=Schema;
+          fk.Foreign_Table:=TAsStringUtils.SplitString(s,'(')[0];
+          fk.Foreign_Column:=TAsStringUtils.RemoveChars(TAsStringUtils.SplitString(s,'(')[1],[')','[',']']);
+          Result.Add(fk);
+        end else
+        fk.Free;
+      end;
+
+    end;
+ finally
+
+  lst2.Free;
+  lst.Free;
+ end;
+
 end;
 
 function TAsSqliteMetadata.GetColumns(Schema, TableName: string): TAsColumns;
@@ -101,6 +144,8 @@ var
   sql:string;
   ds:TAsQuery;
   c:TAsColumn;
+  lst:TStringList;
+  s:string;
 begin
 
  Result := TAsColumns.Create;
@@ -108,19 +153,26 @@ begin
  sql:='pragma table_info('+TableName+')';
 
     ds := TAsQuery.Create(FDbInfo);
+    lst :=TStringLIst.Create;
     try
      ds.Open(sql);
       while not ds.EOF do
        begin
+         lst.Clear;
          c := TAsColumn.Create;
          c.Column_Name:=Trim(ds.FieldByName('name').AsString);
          c.Data_Type:=Trim(ds.FieldByName('type').AsString);
+         TAsRegExUtils.RunRegex(c.Data_Type, '\(.*\)', lst);
+         s := Trim(lst.Text);
+         c.Data_Type:=StringReplace(c.Data_Type,s,'',[rfReplaceAll]);
+         TryStrToInt(TAsStringUtils.RemoveChars(s,['(',')']),c.Max_Length);
          c.Allow_Null:=not ds.FieldByName('notnull').AsBoolean;
          Result.Add(c);
          ds.Next;
        end;
     finally
       ds.Free;
+      lst.Free;
     end;
 end;
 

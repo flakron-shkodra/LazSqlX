@@ -178,11 +178,11 @@ type
     property Items[Index:Integer]:TAsFieldInfo read GetFieldInfo;default;
  end;
 
- { TImportedKeyInfo }
+ { TAsImportedKeyInfo }
 
  TAsImportedKeyInfos = class;
 
- TImportedKeyInfo = class(TCollectionItem)
+ TAsImportedKeyInfo = class(TCollectionItem)
  private
     FColumnName: string;
     FConstraintName: string;
@@ -228,17 +228,17 @@ type
 
  TAsImportedKeyInfos = class(TOwnedCollection)
  private
-   function GetRefInfo(Index: integer): TImportedKeyInfo;
-   procedure SetRefInfo(Index: integer; AValue: TImportedKeyInfo);
+   function GetRefInfo(Index: integer): TAsImportedKeyInfo;
+   procedure SetRefInfo(Index: integer; AValue: TAsImportedKeyInfo);
  public
     constructor Create(AOwner:TPersistent);
-    function Add:TImportedKeyInfo;
+    function Add:TAsImportedKeyInfo;
     function ContainsColumn(Fieldname:string):Boolean;
     function ContainsTable(Tablename:string):Boolean;
     function GetIndex(Fieldname:string):Integer;
-    function GetByName(Fieldname:string):TImportedKeyInfo;
-    function GetByField(Field:TAsFieldInfo):TImportedKeyInfo;
-    property Items[Index:integer]:TImportedKeyInfo read GetRefInfo write SetRefInfo; default;
+    function GetByName(Fieldname:string):TAsImportedKeyInfo;
+    function GetByField(Field:TAsFieldInfo):TAsImportedKeyInfo;
+    property Items[Index:integer]:TAsImportedKeyInfo read GetRefInfo write SetRefInfo; default;
  end;
 
  { TAsTableInfo }
@@ -849,8 +849,8 @@ begin
    end;
   dtSQLite:
      begin
-     o:='[';
-     c:=']';
+     o:='"';
+     c:='"';
    end;
  end;
  Result:=o+FieldName+c;
@@ -1282,7 +1282,7 @@ end;
 procedure TAsTableInfos.GetImportedKeyInfos(Schema: string; Tablename: string;
  var ConstraintInfos: TAsImportedKeyInfos);
 var
-  CI:TImportedKeyInfo;
+  CI:TAsImportedKeyInfo;
   fks:TAsForeignKeys;
   fk:TAsForeignKey;
   lst:TStringList;
@@ -1776,7 +1776,7 @@ end;
 
 {$REGION '  TImportedKeys Implementation  ' }
 
-function TAsImportedKeyInfos.GetByField(Field: TAsFieldInfo): TImportedKeyInfo;
+function TAsImportedKeyInfos.GetByField(Field: TAsFieldInfo): TAsImportedKeyInfo;
 var
   i:Integer;
 begin
@@ -1791,7 +1791,7 @@ begin
   end;
 end;
 
-function TAsImportedKeyInfos.GetByName(Fieldname: string): TImportedKeyInfo;
+function TAsImportedKeyInfos.GetByName(Fieldname: string): TAsImportedKeyInfo;
 var
   i:Integer;
 begin
@@ -1804,25 +1804,25 @@ begin
     end;
 end;
 
-function TAsImportedKeyInfos.GetRefInfo(Index: integer): TImportedKeyInfo;
+function TAsImportedKeyInfos.GetRefInfo(Index: integer): TAsImportedKeyInfo;
 begin
-  Result := TImportedKeyInfo(inherited  Items[Index]);
+  Result := TAsImportedKeyInfo(inherited  Items[Index]);
 end;
 
-procedure TAsImportedKeyInfos.SetRefInfo(Index: integer; AValue: TImportedKeyInfo);
+procedure TAsImportedKeyInfos.SetRefInfo(Index: integer; AValue: TAsImportedKeyInfo);
 begin
  inherited Items[Index] := AValue;
 end;
 
 constructor TAsImportedKeyInfos.Create(AOwner: TPersistent);
 begin
- inherited Create(AOwner,TImportedKeyInfo);
+ inherited Create(AOwner,TAsImportedKeyInfo);
 end;
 
 
-function TAsImportedKeyInfos.Add: TImportedKeyInfo;
+function TAsImportedKeyInfos.Add: TAsImportedKeyInfo;
 begin
-  Result := TImportedKeyInfo(inherited Add);
+  Result := TAsImportedKeyInfo(inherited Add);
 end;
 
 function TAsImportedKeyInfos.ContainsColumn(Fieldname: string): Boolean;
@@ -1870,7 +1870,7 @@ begin
   end;
 end;
 
-procedure TImportedKeyInfo.SetTablename(AValue: string);
+procedure TAsImportedKeyInfo.SetTablename(AValue: string);
 
 begin
  if FTablename=AValue then Exit;
@@ -1878,73 +1878,73 @@ begin
  FTableAlias:=TAsStringUtils.GetFriendlyAlias(FTablename);
 end;
 
-function TImportedKeyInfo.GetDisplayName: string;
+function TAsImportedKeyInfo.GetDisplayName: string;
 begin
  Result:=ColumnName;
 end;
 
-procedure TImportedKeyInfo.SetForiegnTablename(AValue: string);
+procedure TAsImportedKeyInfo.SetForiegnTablename(AValue: string);
 begin
  if FForeignTablename=AValue then Exit;
  FForeignTablename:=AValue;
  FForeignTableAlias:= TAsStringUtils.GetFriendlyAlias(FForeignTablename);
 end;
 
-procedure TImportedKeyInfo.SetColumnName(AValue: string);
+procedure TAsImportedKeyInfo.SetColumnName(AValue: string);
 begin
  if FColumnName=AValue then Exit;
  FColumnName:=AValue;
 end;
 
-procedure TImportedKeyInfo.SetConstraintName(AValue: string);
+procedure TAsImportedKeyInfo.SetConstraintName(AValue: string);
 begin
  if FConstraintName=AValue then Exit;
  FConstraintName:=AValue;
 end;
 
-procedure TImportedKeyInfo.SetForeignColumnName(AValue: string);
+procedure TAsImportedKeyInfo.SetForeignColumnName(AValue: string);
 begin
  if FForeignColumnName=AValue then Exit;
  FForeignColumnName:=AValue;
 end;
 
-procedure TImportedKeyInfo.SetForeignFirstTextField(AValue: string);
+procedure TAsImportedKeyInfo.SetForeignFirstTextField(AValue: string);
 begin
  if FForeignFirstTextField=AValue then Exit;
  FForeignFirstTextField:=AValue;
 end;
 
-procedure TImportedKeyInfo.SetForeignSchema(AValue: string);
+procedure TAsImportedKeyInfo.SetForeignSchema(AValue: string);
 begin
  if FForeignSchema=AValue then Exit;
  FForeignSchema:=AValue;
 end;
 
-procedure TImportedKeyInfo.SetSelectFields(AValue: TStringList);
+procedure TAsImportedKeyInfo.SetSelectFields(AValue: TStringList);
 begin
  if FSelectFields=AValue then Exit;
  FSelectFields:=AValue;
 end;
 
 
-function TImportedKeyInfo.TableAndColumn: string;
+function TAsImportedKeyInfo.TableAndColumn: string;
 begin
  Result:= TableName+ColumnName;
 end;
 
-constructor TImportedKeyInfo.Create(aCollection: TCollection);
+constructor TAsImportedKeyInfo.Create(aCollection: TCollection);
 begin
  inherited Create(aCollection);
  FSelectFields := TStringList.Create;
 end;
 
-destructor TImportedKeyInfo.Destroy;
+destructor TAsImportedKeyInfo.Destroy;
 begin
  FSelectFields.Free;
  inherited Destroy;
 end;
 
-function TImportedKeyInfo.GetCompatibleColumnName(AsDbType: TAsDatabaseType): string;
+function TAsImportedKeyInfo.GetCompatibleColumnName(AsDbType: TAsDatabaseType): string;
 var
  o,c:string;
 begin
@@ -1978,7 +1978,7 @@ begin
  Result:=o+ColumnName+c;
 end;
 
-function TImportedKeyInfo.GetCompatibleForeignColumnName(AsDbType: TAsDatabaseType
+function TAsImportedKeyInfo.GetCompatibleForeignColumnName(AsDbType: TAsDatabaseType
  ): string;
 var
  o,c:string;
@@ -2003,22 +2003,22 @@ begin
  Result:=o+ForeignColumnName+c;
 end;
 
-procedure TImportedKeyInfo.Assign(Source: TPersistent);
+procedure TAsImportedKeyInfo.Assign(Source: TPersistent);
 begin
   if Source=nil then
   Exit;
- if Source is TImportedKeyInfo then
+ if Source is TAsImportedKeyInfo then
  begin
-    FColumnName:=TImportedKeyInfo(Source).ColumnName;
-    FConstraintName:=TImportedKeyInfo(Source).ConstraintName;
-    FForeignColumnName:=TImportedKeyInfo(Source).ForeignColumnName;
-    FForeignFirstTextField:=TImportedKeyInfo(Source).ForeignFirstTextField;
-    FForeignSchema:=TImportedKeyInfo(Source).ForeignSchema;
-    FSelectFields.Assign(TImportedKeyInfo(Source).SelectFields);
-    FTablename:=TImportedKeyInfo(Source).Tablename;
-    FTableAlias:=TImportedKeyInfo(Source).TableAlias;
-    FForeignTableAlias:=TImportedKeyInfo(Source).ForeignTableAlias;
-    FForeignTablename:=TImportedKeyInfo(Source).ForeignTableName;
+    FColumnName:=TAsImportedKeyInfo(Source).ColumnName;
+    FConstraintName:=TAsImportedKeyInfo(Source).ConstraintName;
+    FForeignColumnName:=TAsImportedKeyInfo(Source).ForeignColumnName;
+    FForeignFirstTextField:=TAsImportedKeyInfo(Source).ForeignFirstTextField;
+    FForeignSchema:=TAsImportedKeyInfo(Source).ForeignSchema;
+    FSelectFields.Assign(TAsImportedKeyInfo(Source).SelectFields);
+    FTablename:=TAsImportedKeyInfo(Source).Tablename;
+    FTableAlias:=TAsImportedKeyInfo(Source).TableAlias;
+    FForeignTableAlias:=TAsImportedKeyInfo(Source).ForeignTableAlias;
+    FForeignTablename:=TAsImportedKeyInfo(Source).ForeignTableName;
  end else
  inherited Assign(Source);
 end;

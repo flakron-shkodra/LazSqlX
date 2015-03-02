@@ -211,6 +211,8 @@ type
    procedure ExecSQL;
    procedure Edit;
    procedure ApplyUpdates;
+   procedure DisableControls;
+   procedure EnableControls;
    procedure AddIndex(const AName, AFields : string; AOptions : TIndexOptions; const ADescFields: string = ''; const ACaseInsFields: string = '');
    function GetFieldNames:TStringList;
    function FieldByName(FieldName:string):TField;
@@ -428,7 +430,7 @@ begin
     Output := TStringList.Create;
 
   try
-
+    Output.Clear;
     r := TRegExpr.Create;
     r.InputString := InputStr;
     r.Expression := RegEx;
@@ -851,11 +853,24 @@ begin
       end;
   deZeos:
   begin
-    FZQuery.ApplyUpdates;
-    FZCon.Commit;
+    if not FZCon.AutoCommit then
+    begin
+      FZQuery.ApplyUpdates;
+      FZCon.Commit;
+    end;
   end;
  end;
 
+end;
+
+procedure TAsQuery.DisableControls;
+begin
+  DataSet.DisableControls;
+end;
+
+procedure TAsQuery.EnableControls;
+begin
+ DataSet.EnableControls;
 end;
 
 procedure TAsQuery.AddIndex(const AName, AFields: string;
@@ -1015,11 +1030,16 @@ end;
 class function TAsDbUtils.SafeWrap(dbtyp: TAsDatabaseType; TableOrField: string
  ): string;
 begin
- case dbtyp of
-  dtMsSql,dtSQLite:Result:='['+TableOrField+']';
-  dtMySql:Result:='`'+TableOrField+'`';
-  dtOracle,dtFirebirdd,dtPostgreSql:Result:='"'+TableOrField+'"';
- end;
+ if AnsiContainsStr(TableOrField,' ') then
+ begin
+   case dbtyp of
+    dtMsSql:Result:='['+TableOrField+']';
+    dtMySql:Result:='`'+TableOrField+'`';
+    dtOracle,dtFirebirdd,dtPostgreSql,dtSQLite:Result:='"'+TableOrField+'"';
+   end;
+ end else
+ Result := TableOrField;
+
 end;
 
 class function TAsDbUtils.GetOracleDescriptor(server, database: string;

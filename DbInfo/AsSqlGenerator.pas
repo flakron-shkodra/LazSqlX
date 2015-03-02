@@ -63,6 +63,8 @@ TAsProcedureNames = object
 
     function GetDbParamPrefix: string;
 
+    function SafeWrap(TableOrField:string):string;
+
     function GetSql(Ident: integer; AsTableInfo: TAsTableInfo;
       QueryType: TQueryType): TStringList;
   public
@@ -297,22 +299,18 @@ function TAsSqlGenerator.GetSql(Ident: integer; AsTableInfo: TAsTableInfo;
   QueryType: TQueryType): TStringList;
 var
   seperator, tmpFTablename, tmpTablename: string;
-
-  SqlOpenBr, SqlCloseBr, SqlDot, SqlParamChar, SqlTable, SqlFromDot: string;
-
+  SqlParamChar, SqlTable,SqlFromDot,SqlDot: string;
   I, oIndex: integer;
-
   tmpSelect, tmpSelectInsert, tmpInsert, tmpUpdate, tmpUpdateAll,
   tmpSelectJoins: TStringList;
   r: TStringList;
   field: TField;
-
-  selectTablename:string;
-  selectFieldname:string;
-
-  strTest: string;
-  strIdent: string;
+  selectTablename, selectFieldname:string;
+  strTest, strIdent: string;
   F: Integer;
+  fieldName: String;
+  localColumn: String;
+  foreignColumn: String;
 begin
 
   FSchema := AsTableInfo.Schema;
@@ -328,70 +326,17 @@ begin
   end;
 
   SqlFromDot := '.';
+  SqlTable := AsTableInfo.Tablename;
+  SqlDot := '.';
+  SqlParamChar := ':';
 
   if FDBConInfo.DbType= dtFirebirdd then
   begin
     FSchema:='';
   end;
-  case FDBConInfo.DbType of
-    dtMsSql:
-    begin
-      SqlOpenBr := '[';
-      SqlCloseBr := ']';
-      SqlTable := AsTableInfo.Tablename;
-      SqlDot := '.';
-      SqlParamChar := ':';
-    end;
-    dtOracle:
-    begin
-      SqlOpenBr := '"';
-      SqlCloseBr := '"';
-      SqlTable := AsTableInfo.Tablename;
-      SqlDot := '.';
-      SqlParamChar := ' :';
-    end;
-    dtMySql:
-    begin
-      SqlOpenBr := '`';
-      SqlCloseBr := '`';
-      SqlTable := '';
-      SqlTable := AsTableInfo.Tablename;
-      SqlDot := '.';
-      SqlParamChar := ':';
-    end;
-    dtSQLite:
-    begin
-      SqlOpenBr := '[';
-      SqlCloseBr := ']';
-      SqlTable := AsTableInfo.Tablename;
-      SqlDot := '.';
-      SqlParamChar := ':';
-      SqlFromDot := '';
-    end;
-    dtFirebirdd:
-    begin
-      SqlOpenBr := '"';
-      SqlCloseBr := '"';
-      SqlTable := AsTableInfo.Tablename;
-      SqlDot := '.';
-      SqlParamChar := ':';
-      SqlFromDot := '';
-    end;
-    dtPostgreSql:
-    begin
-      SqlOpenBr := '"';
-      SqlCloseBr := '"';
-      SqlTable := AsTableInfo.Tablename;
-      SqlDot := '.';
-      SqlParamChar := ':';
-      SqlFromDot := '';
-    end;
-  end;
 
   if Trim(AsTableInfo.TableAlias)=EmptyStr then
   AsTableInfo.TableAlias:=AsTableInfo.Tablename[1];
-
-
 
 
   if (AsTableInfo.PrimaryKeys.Count = 0) and not (QueryType in [qtSelect, qtInsert]) then
@@ -409,6 +354,8 @@ begin
 
   for I := 0 to AsTableInfo.AllFields.Count - 1 do
   begin
+    fieldName := SafeWrap(AsTableInfo.AllFields[I].FieldName);
+
     if I < (AsTableInfo.AllFields.Count - 1) then
       seperator := ','
     else
@@ -422,35 +369,30 @@ begin
     if AsTableInfo.AllFields[I].IsReference then
     begin
 
-      oIndex := AsTableInfo.ImportedKeys.GetIndex(AsTableInfo.AllFields[I].FieldName);
-      tmpSelect.Add(strIdent + '    ' + AsTableInfo.TableAlias + SqlDot + SqlOpenBr + AsTableInfo.AllFields[I].FieldName + SqlCloseBr + ',');
-
-      //tmpSelect.Add(strIdent + '    ' +  't' + IntToStr(oIndex + 1) +
-      //  SqlDot + SqlOpenBr +
-      //  TableInfo.ImportedKeys[oIndex].ForeignFirstTextField + SqlCloseBr + seperator);
+      oIndex := AsTableInfo.ImportedKeys.GetIndex(fieldName);
+      tmpSelect.Add(strIdent + '    ' + AsTableInfo.TableAlias + SqlDot + fieldName+ ',');
 
       if AsTableInfo.ImportedKeys[oIndex]<>nil then
       if AsTableInfo.ImportedKeys[oIndex].TableName<>'' then
       for F := 0 to AsTableInfo.ImportedKeys[oIndex].SelectFields.Count-1 do
       begin
         tmpSelect.Add(strIdent + '    ' + 't' + IntToStr(oIndex + 1) +
-          SqlDot + SqlOpenBr + AsTableInfo.ImportedKeys[oIndex].SelectFields[F] +
-          SqlCloseBr + seperator);
+          SqlDot + SafeWrap(AsTableInfo.ImportedKeys[oIndex].SelectFields[F]) +
+          seperator);
       end;
 
     end
     else
     begin
       tmpSelect.Add(strIdent + '    ' + AsTableInfo.TableAlias +
-        SqlDot + SqlOpenBr + AsTableInfo.AllFields[I].FieldName + SqlCloseBr + seperator);
+        SqlDot + fieldName + seperator);
     end;
 
     if (not AsTableInfo.AllFields[I].IsIdentity) then
     begin
       tmpInsert.Add(strIdent + '    ' + SqlParamChar +
         AsTableInfo.AllFields[I].CSharpName + seperator);
-      tmpSelectInsert.Add(strIdent + '    ' + SqlOpenBr +
-        AsTableInfo.AllFields[I].FieldName + SqlCloseBr + seperator);
+      tmpSelectInsert.Add(strIdent + '    ' + fieldName + seperator);
 
       //this check will prevent some unwanted stuff like : (..set Status=@Status, where.. )
       if (I + 1) = AsTableInfo.AllFields.Count - 1 then
@@ -459,12 +401,10 @@ begin
           seperator := '';
 
       if not AsTableInfo.AllFields[I].IsPrimaryKey then
-        tmpUpdate.Add(strIdent + '    ' + SqlOpenBr + AsTableInfo.AllFields[I].FieldName +
-          SqlCloseBr + '=' + SqlParamChar + AsTableInfo.AllFields[I].CSharpName +
+        tmpUpdate.Add(strIdent + '    ' + fieldName+ '=' + SqlParamChar + AsTableInfo.AllFields[I].CSharpName +
           seperator);
 
-      tmpUpdateAll.Add(strIdent + '    ' + SqlOpenBr +
-        AsTableInfo.AllFields[I].FieldName + SqlCloseBr + '=' +
+      tmpUpdateAll.Add(strIdent + '    ' +  fieldName + '=' +
         SqlParamChar + AsTableInfo.AllFields[I].CSharpName + seperator);
 
     end;
@@ -477,19 +417,19 @@ begin
     tmpTablename := AsTableInfo.ImportedKeys[i].TableAlias;
     if trim(tmpTablename)=EmptyStr then
     tmpTablename:=AsTableInfo.ImportedKeys[i].Tablename[1];
+    localColumn := SafeWrap(AsTableInfo.ImportedKeys[I].ColumnName);
+    foreignColumn := SafeWrap(AsTableInfo.ImportedKeys[I].ForeignColumnName);
 
     tmpSelectJoins.Add
     (
       strIdent + ' INNER JOIN  ' + tmpFTablename + ' t' +
-      IntToStr(I + 1) + ' ON ' + tmpTablename + '.' + SqlOpenBr +
-      AsTableInfo.ImportedKeys[I].ColumnName + SqlCloseBr + ' = ' +
-      't' + IntToStr(I + 1) + '.' + SqlOpenBr +
-      AsTableInfo.ImportedKeys[I].ForeignColumnName + SqlCloseBr
+      IntToStr(I + 1) + ' ON ' + tmpTablename + '.' +localColumn + ' = ' +
+      't' + IntToStr(I + 1) + '.' + foreignColumn
       );
   end;
 
 
-  tmpTablename:=SqlOpenBr + AsTableInfo.Tablename + SqlCloseBr;
+  tmpTablename:=SafeWrap(AsTableInfo.Tablename);
 
   case QueryType of
     qtSelect:
@@ -508,21 +448,22 @@ begin
       r.Add(tmpSelectJoins.Text);
       if AsTableInfo.PrimaryKeys.Count > 0 then
       begin
-        r.Add(strIdent + 'WHERE ' + AsTableInfo.TableAlias+ '.' + SqlOpenBr + AsTableInfo.PrimaryKeys[0].FieldName +
-          SqlCloseBr + '=' + SqlParamChar + AsTableInfo.PrimaryKeys[0].CSharpName);
+        r.Add(strIdent + 'WHERE ' + AsTableInfo.TableAlias+ '.' +
+        SafeWrap(AsTableInfo.PrimaryKeys[0].FieldName) + '='+
+         SqlParamChar + AsTableInfo.PrimaryKeys[0].CSharpName);
         if (AsTableInfo.PrimaryKeys.Count > 1) then
         begin
           for I := 1 to AsTableInfo.PrimaryKeys.Count - 1 do
-            r.Add(strIdent + ' AND ' + SqlOpenBr + AsTableInfo.Tablename +
-              SqlCloseBr + '.' + SqlOpenBr + AsTableInfo.PrimaryKeys[I].FieldName +
-              SqlCloseBr + '=' + SqlParamChar + AsTableInfo.PrimaryKeys[I].CSharpName);
+            r.Add(strIdent + ' AND ' + SafeWrap(AsTableInfo.Tablename)+
+            '.' + SafeWrap(AsTableInfo.PrimaryKeys[I].FieldName) + '=' +
+            SqlParamChar + AsTableInfo.PrimaryKeys[I].CSharpName);
         end;
       end;
 
     end;
     qtInsert:
     begin
-      r.Add(strIdent + 'INSERT INTO ' + SqlOpenBr + AsTableInfo.TableName + SqlCloseBr);
+      r.Add(strIdent + 'INSERT INTO ' + SafeWrap(AsTableInfo.TableName));
       r.Add(strIdent + '(');
       r.Add(tmpSelectInsert.Text);
       r.Add(strIdent + ')');
@@ -533,7 +474,7 @@ begin
     end;
     qtUpdate:
     begin
-      r.Add(strIdent + 'UPDATE ' + SqlOpenBr + AsTableInfo.TableName + SqlCloseBr);
+      r.Add(strIdent + 'UPDATE ' + SafeWrap(AsTableInfo.TableName));
       r.Add(strIdent + 'SET ');
 
       //if tmpUpdate.Count > 0 then
@@ -543,32 +484,31 @@ begin
 
       if AsTableInfo.PrimaryKeys.Count > 0 then
       begin
-        r.Add(strIdent + 'WHERE ' + SqlOpenBr + SqlTable + SqlCloseBr +
-          SqlDot + SqlOpenBr + AsTableInfo.PrimaryKeys[0].FieldName +
-          SqlCloseBr + '=' + SqlParamChar + 'p1');
+        r.Add(strIdent + 'WHERE ' + SafeWrap(SqlTable) + SqlDot +
+          SafeWrap(AsTableInfo.PrimaryKeys[0].FieldName) + '=' + SqlParamChar + 'p1');
         if (AsTableInfo.PrimaryKeys.Count > 1) then
         begin
           for I := 1 to AsTableInfo.PrimaryKeys.Count - 1 do
-            r.Add(strIdent + ' AND ' + SqlOpenBr + SqlTable +
-              SqlCloseBr + SqlDot + SqlOpenBr + AsTableInfo.PrimaryKeys[I].FieldName +
-              SqlCloseBr + '=' + SqlParamChar + 'p'+IntToStr(I+1));
+            r.Add(strIdent + ' AND ' + SafeWrap(SqlTable)+SqlDot+
+             SafeWrap(AsTableInfo.PrimaryKeys[I].FieldName)+
+              '=' + SqlParamChar + 'p'+IntToStr(I+1));
         end;
       end;
     end;
     qtDelete:
     begin
-      r.Add(strIdent + 'DELETE FROM ' + SqlOpenBr+SqlTable+SqlCloseBr);
+      r.Add(strIdent + 'DELETE FROM ' + SafeWrap(SqlTable));
       if AsTableInfo.PrimaryKeys.Count > 0 then
       begin
-        r.Add(strIdent + 'WHERE ' + SqlOpenBr + SqlTable + SqlCloseBr +
-          SqlDot + SqlOpenBr + AsTableInfo.PrimaryKeys[0].FieldName +
-          SqlCloseBr + '=' + SqlParamChar + 'p1');
+        r.Add(strIdent + 'WHERE ' + SafeWrap(SqlTable)+
+          SqlDot + SafeWrap(AsTableInfo.PrimaryKeys[0].FieldName)+
+          '=' + SqlParamChar + 'p1');
         if (AsTableInfo.PrimaryKeys.Count > 1) then
         begin
           for I := 1 to AsTableInfo.PrimaryKeys.Count - 1 do
-            r.Add(strIdent + ' AND ' + SqlOpenBr + SqlTable +
-              SqlCloseBr + SqlDot + SqlOpenBr + AsTableInfo.PrimaryKeys[I].FieldName +
-              SqlCloseBr + '=' + SqlParamChar + 'p'+IntToStr(I+1));
+            r.Add(strIdent + ' AND ' + SafeWrap(SqlTable)+
+              SqlDot + SafeWrap(AsTableInfo.PrimaryKeys[I].FieldName)+
+              '=' + SqlParamChar + 'p'+IntToStr(I+1));
         end;
       end;
     end;
@@ -769,6 +709,11 @@ begin
     dtOracle: Result := '_';
     dtMySql: Result := '_';
   end;
+end;
+
+function TAsSqlGenerator.SafeWrap(TableOrField: string): string;
+begin
+  Result := TAsDbUtils.SafeWrap(FDBConInfo.DbType,TableOrField);
 end;
 
 procedure TAsSqlGenerator.CheckProcedureName(Tablename: string);

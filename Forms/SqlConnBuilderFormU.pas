@@ -318,16 +318,13 @@ begin
 
     if (odSelected in State) then
     begin
-      FrameRect(ARect);
-      GradientFill(ARect, clSilver, clGray, gdVertical);
-      //Font.Color := $0000CCFF;
-      Font.Color := clWhite;
+      GradientFill(ARect, clWhite, clSkyBlue, gdVertical);
+      Font.Color := clBlack;
     end
     else if (odFocused in State) then
     begin
-      FrameRect(ARect);
-      GradientFill(ARect, clSilver, clGray, gdVertical);
-      Font.Color := clWhite;
+      GradientFill(ARect, clWhite, clSkyBlue, gdVertical);
+      Font.Color := clBlack;
     end
     else
     begin
@@ -515,7 +512,7 @@ begin
       txtPort.Visible := False;
       lblSever.Visible := False;
       cmbServerName.Visible := False;
-      cmbDbEngine.ItemIndex:=1;
+      cmbDbEngine.ItemIndex:=0;
     end;
     4: // Firebird
     begin
@@ -559,7 +556,7 @@ begin
 
   if odSelected in State then
   begin
-    cmb.Canvas.GradientFill(ARect, $00E2E2E2, clGray, gdVertical);
+    cmb.Canvas.GradientFill(ARect, clWhite, clSkyBlue, gdVertical);
   end
   else
   begin
@@ -578,6 +575,7 @@ begin
   end;
 
   cmb.Canvas.Font.Size := 10;
+  cmb.Canvas.Font.Color:=clWindowText;
   cmb.Canvas.Brush.Style := bsClear;
   cmb.Canvas.TextOut(ARect.Left + 30, ARect.Top + 3, cmb.Items[Index]);
 end;
@@ -591,7 +589,7 @@ begin
 
   if odSelected in State then
   begin
-    cmb.Canvas.GradientFill(ARect, $00E2E2E2, clGray, gdVertical);
+    cmb.Canvas.GradientFill(ARect, clWhite, clSkyBlue, gdVertical);
   end
   else
   begin
@@ -606,6 +604,7 @@ begin
   end;
 
   cmb.Canvas.Font.Size := 10;
+  cmb.Canvas.Font.Color:=clWindowText;
   cmb.Canvas.Brush.Style := bsClear;
   cmb.Canvas.TextOut(ARect.Left + 30, ARect.Top + 3, cmb.Items[Index]);
 end;

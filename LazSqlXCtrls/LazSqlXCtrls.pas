@@ -8,7 +8,7 @@ uses
   Classes, SysUtils, Controls, StdCtrls, ComCtrls, ExtCtrls, Graphics,Dialogs, sqldb, db,
   ZDataset, ZConnection, DbCtrls, DBGrids, SynEdit, SynCompletion, SynEditTypes,
   Grids, Menus, AsStringUtils, AsDbType, Utils, SynHighlighterSQL, Types, strutils,
-  LCLType, SqlExecThread, AsSqlGenerator;
+  LCLType, SqlExecThread, Forms;
 
 
 type
@@ -358,14 +358,12 @@ end;
 procedure TLazSqlXTabSheet.OnQyeryAfterPost(DataSet: TDataSet);
 begin
  FQuery.ApplyUpdates;
- FDbInfoNew.Commit;
 end;
 
 
 procedure TLazSqlXTabSheet.OnQueryAfterDelete(DataSet: TDataSet);
 begin
  FQuery.ApplyUpdates;
- FDbInfoNew.Commit;
 end;
 
 procedure TLazSqlXTabSheet.SetDataGrid(AValue: TDBGrid);
@@ -503,8 +501,13 @@ begin
   Caption := 'Query(' + FNumbering + ')';
   Name := 'QueryTab' + FNumbering;
 
-  FDbInfoNew := TAsDbConnectionInfo.Create;
-  FDbInfoNew.Assign(FParent.DBInfo);
+  //in order to avoid dbLock don't create new connection
+  if FParent.DBInfo.DbType <> dtSQLite then
+  begin
+    FDbInfoNew := TAsDbConnectionInfo.Create;
+    FDbInfoNew.Assign(FParent.DBInfo);
+  end else
+  FDbInfoNew := FParent.DBInfo;
 
   FQuery := TAsQuery.Create(FDbInfoNew);
   FQuery.Name := 'qr' + FNumbering;
@@ -523,8 +526,15 @@ begin
   FQueryEditor.Name := 'txtSyn' + FNumbering;
   FQueryEditor.Font.Pitch := fpFixed;
   FQueryEditor.Font.Quality := fqDraft;
+  FQueryEditor.Font.Size:=8;
+  if Screen.Fonts.IndexOf('Lucida Sans Typewriter')>-1 then
+  begin
+    FQueryEditor.Font.Name:='Lucida Sans Typewriter';
+  end;
+  FQueryEditor.TabWidth:=2;
   FQueryEditor.Options := FQueryEditor.Options - [eoSmartTabs, eoScrollPastEol] + [eoTabIndent];
   FQueryEditor.RightEdge := 120;
+
   FQueryEditor.MouseOptions := FQueryEditor.MouseOptions + [TSynEditorMouseOption.emCtrlWheelZoom];
 
   FQueryEditor.OnChange := @OnQueryEditorChange;
@@ -604,6 +614,8 @@ begin
    FBottomPanel.Free;
 
    try
+     //only sqlite connection will use main Connection
+     if FParent.DBInfo.DbType<>dtSQLite then
      FDbInfoNew.Free; //sorry for memleak (if)
    except
    end;
@@ -953,7 +965,7 @@ begin
 
   if Selected then
   begin
-    ACanvas.GradientFill(r, $00E2E2E2, clGray, gdVertical);
+    ACanvas.GradientFill(r, clWhite, clSkyBlue, gdVertical);
     ACanvas.Brush.Style := bsClear;
     ACanvas.Font.Color := clBlack;
   end;

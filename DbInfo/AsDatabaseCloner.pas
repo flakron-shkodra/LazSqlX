@@ -29,6 +29,8 @@ type
     procedure MakeTable(info: TAsTableInfo; CreateConstraints:boolean=true; OverrideDefaultTypes: boolean = False);
     {Create constra0ints for Info}
     procedure CreateConstraints(info:TAsTableInfo);
+    {Copy data from source db,table to destination table}
+    procedure CopyData(FromDb:TAsDbConnectionInfo; srcTablename,destTablename:string);
     {Create constraincts for all importedKeys in tableInfos}
     procedure CreateConstraintsForAll(infos:TAsTableInfos);
     {Create tables for all tableInfos}
@@ -111,13 +113,13 @@ begin
   dtSQLite:
          begin
            case ftype of
-              ftCurrency,ftBCD,ftFloat: Result:='real';
-              ftWideMemo: Result := 'text';
-              ftWideString: Result:='text';
+              ftCurrency,ftFloat,ftFMTBcd: Result:='real';
+              ftWideMemo,ftMemo,ftGuid: Result := 'text';
+              ftWideString,ftString: Result:='varchar';
               ftBlob,ftOraBlob: Result:='blob';
               ftBoolean:Result:='integer';
-              ftDate,ftDateTime:Result:='text';
-              ftInteger: Result:='integer' ;
+              ftDate,ftDateTime:Result:='datetime';
+              ftInteger,ftSmallint, ftLargeint,ftWord,ftAutoInc : Result:='integer';
               ftBytes,ftVarBytes: Result:='blob';
               else
               Result:='text';
@@ -260,25 +262,13 @@ begin
 
       for I := 0 to info.PrimaryKeys.Count - 1 do
       begin
-
-        if I>15 then
-        begin
-          sql := Copy(sql, 1, Length(sql) - 1);
-          break;
-        end;
-
         sql := sql + info.PrimaryKeys[I].GetCompatibleFieldName(FDbInfo.DbType) +
           LoopSeperator[integer(I < info.PrimaryKeys.Count - 1)];
-
-        if FDbInfo.DbType = dtSQLite then
-        begin
-          if info.PrimaryKeys.Count > 1 then
-          begin
-            sql := Copy(sql, 1, Length(sql) - 1);
-          end;
-          sql := sql + ' ASC';
-          break;
-        end;
+        //if FDbInfo.DbType=dtSQLite then
+        //begin
+        //  sql[Length(sql)]:=' ';
+        //  Break;
+        //end;
       end;
     end;
     sql := sql + ' )';
@@ -296,30 +286,34 @@ begin
   end;
 
   if CreateConstraints then
-  if FDbInfo.DbType <> dtSQLite then
+
     for I := 0 to info.ImportedKeys.Count - 1 do
     begin
-      if FDbInfo.DbType in [dtOracle, dtMySql,dtFirebirdd] then
+      if FDbInfo.DbType in [dtOracle, dtMySql,dtFirebirdd,dtSQLite] then
       begin
         sql := sql + ',';
       end;
-      if FDbInfo.DbType<>dtPostgreSql then
-      begin
-      Sql := Sql + ' CONSTRAINT ' + TAsDbUtils.SafeWrap(FDbInfo.DbType,'fk_'+ info.ImportedKeys[I].ForeignTableName + info.ImportedKeys[I].ForeignColumnName) +
-        ' FOREIGN KEY (' + info.ImportedKeys[I].GetCompatibleColumnName(FDbInfo.DbType) + ') ' +
-        ' REFERENCES ' + info.ImportedKeys[I].ForeignTableName +
-        '(' + info.ImportedKeys[I].GetCompatibleForeignColumnName(FDbInfo.DbType) + ') ';
+      case FDbInfo.DbType of
+      dtMsSql,dtOracle,dtMySql,dtFirebirdd:
+        begin
+        Sql := Sql + ' CONSTRAINT ' + TAsDbUtils.SafeWrap(FDbInfo.DbType,'fk_'+ info.ImportedKeys[I].ForeignTableName + info.ImportedKeys[I].ForeignColumnName) +
+          ' FOREIGN KEY (' + info.ImportedKeys[I].GetCompatibleColumnName(FDbInfo.DbType) + ') ' +
+          ' REFERENCES ' + info.ImportedKeys[I].ForeignTableName +
+          '(' + info.ImportedKeys[I].GetCompatibleForeignColumnName(FDbInfo.DbType) + ') ';
 
-      end else
-      begin
+        end;
+      dtSQLite:
+        begin
+           Sql := Sql+' FOREIGN KEY('+info.ImportedKeys[I].GetCompatibleColumnName(FDbInfo.DbType)+') REFERENCES '+
+          info.ImportedKeys[I].ForeignTableName+'('+info.ImportedKeys[I].ForeignColumnName+')';
+        end
+      else
+        begin
         sql :=sql+LineEnding+ ' ALTER TABLE ' +Info.Tablename + ' ADD FOREIGN KEY ('+ TAsDbUtils.SafeWrap(FDbInfo.DbType, info.ImportedKeys[I].ColumnName)+') ' +
         ' REFERENCES '+info.ImportedKeys[I].ForeignTableName+'('+TAsDbUtils.SafeWrap(FDbInfo.DbType, info.ImportedKeys[I].ForeignColumnName)+');';
+        end;
       end;
-
-
-
-    end;
-
+   end;
 
   if FDbInfo.DbType <> dtPostgreSql then
   sql := sql + ')';
@@ -363,6 +357,41 @@ begin
       ' REFERENCES '+info.ImportedKeys[I].ForeignTableName+'('+info.ImportedKeys[I].ForeignColumnName+')';
     end;
     TAsDbUtils.ExecuteQuery(sql,FDbInfo);
+  end;
+end;
+
+procedure TAsDatabaseCloner.CopyData(FromDb: TAsDbConnectionInfo; srcTablename,
+  destTablename: string);
+var
+  src,dest:TAsQuery;
+  I: Integer;
+  lst: TStringList;
+begin
+  src := TAsQuery.Create(FromDb);
+  dest := TAsQuery.Create(FDbInfo);
+  try
+    src.DisableControls;
+    dest.DisableControls;
+
+    src.Open('select * from '+TAsDbUtils.SafeWrap(FromDb.DbType,srcTablename));
+    dest.Open('select * from '+TAsDbUtils.SafeWrap(FDbInfo.DbType,destTablename));
+
+    while not src.EOF do
+    begin
+      dest.Insert;
+      for I:=0 to src.FieldCount-1 do
+      begin
+        if (dest.Fields[I].Required) and (src.Fields[I].IsNull) then
+          dest.Fields[I].Value :='1'
+        else
+          dest.Fields[I].Value := src.Fields[I].Value;
+      end;
+      dest.Post;
+      src.Next;
+    end;
+  finally
+    src.Free;
+    dest.Free;
   end;
 end;
 

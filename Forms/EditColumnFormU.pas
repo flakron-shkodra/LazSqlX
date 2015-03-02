@@ -170,13 +170,12 @@ procedure TEditColumnForm.UpdateGUI;
 var
  dt: string;
 begin
- if FDbType<> dtSQLite then
- begin
+
    lblPrecision.Visible:=False;
    txtPrecision.Visible:=False;
    lblLength.Visible:=False;
    txtLength.Visible:=False;
-   chkIdentity.Visible:=False;
+
 
    dt := lowercase(cmbDataTypes.Text);
    if (dt='varchar') or (dt='nvarchar') or (dt='varchar2') or (dt='nvarchar2')
@@ -193,7 +192,11 @@ begin
        lblLength.Visible:=True;
        txtLength.Visible:=True;
    end;
+
+ if FDbType<> dtSQLite then
+ begin
    chkIdentity.Visible := (dt='int') or (dt='numeric');
+   chkIdentity.Visible:=False;
  end;
 
  if DbType=dtOracle then

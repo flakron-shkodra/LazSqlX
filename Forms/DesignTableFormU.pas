@@ -332,7 +332,7 @@ end;
 procedure TDesignTableForm.actDropConstraintExecute(Sender: TObject);
 var
   sql:string;
-  ci:TImportedKeyInfo;
+  ci:TAsImportedKeyInfo;
 begin
 
   if lsvDependencies.Selected = nil then
@@ -341,11 +341,11 @@ begin
   if FDbInfo.DbType = dtMySql then
   begin
     sql := ' ALTER TABLE '+TAsDbUtils.SafeWrap(FDbInfo.DbType, FTablename) +
-          ' DROP FOREIGN KEY '+lsvDependencies.Selected.Caption;
+          ' DROP FOREIGN KEY '+TAsDbUtils.SafeWrap(FDbInfo.DbType,lsvDependencies.Selected.Caption);
   end else
   begin
     sql := '  ALTER TABLE '+TAsDbUtils.SafeWrap(FDbInfo.DbType, FTablename) +
-            ' DROP CONSTRAINT '+lsvDependencies.Selected.Caption ;
+            ' DROP CONSTRAINT '+ TAsDbUtils.SafeWrap(FDbInfo.DbType,lsvDependencies.Selected.Caption);
   end;
 
   if MessageDlg('Confirm', 'Are you sure you want to drop this field?', mtConfirmation,
@@ -505,13 +505,7 @@ begin
   EditColumnForm.FillDataTypesOnShow:=True;
   EditColumnForm.chkPrimaryKey.Visible := FCreateNew;
 
-  //sqlte only on primary key, so check if there's already one
-  if FDbInfo.DbType = dtSQLite then
-  begin
-    EditColumnForm.chkPrimaryKey.Visible := not FWorkingTableInfo.HasPrimaryKeys;
-  end;
-
-  if (EditColumnForm.ShowModal(FDbInfo.DbType) =
+   if (EditColumnForm.ShowModal(FDbInfo.DbType) =
     mrOk) and (EditColumnForm.Validate) then
   begin
     cname := EditColumnForm.ColumnName;
@@ -590,7 +584,7 @@ end;
 procedure TDesignTableForm.actNewConstraintExecute(Sender: TObject);
 var
   sql:string;
-  ci:TImportedKeyInfo;
+  ci:TAsImportedKeyInfo;
 begin
  {
 
@@ -645,11 +639,8 @@ begin
   btnApply.Visible := FCreateNew;
   pgcMain.ActivePageIndex := 0;
 
-  tabDependencies.Visible:= not (FDbInfo.DbType = dtSQLite);
-  tabIndexes.Visible:= not (FDbInfo.DbType = dtSQLite);
-  tabTriggers.Visible:= not (FDbInfo.DbType = dtSQLite);
-
-  tabIndexes.Visible:=not FCreateNew;
+  tabDependencies.TabVisible := (FDbInfo.DbType <> dtSQLite) or FCreateNew;
+  tabIndexes.TabVisible := (FCreateNew=False);
 
 end;
 
@@ -657,7 +648,6 @@ function TDesignTableForm.GetCreateTableSQL: string;
 var
   sql: string;
   I: integer;
-  HasPK: boolean;
 begin
 
   sql := 'CREATE TABLE ' + FTablename + ' ( ';

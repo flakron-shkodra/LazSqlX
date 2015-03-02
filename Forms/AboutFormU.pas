@@ -21,6 +21,7 @@ type
   TAboutForm = class(TForm)
     btnOK: TButton;
     Image1: TImage;
+    lblPoweredBy: TLabel;
     lblVersion: TLabel;
     lblOwner: TLabel;
     lblProduct: TLabel;

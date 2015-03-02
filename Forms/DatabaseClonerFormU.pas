@@ -24,6 +24,8 @@ type
     btnAccept: TBitBtn;
     btnCancel: TBitBtn;
     chkDbStructure: TCheckBox;
+    chkCreateConstraints: TCheckBox;
+    chkCopyData: TCheckBox;
     chkIntegratedSecurity: TCheckBox;
     cmbDatabaseType: TComboBox;
     cmbServerName: TComboBox;
@@ -99,7 +101,7 @@ begin
 
   if odSelected in State then
   begin
-    cmb.Canvas.GradientFill(ARect, $00E2E2E2, clGray, gdVertical);
+    cmb.Canvas.GradientFill(ARect, clWhite, clSkyBlue, gdVertical);
   end
   else
   begin
@@ -304,7 +306,8 @@ begin
             Continue;
           end;
 
-         dbc.MakeTable(FTableInfos[I],false,true);
+         //create table; create constraints now only for sqlite, otherwise later
+         dbc.MakeTable(FTableInfos[I],(chkCreateConstraints.Checked) and (dbi.DbType=dtSQLite),true);
          pbProgressBar.StepIt;
          WriteLog('SUCCESS: Table [' + FTableInfos[I].Tablename + ']',ltInfo);
          Application.ProcessMessages;
@@ -318,6 +321,7 @@ begin
       pbProgressBar.Position:=0;
 
       //creat autonumber for oracle and firebird
+      if dbi.DbType in [dtOracle,dtFirebirdd] then
       for I := 0 to FTableInfos.Count - 1 do
       begin
         try
@@ -336,23 +340,46 @@ begin
         end;
       end;
 
-      //create relations
-      WriteLog('',ltInfo);
-      WriteLog('CONSTRAINTS',ltInfo);
-      WriteLog('',ltInfo);
-
-      if FDBInfo.DbType<>dtSQLite then
+      pbProgressBar.Position:=0;
+      //copy data
+      if chkCopyData.Checked then
       for I := 0 to FTableInfos.Count - 1 do
+        begin
+          try
+           lblProgress.Caption := 'Copy  data [' + FTableInfos[I].Tablename + ']';
+           dbc.CopyData(FDBInfo,FTableInfos[I].Tablename,FTableInfos[I].Tablename);
+           pbProgressBar.StepIt;
+           Application.ProcessMessages;
+           WriteLog('SUCCESS: Copy data for ['+FTableInfos[I].Tablename+']',ltInfo);
+           Application.ProcessMessages;
+          except on e:exception do
+            begin
+              WriteLog('FAIL: Copy data for ['+FTableInfos[I].Tablename+'] '+e.Message,ltError);
+            end;
+          end;
+        end;
+
+      //create relations
+      pbProgressBar.Position:=0;
+      if (chkCreateConstraints.Checked) and (dbi.DbType<>dtSQLite) then
       begin
-        try
-         lblProgress.Caption := 'Creating  relations [' + FTableInfos[I].Tablename + ']';
-         dbc.CreateConstraints(FTableInfos[I]);
-         pbProgressBar.StepIt;
-         WriteLog('SUCCESS: Create realtions for ['+FTableInfos[I].Tablename+']',ltInfo);
-         Application.ProcessMessages;
-        except on e:exception do
-          begin
-            WriteLog('FAIL: Create relations for ['+FTableInfos[I].Tablename+'] '+e.Message,ltError);
+        WriteLog('',ltInfo);
+        WriteLog('CONSTRAINTS',ltInfo);
+        WriteLog('',ltInfo);
+
+        if FDBInfo.DbType<>dtSQLite then
+        for I := 0 to FTableInfos.Count - 1 do
+        begin
+          try
+           lblProgress.Caption := 'Creating  relations [' + FTableInfos[I].Tablename + ']';
+           dbc.CreateConstraints(FTableInfos[I]);
+           pbProgressBar.StepIt;
+           WriteLog('SUCCESS: Create realtions for ['+FTableInfos[I].Tablename+']',ltInfo);
+           Application.ProcessMessages;
+          except on e:exception do
+            begin
+              WriteLog('FAIL: Create relations for ['+FTableInfos[I].Tablename+'] '+e.Message,ltError);
+            end;
           end;
         end;
       end;

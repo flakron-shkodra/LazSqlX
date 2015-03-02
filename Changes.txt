@@ -1,3 +1,31 @@
+v.5.1.0.1577
+
+-Fix dropping constraints when names contained spaces [mssql]
+
+SQLite improvements:
+
+-Sqlite foreign key extraction from ddl [AsSqliteMetadata]
+-Better field type mapping when cloning to Sqlite from other database types [sqlite]
+-New data types added for Sqlite3: varchar,datetime[sqlite]
+-Fix field length [AsSqliteMetadata]
+
+DatabaseCloner
+
+-Improvements in cloning to Sqlite (creates constraints,better data type mappings) 
+-Added option to create or not the foreign key constraints
+-Added option to copy data (experimental)
+Note: except for Sqlite, constraints will be created after copying data. When you have
+constraints in your source db when cloning to sqlite, expect failure in copy data.
+
+Firebird
+-Firebird embedded libraries included 
+
+GUI:
+-TableList in UI changed to Treeview with expandable table items
+-Changed some colors
+-Icon(s) changed
+
+============================================================================================================
 v.5.0.0.1572
 -Fix when generating/running query for running stored procedures when procedure had parameters of type Date
 -Fix: display proper info after query finished execution (DataGrid with resultset or Message that query executed successfully when there's no resultset)

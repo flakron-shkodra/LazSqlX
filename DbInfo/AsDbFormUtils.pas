@@ -968,7 +968,7 @@ var
  be:TAsDbBlobEdit;
  mem:TDBMemo;
  LastControlHeight: Integer;
- ik: TImportedKeyInfo;
+ ik: TAsImportedKeyInfo;
  lastControl:TControl;
  controlName:string;
 begin
@@ -1215,24 +1215,17 @@ begin
  Height:= 550;
  Width:= (5 * FControlWidth) + (5 * FControlSpace) + 30;
 
- FDbInfo:=TAsDbConnectionInfo.Create(False);
- FDbInfo.Assign(aDbInfo);
+ if aDbInfo.DbType<>dtSQLite then
+ begin
+  FDbInfo:=TAsDbConnectionInfo.Create(False);
+  FDbInfo.Assign(aDbInfo);
+ end else
+ FDbInfo := aDbInfo;
+
  FTableInfo := aTableInfo;
  FSqlQuery:= 'Select * from '+FTableInfo.Tablename;
 
  FDataObject := TAsUIDataAcessObject.Create(FDbInfo,FSqlQuery);
-
- //FDataObject.FQuery.DataSet.AfterInsert:=@AfterInsert;
- //FDataObject.FQuery.DataSet.AfterEdit:=@AfterEdit;
- //
- //FDataObject.FQuery.DataSet.AfterPost:=@AfterPost;
- //FDataObject.FQuery.DataSet.AfterDelete:=@AfterPost;
- //
- //FDataObject.FQuery.DataSet.AfterCancel:=@AfterCancel;
- //FDataObject.FQuery.DataSet.AfterClose:=@AfterCancel;
- //FDataObject.FQuery.DataSet.AfterRefresh:=@AfterCancel;
-
-
  FRefDataObjects := TAsUIDataAcessObjects.Create;
 
  FEditControlsBox := TScrollBox.Create(Self);
@@ -1242,14 +1235,11 @@ begin
 
  MakeEditControls;
 
- //FEditControlsBox.Enabled:=False;//enabled when Insert or Edit
-
  FGridNavGroup := TGroupBox.Create(Self);
  FGridNavGroup.Parent := Self;
  FGridNavGroup.Align:=alClient;
  FGridNavGroup.Name:='grpData';
  FGridNavGroup.Caption:='';
-
 
  grp := TGroupBox.Create(FGridNavGroup);
  grp.Parent := FGridNavGroup;
@@ -1300,7 +1290,10 @@ begin
   ClearEditControls;
   FDataObject.Destroy;
   FRefDataObjects.Destroy;
+  //only sqlite won't create new connection to avoid dbLock
+  if FDbInfo.DbType<>dtSQLite then
   FDbInfo.Free;
+
  inherited Destroy;
 end;
 
