@@ -13,7 +13,7 @@ interface
 
 uses
   Classes, SysUtils, typinfo, types, fgl, strutils, AsStringUtils, RegExpr,
-  ZConnection, ZDataset, sqldb, db, fpsqlparser, fpsqltree;
+  ZConnection, ZDataset, sqldb, db, fpsqlparser, fpsqltree,sqldblib;
 
 type
 
@@ -71,17 +71,21 @@ type
    FSchema: string;
    FServer: string;
    FUsername: string;
+   FLibraryLocation: string;
    FSqlCon:TSQLConnector;
    FTrans: TSQLTransaction;
+   FLibraryLoader:TSQLDBLibraryLoader;
    FZCon:TZConnection;
    FConnectionsCreated:Boolean;
    function GetIdentifier: string;
    function GetIsConnected: Boolean;
+   function GetLibLocation: String;
    function GetProperties: TStrings;
    procedure Instantiate;
    procedure SetDatabase(AValue: string);
    procedure SetDbEngine(AValue: TAsDatabaseEngineType);
    procedure SetDbType(AValue: TAsDatabaseType);
+   procedure SetLibLocation(AValue: String);
    procedure SetPassword(AValue: string);
    procedure SetPort(AValue: Integer);
    procedure SetProperties(AValue: TStrings);
@@ -89,11 +93,7 @@ type
    procedure SetServer(AValue: string);
    procedure SetUsername(AValue: string);
    function GetConnectionsCreated:Boolean;
-    {creates a new instance of Zeos connection according to properties of this class}
-    //function ToZeosConnection:TZConnection;
-    {creates a new instance of SqlDbConnector according to properties of this class}
-    //function ToSqlConnector:TSQLConnector;
-    procedure AssignProperties;
+   procedure AssignProperties;
   public
     {Constructor: CreateConnections set to false when sqlcon and zcon not needed to be created, for instance for RecentConnections}
     constructor Create(CreateConnections: Boolean=True);
@@ -105,6 +105,7 @@ type
 
     procedure Open;
     procedure Close;
+    procedure StartTransaction;
     procedure Rollback;
     procedure Commit;
   published
@@ -135,6 +136,8 @@ type
     property Properties:TStrings read GetProperties write SetProperties;
 
     property Schema:String read FSchema write SetSchema;
+
+    property LibraryLocation:String read GetLibLocation write SetLibLocation;
 
   end;
 
@@ -329,7 +332,7 @@ type
   private
    
     class function MakeEngine(DbInfo:TAsDbConnectionInfo):TAsDbMetadata;
-    class procedure DisposeEngine(dbinfo:TAsDbConnectionInfo; a:TAsDbMetadata);
+    class procedure DisposeEngine(a:TAsDbMetadata);
   public
     {this was supposed to 'know' the difference between GUID percieved as BLOB and a real BLOB}
     class function IsBlobGUID(var aField: TField): boolean;experimental;
@@ -950,8 +953,7 @@ begin
  end;
 end;
 
-class procedure TAsDbUtils.DisposeEngine(dbinfo: TAsDbConnectionInfo;
- a: TAsDbMetadata);
+class procedure TAsDbUtils.DisposeEngine(a: TAsDbMetadata);
 begin
  a.Free;
 end;
@@ -1189,7 +1191,7 @@ begin
   try
     Result := md.GetSchemas;
   finally
-    DisposeEngine(DbInfo,md);
+    DisposeEngine(md);
   end;
 end;
 
@@ -1202,7 +1204,7 @@ begin
   try
     Result := md.GetTablenames(DbInfo.Schema);
   finally
-    DisposeEngine(DbInfo,md);
+    DisposeEngine(md);
   end;
 end;
 
@@ -1242,7 +1244,7 @@ begin
   try
     Result := md.GetPrimaryKeys(DbInfo.Schema,TableName);
   finally
-     DisposeEngine(DbInfo,md);
+     DisposeEngine(md);
   end;
 
 end;
@@ -1256,7 +1258,7 @@ begin
   try
     Result := md.GetForeignKeys(DbInfo.Schema,TableName);
   finally
-     DisposeEngine(DbInfo,md);
+     DisposeEngine(md);
   end;
 end;
 
@@ -1269,7 +1271,7 @@ begin
   try
     Result := md.GetColumns(DbInfo.Schema,TableName);
   finally
-     DisposeEngine(DbInfo,md);
+     DisposeEngine(md);
   end;
 end;
 
@@ -1282,7 +1284,7 @@ begin
   try
     Result := md.GetIndexes(DbInfo.Schema,TableName);
   finally
-     DisposeEngine(DbInfo,md);
+     DisposeEngine(md);
   end;
 end;
 
@@ -1320,7 +1322,7 @@ begin
   try
     Result := md.GetTriggers(DbInfo.Schema,TableName);
   finally
-   DisposeEngine(DbInfo,md);
+   DisposeEngine(md);
   end;
 end;
 
@@ -1333,7 +1335,7 @@ begin
   try
     Result := md.GetProcedureNames(DbInfo.Schema);
   finally
-   DisposeEngine(DbInfo,md);
+   DisposeEngine(md);
   end;
 end;
 
@@ -1346,7 +1348,7 @@ begin
   try
     Result := md.GetProcedureParams(ProcedureName);
   finally
-   DisposeEngine(DbInfo,md);
+   DisposeEngine(md);
   end;
 end;
 
@@ -1359,7 +1361,7 @@ begin
    try
     Result := md.GetCatalogNames;
    finally
-    DisposeEngine(aDbInfo,md);
+    DisposeEngine(md);
    end;
 end;
 
@@ -1449,6 +1451,11 @@ begin
   end;
 end;
 
+function TAsDbConnectionInfo.GetLibLocation: String;
+begin
+  Result := FLibraryLocation;
+end;
+
 function TAsDbConnectionInfo.GetProperties: TStrings;
 begin
  case FDbEngine of
@@ -1464,6 +1471,7 @@ begin
    FSqlCon.Transaction:=FTrans;
    FZCon := TZConnection.Create(nil);
    FZCon.AutoCommit:=False;
+   FLibraryLoader := TSQLDBLibraryLoader.Create(FSqlCon);
 end;
 
 procedure TAsDbConnectionInfo.SetDbEngine(AValue: TAsDatabaseEngineType);
@@ -1480,6 +1488,24 @@ begin
   FSqlCon.ConnectorType:= TAsDbUtils.DatabaseTypeAsConnectorType(FDbType);
   FZCon.Protocol := TAsDbUtils.DatabaseTypeAsString(FDbType, True);
  end;
+end;
+
+procedure TAsDbConnectionInfo.SetLibLocation(AValue: String);
+begin
+  FLibraryLocation:= AValue;
+  if FileExists(FLibraryLocation) then
+  begin
+    FZCon.LibraryLocation := FLibraryLocation;
+    FLibraryLoader.LibraryName := FLibraryLocation;
+    FLibraryLoader.ConnectionType := TAsDbUtils.DatabaseTypeAsConnectorType(FDbType);
+    FLibraryLoader.Enabled := True;
+  end else
+  begin
+    FLibraryLoader.Enabled := False;
+    FZCon.LibraryLocation := EmptyStr;
+    FLibraryLoader.LibraryName := '';
+  end;
+
 end;
 
 procedure TAsDbConnectionInfo.SetPassword(AValue: string);
@@ -1557,7 +1583,7 @@ end;
 
 procedure TAsDbConnectionInfo.AssignProperties;
 begin
-  if GetConnectionsCreated then
+ if GetConnectionsCreated then
  begin
   FSqlCon.UserName:=FUsername;
   FSqlCon.HostName:= FServer;
@@ -1577,6 +1603,7 @@ begin
    else
        FZCon.Database := FDatabase;
    end;
+
  end;
 end;
 
@@ -1675,6 +1702,14 @@ begin
  end;
 end;
 
+procedure TAsDbConnectionInfo.StartTransaction;
+begin
+  case FDbEngine of
+  deSqlDB: FSqlCon.StartTransaction;
+  deZeos: FZCon.StartTransaction;
+  end;
+end;
+
 procedure TAsDbConnectionInfo.Rollback;
 var
  c:Boolean;
@@ -1697,8 +1732,15 @@ end;
 procedure TAsDbConnectionInfo.Commit;
 begin
  case FDbEngine of
-   deZeos:FZCon.Commit;
-   deSqlDB:FSqlCon.Transaction.CommitRetaining;
+   deZeos:
+   begin
+     if not FZCon.AutoCommit then
+     FZCon.Commit;
+   end;
+   deSqlDB:
+   begin
+     FSqlCon.Transaction.CommitRetaining;
+   end;
  end;
 end;
 

@@ -1,3 +1,10 @@
+v.5.1.1.1586
+-New: Holding Ctrl and clicking on a word in queryeditor: if it's a tablename or a procedurename will open table deisnger or execute procedure dialog
+-Fix: Caret position info
+-Fix: committing transaction when sql query didn't return a resultset
+-Fix: Procedure names added back to Autocomplete list
+-Fix: Now you can connect to MySql with Sqldb too. It was limited to Zeos only.
+
 v.5.1.0.1577
 
 -Fix dropping constraints when names contained spaces [mssql]

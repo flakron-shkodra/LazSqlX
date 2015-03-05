@@ -5,10 +5,11 @@ unit LazSqlXCtrls;
 interface
 
 uses
-  Classes, SysUtils, Controls, StdCtrls, ComCtrls, ExtCtrls, Graphics,Dialogs, sqldb, db,
-  ZDataset, ZConnection, DbCtrls, DBGrids, SynEdit, SynCompletion, SynEditTypes,
-  Grids, Menus, AsStringUtils, AsDbType, Utils, SynHighlighterSQL, Types, strutils,
-  LCLType, SqlExecThread, Forms;
+  Classes, SysUtils, Controls, StdCtrls, ComCtrls, ExtCtrls, Graphics, Dialogs,
+  sqldb, db, ZConnection, DbCtrls, DBGrids, SynEdit, SynCompletion,
+  SynEditTypes,SynEditMouseCmds, Grids, Menus, AsStringUtils, AsDbType, AsProcedureInfo,
+  SynHighlighterSQL, Types, strutils, LCLType, SqlExecThread, DesignTableFormU,
+  Forms;
 
 
 type
@@ -20,11 +21,14 @@ type
 
   TLazSqlXScanNeeded = procedure (ScanText:string) of object;
   TLazSqlXLastWordChanged = procedure (var LastWord:string) of object;
-  TLazSqlXCaretPositionChanged = procedure (Line, Column : Integer) of object;
+  TLazSqlXCaretPositionChanged = procedure (Line, Pos : Integer) of object;
 
   TLazSqlXTabSheet = class(TTabSheet)
   private
-    FMessage: string;
+    FCurrentExecutor:TSqlExecThread;
+    FDbInfoNew:TAsDbConnectionInfo;
+    FDBType:TAsDatabaseType;
+    FEditMode:Boolean;
     FOnCaretPositionChanged: TLazSqlXCaretPositionChanged;
     FOnExecutionFinished: TOnSqlExecThreadFinish;
     FOnExecutionStopped: TNotifyEvent;
@@ -38,24 +42,26 @@ type
     FQueryEditor: TSynEdit;
     FSplitter: TSplitter;
     FErrorMemo: TMemo;
+    FMessage: string;
     FNumbering: string;
     FParent:TLazSqlXPageControl;
-    FCurrentExecutor:TSqlExecThread;
-    FEditMode:Boolean;
     FTransaction:TSQLTransaction;
-    FDbInfoNew:TAsDbConnectionInfo;
+    FWordUnderMouse:string;
     function GetDataSet: TDataSet;
     function GetExecutionInProgress: Boolean;
     function GetHasActiveData: Boolean;
     function GetSqlQuery: string;
     procedure OnDBGridDrawColumnCell(Sender: TObject; const Rect: TRect; DataCol: integer; Column: TColumn; State: TGridDrawState);
+
     procedure OnQueryEditorChange(Sender: TObject);
     procedure OnQueryEditorKeyDown(Sender: TObject; var Key: word; Shift: TShiftState);
     procedure OnQueryEditorKeyPress(Sender: TObject; var Key: char);
     procedure OnQueryEditorKeyUp(Sender: TObject; var Key: word; Shift: TShiftState);
-    procedure OnQueryEditorPaste(Sender: TObject; var AText: string;
-      var AMode: TSynSelectionMode; ALogStartPos: TPoint;
-      var AnAction: TSynCopyPasteAction);
+    procedure OnQueryEditorPaste(Sender: TObject; var AText: string; var AMode: TSynSelectionMode; ALogStartPos: TPoint; var AnAction: TSynCopyPasteAction);
+    procedure OnQueryEditorOnMouseLink(Sender: TObject; X, Y: Integer; var AllowMouseLink: Boolean);
+    procedure OnQueryEditorLinkClick(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+    procedure OnQueryEditorMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+
     procedure OnQyeryAfterPost(DataSet:TDataSet);
     procedure OnQueryAfterDelete(DataSet:TDataSet);
     procedure SetDataGrid(AValue: TDBGrid);
@@ -255,7 +261,45 @@ begin
   end;
 end;
 
+procedure TLazSqlXTabSheet.OnQueryEditorLinkClick(Sender: TObject;
+ Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+var
+  i:Integer;
+  qry: String;
+begin
+  if FParent.Tables.Find(FWordUnderMouse,i) then
+  begin
+    DesignTableForm.Showmodal(FDbInfoNew,FDbInfoNew.Schema,FParent.Tables[I]);
+  end else
+  if FParent.Procedures.Find(FWordUnderMouse,i) then
+  begin
+    with TAsProcedureInfo.Create(FDbInfoNew) do
+    begin
+      try
+        qry := GetRunProcedureText(FParent.Procedures[I],True);
+        FQueryEditor.Lines.Add(qry);
+      finally
+       Free;
+      end;
+    end;
+  end;
+end;
 
+procedure TLazSqlXTabSheet.OnQueryEditorMouseDown(Sender: TObject;
+ Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+begin
+ if FOnCaretPositionChanged<>nil then
+ FOnCaretPositionChanged(FQueryEditor.CaretX,FQueryEditor.CaretY);
+end;
+
+procedure TLazSqlXTabSheet.OnQueryEditorOnMouseLink(Sender: TObject; X,
+ Y: Integer; var AllowMouseLink: Boolean);
+var
+ i:Integer;
+begin
+ FWordUnderMouse := FQueryEditor.GetWordAtRowCol(Point(X,Y));
+ AllowMouseLink:= (FParent.Tables.Find(FWordUnderMouse,I) ) or (FParent.Procedures.Find(FWordUnderMouse,I));
+end;
 
 function TLazSqlXTabSheet.GetDataSet: TDataSet;
 begin
@@ -465,7 +509,7 @@ begin
 
     end;
   finally
-
+    FDbInfoNew.Commit;
     ResizeColumns;
     FCurrentExecutor := nil;
     if Assigned(FOnExecutionFinished) then
@@ -490,6 +534,8 @@ begin
 end;
 
 constructor TLazSqlXTabSheet.Create(ParentPage: TLazSqlXPageControl);
+const
+  lucidaFont='Lucida Sans Typewriter';
 begin
 
   inherited Create(Parent);
@@ -509,6 +555,8 @@ begin
   end else
   FDbInfoNew := FParent.DBInfo;
 
+  FDBType:= FDbInfoNew.DbType;
+
   FQuery := TAsQuery.Create(FDbInfoNew);
   FQuery.Name := 'qr' + FNumbering;
   FQuery.DataSet.AfterPost:=@OnQyeryAfterPost;
@@ -527,21 +575,31 @@ begin
   FQueryEditor.Font.Pitch := fpFixed;
   FQueryEditor.Font.Quality := fqDraft;
   FQueryEditor.Font.Size:=8;
-  if Screen.Fonts.IndexOf('Lucida Sans Typewriter')>-1 then
+  if Screen.Fonts.IndexOf(lucidaFont)>-1 then
   begin
-    FQueryEditor.Font.Name:='Lucida Sans Typewriter';
+    FQueryEditor.Font.Name:=lucidaFont;
   end;
   FQueryEditor.TabWidth:=2;
   FQueryEditor.Options := FQueryEditor.Options - [eoSmartTabs, eoScrollPastEol] + [eoTabIndent];
   FQueryEditor.RightEdge := 120;
 
-  FQueryEditor.MouseOptions := FQueryEditor.MouseOptions + [TSynEditorMouseOption.emCtrlWheelZoom];
+  FQueryEditor.MouseOptions := FQueryEditor.MouseOptions + [emCtrlWheelZoom,emShowCtrlMouseLinks];
+
 
   FQueryEditor.OnChange := @OnQueryEditorChange;
   FQueryEditor.OnPaste := @OnQueryEditorPaste;
   FQueryEditor.OnKeyDown:=@OnQueryEditorKeyDown;
   FQueryEditor.OnKeyPress:=@OnQueryEditorKeyPress;
   FQueryEditor.OnKeyUp:=@OnQueryEditorKeyUp;
+  FQueryEditor.OnMouseDown:=@OnQueryEditorMouseDown;
+  FQueryEditor.OnMouseLink:=@OnQueryEditorOnMouseLink;
+  FQueryEditor.OnClickLink:=@OnQueryEditorLinkClick;
+  with FQueryEditor.MouseActions.Add do
+  begin
+    Command:=emcMouseLink;
+    Shift:=[ssCtrl];
+    ShiftMask:=[ssCtrl];
+  end;
 
   FQueryEditor.Align := alClient;
   FQueryEditor.Gutter.Visible := True;
@@ -602,10 +660,6 @@ begin
    FDBNavigator.Free;
    FDataSource.Free;
    FQuery.Free;
-
-   {This control is Parented, because if not,
-   some keyboards keys don't work on SynEdit like back,arrows,home,end,pgup,pdwn,insert; delete works on selection only,}
-
    //FQueryEditor.Free;
    FTransaction.Free;
    FSplitter.Free;
@@ -615,7 +669,7 @@ begin
 
    try
      //only sqlite connection will use main Connection
-     if FParent.DBInfo.DbType<>dtSQLite then
+     if FDBType<>dtSQLite then
      FDbInfoNew.Free; //sorry for memleak (if)
    except
    end;
@@ -1440,7 +1494,9 @@ begin
   FlstAlias := TStringList.Create;
 
   FTables := TStringList.Create;
+  FTables.CaseSensitive:=False;
   FProcedures := TStringList.Create;
+  FProcedures.CaseSensitive:= False;
   FKeywords := TStringList.Create;
 end;
 

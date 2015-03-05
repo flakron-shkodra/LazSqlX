@@ -13,9 +13,9 @@ interface
 
 uses
   SysUtils, Variants, Classes, Graphics, Controls, Forms, Dialogs, StdCtrls,
-  Buttons, ExtCtrls, Utils, ZConnection, AsTableInfo, AsDbType,sqldb,mssqlconn,mysql40conn,
+  Buttons, ExtCtrls, Utils, ZConnection, AsDbType,sqldb,mssqlconn,mysql40conn,
   mysql41conn,mysql50conn,mysql51conn,mysql55conn,mysql56conn, IBConnection,sqlite3conn,
-  {$ifndef win64}oracleconnection,{$endif}  strutils, types, LCLType, Spin, EditBtn, Menus, IniFiles;
+  {$ifndef win64}oracleconnection,{$endif}  types, LCLType, Spin, EditBtn, Menus, IniFiles;
 
 type
 
@@ -378,11 +378,7 @@ end;
 
 procedure TSqlConnBuilderForm.PerformConnection;
 var
-  zcon: TZConnection;
-  sqlcon:TSqlConnector;
   i: integer;
-  wt:TAsStringWrapType;
-  s: TCaption;
   LastError:string;
   dbi:TAsDbConnectionInfo;
 begin
@@ -394,8 +390,14 @@ begin
   LastError := EmptyStr;
   AssignDbInfo;
 
+  if chkAlternateLibLocation.Checked then
+  begin
+    FDBInfo.Properties.AddStrings(txtAdvancedProperties.Lines);
+    FDBInfo.LibraryLocation:=txtLibraryFilename.Text;
+  end;
+
   try
-    DbInfo.Open;
+    FDBInfo.Open;
   except on E:Exception do
     LastError := E.Message;
   end;
@@ -419,7 +421,7 @@ begin
   begin
      // Close form and pass on failure
      Self.ModalResult := mrNone;
-     ShowMessage('Cannot connect to server/database' + LineEnding + LastError);
+     ShowMessage( 'Cannot connect to server/database' + LineEnding + LastError);
   end;
 end;
 
@@ -475,33 +477,31 @@ begin
   cmbDbEngine.Enabled:=True;
   cmbDbEngine.ItemIndex:=0;
 
-  case cmbDatabaseType.ItemIndex of
-    0: //MS SQL Server
+  case TAsDatabaseType(cmbDatabaseType.ItemIndex) of
+    dtMsSql: //MS SQL Server
     begin
       txtPort.Text := '0';
       txtUserName.Text := 'sa';
       txtPassword.Text := '';
     end;
-    1: //Oracle
+    dtOracle: //Oracle
     begin
       txtPort.Text := '1521';
       txtUserName.Text := 'sa';
       txtPassword.Text := '';
-      cmbDbEngine.ItemIndex:=1;
       if Is64Bit then
       begin
         cmbDbEngine.Enabled:=False;
       end;
+      cmbDbEngine.ItemIndex:=1;
     end;
-    2: // MySQL
+    dtMySql: // MySQL
     begin
       txtPort.Text := '3306';
       txtUserName.Text := 'root';
       txtPassword.Text := '';
-      cmbDbEngine.ItemIndex:=1;
-      cmbDbEngine.Enabled:=False;
     end;
-    3: // SQLite
+    dtSQLite: // SQLite
     begin
       cmbDatabase.Width := 217;
       lblUseraname.Visible := False;
@@ -512,9 +512,11 @@ begin
       txtPort.Visible := False;
       lblSever.Visible := False;
       cmbServerName.Visible := False;
-      cmbDbEngine.ItemIndex:=0;
+      cmbServerName.Text:='';
+      txtUserName.Text:='';
+      txtPassword.Text:='';
     end;
-    4: // Firebird
+    dtFirebirdd: // Firebird
     begin
       cmbDatabase.Width := 217;
       lblUseraname.Visible := True;
@@ -529,7 +531,7 @@ begin
       txtUserName.Text := 'SYSDBA';
       txtPassword.Text := '';
     end;
-    5: //PostgreSQL
+    dtPostgreSql: //PostgreSQL
     begin
       lblUseraname.Visible := True;
       txtUserName.Visible := True;

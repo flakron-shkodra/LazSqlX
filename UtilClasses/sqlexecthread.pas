@@ -161,33 +161,16 @@ end;
 
 procedure TSqlExecThread.SqlExecute;
 var
-  I: integer;
-  tmpCommand: string;
   t1: TTime;
-  Handled: boolean;
-  c:Boolean;
   affected:Integer;
 begin
   //FLock.Acquire; //fails with zeos components
-  try
    FIsSelect:=AnsiContainsText(Lowercase(FCommand),'select') or AnsiContainsText(Lowercase(FCommand),'call') or
    AnsiContainsText(Lowercase(FCommand),'exec');
    try
      FLastError := '';
-     c := (FQuery<>nil);
-
-     if not c then
-     begin
-       FLastError:='Internal FQuery not assigned';
-       FOnFinish(Self,FTablenameAssigned);
-       Exit;
-     end;
-
      Sleep(300);
-
      t1 := Time;
-
-
     if Assigned(FQuery) then
     begin
       FQuery.Close;
@@ -199,11 +182,18 @@ begin
        begin
          if (E.Message=ErrorMsg_ZeosNoResultSet) or (E.Message=ErrorMsg_SqlDBNoResultSet) then
          begin
-           FIsSelect:= False;
-           affected:=FQuery.RowsAffected;
-           FMessage := 'Command successfully executed. Rows affected (' +IntToStr(affected) + ')';
+           try
+            FIsSelect:= False;
+            affected:=FQuery.RowsAffected;
+            FMessage := 'Command successfully executed. Rows affected (' +IntToStr(affected) + ')';
+           except
+            raise;
+           end;
          end else
-         raise;
+         begin
+          raise;
+         end;
+
        end;
       end;
 
@@ -216,13 +206,6 @@ begin
       end;
 
     end;
-
-   except
-     on e: Exception do
-     begin
-       FLastError := e.Message;
-     end;
-   end;
 
   finally
   //  FLock.Release;

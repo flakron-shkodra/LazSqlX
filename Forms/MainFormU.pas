@@ -324,7 +324,7 @@ type
     procedure lstTablesDblClick(Sender: TObject);
     procedure mitOpenDataClick(Sender: TObject);
     procedure mitRefreshTablesClick(Sender: TObject);
-    procedure OnCaretPosition(Line, Column: Integer);
+    procedure OnCaretPosition(Line, Pos: Integer);
     procedure OnDynamicEditKeyDown(Sender: TObject; var Key: word;
       Shift: TShiftState);
     procedure OnPageControlChange(Sender: TObject);
@@ -1218,38 +1218,15 @@ end;
 
 
 procedure TMainForm.Connect;
-var
-  p: TAsProcedureNames;
-  wt: TAsStringWrapType;
-  z:TZConnection;
-  s:TSQLConnector;
 begin
-
   DoDisconnect;
+  FDBInfo.Properties.Text := SqlConnBuilderForm.txtAdvancedProperties.Text;
   if SqlConnBuilderForm.ShowModal(FDBInfo) = mrOk then
   begin
     trvTables.Items.Clear;
     QueryDesignerForm.Clear;
 
-    FDBInfo.ZeosConnection.Properties.Text := SqlConnBuilderForm.txtAdvancedProperties.Text;
-    if SqlConnBuilderForm.chkAlternateLibLocation.Checked then
-    begin
-      FDBInfo.ZeosConnection.LibraryLocation := SqlConnBuilderForm.txtLibraryFilename.Text;
-      LibraryLoader.LibraryName := SqlConnBuilderForm.txtLibraryFilename.Text;
-      LibraryLoader.ConnectionType :=
-        TAsDbUtils.DatabaseTypeAsConnectorType(FDBInfo.DbType);
-      LibraryLoader.Enabled := True;
-    end
-    else
-    begin
-      LibraryLoader.Enabled := False;
-      FDBInfo.ZeosConnection.LibraryLocation := EmptyStr;
-      LibraryLoader.LibraryName := '';
-    end;
-
-
     try
-
       //DoSelectiveConnect; //connection done in sqlconnbuilderform
 
       if FPageControl.PageCount = 0 then
@@ -1539,9 +1516,11 @@ begin
     for s in lst do
     begin
       n := trvProcedures.Items.AddChild(nil,s);
-      n.ImageIndex:=10;
-      n.SelectedIndex:=10;
+      n.ImageIndex:=9;
+      n.SelectedIndex:=9;
     end;
+    FPageControl.Procedures.Clear;
+    FPageControl.Procedures.AddStrings(lst);
   finally
     lst.Free;
   end;
@@ -1558,7 +1537,7 @@ var
 begin
 
   try
-  ProcInfo := TAsProcedureInfo.Create(FDBInfo);
+    ProcInfo := TAsProcedureInfo.Create(FDBInfo);
     s := ProcInfo.GetRunProcedureText(procname,true);
     if s <> EmptyStr then
     begin
@@ -1805,8 +1784,6 @@ begin
 end;
 
 procedure TMainForm.FormCreate(Sender: TObject);
-var
-  I: integer;
 begin
   FDBInfo := TAsDbConnectionInfo.Create;
 
@@ -1819,7 +1796,7 @@ begin
   FfieldIcon := TBitmap.Create;
 
   TreeViewImages.GetBitmap(0, FtableIcon);
-  TreeViewImages.GetBitmap(10, FfunctionIcon);
+  TreeViewImages.GetBitmap(4, FfunctionIcon);
   TreeViewImages.GetBitmap(3, FfieldIcon);
   TreeViewImages.GetBitmap(8, FvarIcon);
   TreeViewImages.GetBitmap(9, FprocedureIcon);
@@ -2597,9 +2574,9 @@ begin
   FillTables;
 end;
 
-procedure TMainForm.OnCaretPosition(Line, Column: Integer);
+procedure TMainForm.OnCaretPosition(Line, Pos: Integer);
 begin
- sbMain.Panels[2].Text:= 'Row: '+IntToStr(Line)+' Col: '+IntToStr(Column);
+ sbMain.Panels[2].Text:= 'Row: '+IntToStr(Pos)+' Col: '+IntToStr(Line);
 end;
 
 

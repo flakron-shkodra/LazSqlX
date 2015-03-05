@@ -12,7 +12,7 @@ interface
 
 uses
   SysUtils, Classes, AsDbType,  DB, typinfo, Forms, Controls, StdCtrls, ExtCtrls, Buttons, EditBtn, Spin, Dialogs,
-  sqldb;
+  sqldb,dynlibs;
 
 type
 
@@ -20,8 +20,10 @@ type
 
   TAsProcedureInfo = class
   private
+    RemHandle:THandle;
     FDbInfo:TAsDbConnectionInfo;
     function GetFieldType(SqlType: string): TFieldType;
+    procedure ExecuteOracleProcedure(ProcName: string; Params: array of Variant);
   public
     constructor Create(aDbInfo:TAsDbConnectionInfo);
     function GetRunProcedureText(procName: string; ShowGUI: Boolean): string;
@@ -67,6 +69,31 @@ begin
     Result := ftString;
 end;
 
+procedure TAsProcedureInfo.ExecuteOracleProcedure(ProcName: string;
+ Params: array of Variant);
+type
+ TExeOraSp = procedure(a:THandle; out b:THandle; Db,User,Password,ProcName:string; const Params: array of variant);stdcall;
+var
+  dll:THandle;
+  dllProc:TExeOraSp;
+  db,usr,pwd:string;
+begin
+  dll := LoadLibrary('OraSpLib.dll');
+  try
+    Pointer(dllProc) := GetProcAddress(dll,'Execute');
+    if dllProc <> nil then
+    begin
+     db :=  TAsDbUtils.GetOracleDescriptor(FDbInfo);
+     usr := FDbInfo.Username;
+     pwd := FDbInfo.Password;
+
+     dllProc(0,RemHandle, db,usr,pwd,ProcName, Params);
+    end;
+  finally
+    FreeLibrary(dll);
+  end;
+end;
+
 
 constructor TAsProcedureInfo.Create(aDbInfo: TAsDbConnectionInfo);
 begin
@@ -78,19 +105,14 @@ function TAsProcedureInfo.GetRunProcedureText(procName: string; ShowGUI: Boolean
  ): string;
 var
   I: integer;
-
   lbl: TLabel;
   ctl: TWinControl;
   x, y: integer;
-
   frm: TForm;
   pnl: TPanel;
-  lst: TList;
-  s: string;
   tab: integer;
   paramName: string;
   sqlExecSp: string;
-
   btnOk, btnCancel: TButton;
   prmPrefix: string;
   beginSp: string;
@@ -98,18 +120,15 @@ var
   equalOp:string;
   dateFormat:TFormatSettings;
   g: TGuid;
-  pt: string;
   ValuesOnly:string;
-  outResultVar:string;
-  prmCount: Integer;
+  AllProcParams,ProcParams:TAsProcedureParams;
 
-  IntRecNo: LongInt;
-  procParams:TAsProcedureParams;
   p:TAsProcedureParam;
   paramType:TFieldType;
   ShouldContinue:Boolean;
   sVal: String;
   fs:TFormatSettings;
+  oraParam:array of Variant;
 begin
 
 
@@ -187,27 +206,30 @@ begin
   try
 
 
-    procParams := TAsDbUtils.GetProcedureParams(FDbInfo,procName);
+    AllProcParams := TAsDbUtils.GetProcedureParams(FDbInfo,procName);
+
+    ProcParams := TAsProcedureParams.Create;
+
+    for p in AllProcParams do
+    begin
+     paramType:= GetFieldType(p.Data_Type);
+     if (CompareText(p.Param_Type,'OUT')=0) or (p.Param_name = '@RETURN_VALUE') or (p.Data_Type = 'REF CURSOR') then
+     begin
+        Continue;
+     end else
+     ProcParams.Add(p);
+    end;
 
     //create control dynamically for each procedure parameter
     tab := 5;
 
-    for p in procParams do
+    SetLength(oraParam,ProcParams.Count);
+
+    for p in ProcParams do
     begin
 
       paramName := StringReplace(p.Param_name,'@', '', [rfReplaceAll]);
-
       paramType:= GetFieldType(p.Data_Type);
-
-      if CompareText(p.Param_Type,'OUT')=0 then
-        continue;
-
-      if (p.Param_name = '@RETURN_VALUE') or
-          (p.Data_Type = 'REF CURSOR') then
-      begin
-        Continue;
-      end;
-
       case paramType of
         ftString:
         begin
@@ -279,12 +301,13 @@ begin
     if ShouldContinue then
     begin
 
-     for I:=0 to procParams.Count-1 do
+
+     for I:=0 to ProcParams.Count-1 do
      begin
 
        paramType:=GetFieldType(p.Data_Type);
 
-         paramName := StringReplace(procParams[I].Param_name,'@', '', [rfReplaceAll]);
+         paramName := StringReplace(AllProcParams[I].Param_name,'@', '', [rfReplaceAll]);
          case FDbInfo.DbType of
            dtOracle:equalOp:='';
            dtFirebirdd:equalOp:='';
@@ -302,6 +325,7 @@ begin
              sqlExecSp := sqlExecSp + prmPrefix + paramName +equalOp+
              IntToStr((ctl as TSpinEdit).Value);
              ValuesOnly:=ValuesOnly+IntToStr((ctl as TSpinEdit).Value);
+             oraParam[I] := (ctl as TSpinEdit).Value;
            end
            else
            if (ctl is TDateEdit) then
@@ -315,6 +339,7 @@ begin
               sVal := 'TO_DATE('''+DateToStr((ctl as TDateEdit).Date,fs)+''','''+fs.ShortDateFormat+''')';
              end;
              ValuesOnly:=ValuesOnly+sVal;
+             oraParam[I] := (ctl as TDateEdit).Date;
            end
            else
            if (ctl is TFloatSpinEdit) then
@@ -322,6 +347,7 @@ begin
              sqlExecSp := sqlExecSp + prmPrefix + paramName + equalOp +
                FloatToStr((ctl as TFloatSpinEdit).Value);
              ValuesOnly:=ValuesOnly+ FloatToStr((ctl as TFloatSpinEdit).Value);
+             oraParam[I] := (ctl as TFloatSpinEdit).Value;
            end
            else
            if (ctl is TCheckBox) then
@@ -330,6 +356,7 @@ begin
                IntToStr(integer((ctl as TCheckBox).Checked));
 
              ValuesOnly:=ValuesOnly+ IntToStr( integer((ctl as TCheckBox).Checked));
+             oraParam[I] := integer((ctl as TCheckBox).Checked);
            end
            else
            if (ctl is TEdit) then
@@ -337,8 +364,9 @@ begin
              sqlExecSp := sqlExecSp + prmPrefix + paramName +equalOp + '''' +
                (ctl as TEdit).Text + '''';
              ValuesOnly:=ValuesOnly+''''+(ctl as TEdit).Text+'''';
+             oraParam[I] := (ctl as TEdit).Text;
            end;
-           if I < procParams.Count - 1 then
+           if I < AllProcParams.Count - 1 then
            begin
              sqlExecSp := sqlExecSp + ', ';
              ValuesOnly:=ValuesOnly+', ';
@@ -379,6 +407,12 @@ begin
           end;
         end;
 
+        if (FDbInfo.DbType=dtOracle) and (ShowGUI) then
+        begin
+         Result :='';
+         ExecuteOracleProcedure(procName,oraParam);
+        end;
+
       except
         on e: Exception do
           ShowMessage(e.Message);
@@ -387,10 +421,12 @@ begin
     end;
 
   finally
+    ProcParams.Free;
     frm.Free;
   end;
 
 end;
+
 
 end.
 

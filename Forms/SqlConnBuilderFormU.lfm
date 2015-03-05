@@ -15,7 +15,7 @@ object SqlConnBuilderForm: TSqlConnBuilderForm
   OnDestroy = FormDestroy
   OnShow = FormShow
   Position = poScreenCenter
-  LCLVersion = '1.2.6.0'
+  LCLVersion = '1.4.0.2'
   object pnlMain: TPanel
     Left = 208
     Height = 302

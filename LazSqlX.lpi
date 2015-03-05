@@ -28,7 +28,8 @@
       <AutoIncrementBuild Value="True"/>
       <MajorVersionNr Value="5"/>
       <MinorVersionNr Value="1"/>
-      <BuildNr Value="1577"/>
+      <RevisionNr Value="1"/>
+      <BuildNr Value="1586"/>
       <StringTable ProductVersion=""/>
     </VersionInfo>
     <BuildModes Count="2">
@@ -42,7 +43,7 @@
           </Target>
           <SearchPaths>
             <IncludeFiles Value="$(ProjOutDir)"/>
-            <OtherUnitFiles Value="Forms;DbInfo;FileTypeDetector;Generators;UtilClasses;QueryDesigner;LoadingIndicator;LazSqlXCtrls;Resources"/>
+            <OtherUnitFiles Value="Forms;DbInfo;DbInfo\DbMetadata;FileTypeDetector;UtilClasses;QueryDesigner;LoadingIndicator;LazSqlXCtrls;Resources"/>
             <UnitOutputDirectory Value="..\build64\units"/>
           </SearchPaths>
           <CodeGeneration>
@@ -135,7 +136,6 @@
         <ComponentName Value="SqlConnBuilderForm"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <UnitName Value="SqlConnBuilderFormU"/>
       </Unit4>
       <Unit5>
         <Filename Value="Forms\DesignTableFormU.pas"/>
@@ -143,7 +143,6 @@
         <ComponentName Value="DesignTableForm"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <UnitName Value="DesignTableFormU"/>
       </Unit5>
       <Unit6>
         <Filename Value="DbInfo\AsDbType.pas"/>
@@ -157,7 +156,6 @@
       <Unit8>
         <Filename Value="DbInfo\AsTableInfo.pas"/>
         <IsPartOfProject Value="True"/>
-        <UnitName Value="AsTableInfo"/>
       </Unit8>
       <Unit9>
         <Filename Value="FileTypeDetector\FtDetector.pas"/>
@@ -166,7 +164,6 @@
       <Unit10>
         <Filename Value="DbInfo\AsSqlGenerator.pas"/>
         <IsPartOfProject Value="True"/>
-        <UnitName Value="AsSqlGenerator"/>
       </Unit10>
       <Unit11>
         <Filename Value="UtilClasses\sqlexecthread.pas"/>
@@ -176,7 +173,6 @@
       <Unit12>
         <Filename Value="UtilClasses\Utils.pas"/>
         <IsPartOfProject Value="True"/>
-        <UnitName Value="Utils"/>
       </Unit12>
       <Unit13>
         <Filename Value="DbInfo\AsSqlParser.pas"/>
@@ -192,7 +188,6 @@
         <ComponentName Value="AboutForm"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <UnitName Value="AboutFormU"/>
       </Unit15>
       <Unit16>
         <Filename Value="Forms\EditColumnFormU.pas"/>
@@ -239,7 +234,6 @@
         <ComponentName Value="QueryDesigner"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
-        <UnitName Value="QueryDesignerU"/>
       </Unit22>
       <Unit23>
         <Filename Value="QueryDesigner\QueryDesignerTablesU.pas"/>
@@ -258,7 +252,6 @@
         <ComponentName Value="DatabaseClonerForm"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <UnitName Value="DatabaseClonerFormU"/>
       </Unit25>
       <Unit26>
         <Filename Value="Forms\ProgressFormU.pas"/>
@@ -352,7 +345,6 @@
       <Unit45>
         <Filename Value="DbInfo\AsDbFormUtils.pas"/>
         <IsPartOfProject Value="True"/>
-        <UnitName Value="AsDbFormUtils"/>
       </Unit45>
       <Unit46>
         <Filename Value="Resources\ReportTemplate.lrf"/>
@@ -403,6 +395,9 @@
       <Checks>
         <StackChecks Value="True"/>
       </Checks>
+      <Optimizations>
+        <OptimizationLevel Value="0"/>
+      </Optimizations>
     </CodeGeneration>
     <Linking>
       <Debugging>

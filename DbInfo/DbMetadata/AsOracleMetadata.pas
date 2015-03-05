@@ -278,7 +278,7 @@ var
   s: String;
 begin
 
- sql:='SELECT OBJECT_NAME,STATUS FROM ALL_OBJECTS WHERE OBJECT_TYPE IN (''PROCEDURE'',''PACKAGE'') '+
+ sql:='SELECT OBJECT_NAME,STATUS FROM ALL_OBJECTS WHERE OBJECT_TYPE IN (''PROCEDURE'',''PACKAGE'',''FUNCTION'') '+
               ' and OWNER='''+Schema+'''';
 
  Result := TStringList.Create;

@@ -1,7 +1,7 @@
 object MainForm: TMainForm
-  Left = 269
+  Left = 324
   Height = 596
-  Top = 122
+  Top = 93
   Width = 1012
   Anchors = [akTop, akLeft, akRight, akBottom]
   Caption = 'LazSQLX'
@@ -1148,9 +1148,9 @@ object MainForm: TMainForm
         Height = 502
         Top = 24
         Width = 256
-        ActivePage = tabTables
+        ActivePage = tabProcedures
         Align = alClient
-        TabIndex = 0
+        TabIndex = 1
         TabOrder = 1
         object tabTables: TTabSheet
           Caption = 'Tables'
