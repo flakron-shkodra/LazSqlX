@@ -42,6 +42,7 @@ type
     lstLog: TListBox;
     btnOpenFile: TSpeedButton;
     OpenDialog1: TOpenDialog;
+    pbCopyDataProgress: TProgressBar;
     txtErrors: TMemo;
     pgLog: TPageControl;
     pbProgressBar: TProgressBar;
@@ -62,6 +63,7 @@ type
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure FormShow(Sender: TObject);
+    procedure OnCopyDataRow(CurrentRow, TotalRows: Integer);
     procedure pnlMainClick(Sender: TObject);
   private
     FTableInfos: TAsTableInfos;
@@ -347,7 +349,7 @@ begin
         begin
           try
            lblProgress.Caption := 'Copy  data [' + FTableInfos[I].Tablename + ']';
-           dbc.CopyData(FDBInfo,FTableInfos[I].Tablename,FTableInfos[I].Tablename);
+           dbc.CopyData(FDBInfo,FTableInfos[I].Tablename,FTableInfos[I].Tablename,@OnCopyDataRow);
            pbProgressBar.StepIt;
            Application.ProcessMessages;
            WriteLog('SUCCESS: Copy data for ['+FTableInfos[I].Tablename+']',ltInfo);
@@ -444,6 +446,14 @@ end;
 procedure TDatabaseClonerForm.FormShow(Sender: TObject);
 begin
  pgLog.ActivePageIndex:=0;
+end;
+
+procedure TDatabaseClonerForm.OnCopyDataRow(CurrentRow, TotalRows: Integer);
+begin
+  if pbCopyDataProgress.Max<>TotalRows then
+  pbCopyDataProgress.Max:=TotalRows;
+  pbCopyDataProgress.Position:=CurrentRow;
+  Application.ProcessMessages;
 end;
 
 procedure TDatabaseClonerForm.pnlMainClick(Sender: TObject);

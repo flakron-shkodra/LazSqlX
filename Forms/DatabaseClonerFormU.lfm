@@ -1,7 +1,7 @@
 object DatabaseClonerForm: TDatabaseClonerForm
-  Left = 348
+  Left = 351
   Height = 615
-  Top = 118
+  Top = 54
   Width = 617
   BorderIcons = [biMinimize, biMaximize]
   BorderStyle = bsSingle
@@ -12,7 +12,7 @@ object DatabaseClonerForm: TDatabaseClonerForm
   OnDestroy = FormDestroy
   OnShow = FormShow
   Position = poScreenCenter
-  LCLVersion = '1.2.6.0'
+  LCLVersion = '1.4.0.2'
   object Label2: TLabel
     Left = 16
     Height = 15
@@ -62,7 +62,7 @@ object DatabaseClonerForm: TDatabaseClonerForm
     Top = 8
     Width = 602
     Caption = 'Destination Server'
-    ClientHeight = 358
+    ClientHeight = 356
     ClientWidth = 598
     TabOrder = 3
     object pnlMain: TPanel
@@ -233,13 +233,13 @@ object DatabaseClonerForm: TDatabaseClonerForm
     Height = 192
     Top = 392
     Width = 596
-    ClientHeight = 174
+    ClientHeight = 172
     ClientWidth = 592
     TabOrder = 4
     object lblProgress: TLabel
       Left = 7
       Height = 15
-      Top = 0
+      Top = -10
       Width = 581
       AutoSize = False
       Caption = 'Progress'
@@ -248,15 +248,16 @@ object DatabaseClonerForm: TDatabaseClonerForm
     object pbProgressBar: TProgressBar
       Left = 7
       Height = 12
-      Top = 19
+      Top = 9
       Width = 581
       Step = 1
       TabOrder = 0
+      BarShowText = True
     end
     object pgLog: TPageControl
       Left = 7
-      Height = 130
-      Top = 40
+      Height = 126
+      Top = 43
       Width = 580
       ActivePage = tabErrors
       TabIndex = 1
@@ -285,11 +286,11 @@ object DatabaseClonerForm: TDatabaseClonerForm
       end
       object tabErrors: TTabSheet
         Caption = 'Errors'
-        ClientHeight = 102
+        ClientHeight = 98
         ClientWidth = 572
         object txtErrors: TMemo
           Left = 0
-          Height = 102
+          Height = 98
           Top = 0
           Width = 572
           Align = alClient
@@ -306,6 +307,15 @@ object DatabaseClonerForm: TDatabaseClonerForm
           TabOrder = 0
         end
       end
+    end
+    object pbCopyDataProgress: TProgressBar
+      Left = 7
+      Height = 12
+      Top = 26
+      Width = 581
+      Step = 1
+      TabOrder = 2
+      BarShowText = True
     end
   end
   object OpenDialog1: TOpenDialog

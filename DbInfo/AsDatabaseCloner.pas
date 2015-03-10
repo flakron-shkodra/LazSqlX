@@ -14,12 +14,14 @@ uses SysUtils, Classes, AsTableInfo, AsDbType, DB, AsStringUtils,LCLType;
 
 type
 
+  TAsDbClonerRowEvent = procedure (CurrentRow,TotalRows:Integer) of object;
   { TAsDatabaseCloner }
 
   TAsDatabaseCloner = class
   private
     FDbInfo:TAsDbConnectionInfo;
     FDestDbName : string;
+    FOnCopyRow:TAsDbClonerRowEvent;
     function GetFieldTypeAs(ftype:TFieldType):String;
   public
     constructor Create(DestDBInfo:TAsDbConnectionInfo; DestDbName:string);
@@ -30,7 +32,8 @@ type
     {Create constra0ints for Info}
     procedure CreateConstraints(info:TAsTableInfo);
     {Copy data from source db,table to destination table}
-    procedure CopyData(FromDb:TAsDbConnectionInfo; srcTablename,destTablename:string);
+    procedure CopyData(FromDb: TAsDbConnectionInfo; srcTablename,
+      destTablename: string; OnCopyRow: TAsDbClonerRowEvent);
     {Create constraincts for all importedKeys in tableInfos}
     procedure CreateConstraintsForAll(infos:TAsTableInfos);
     {Create tables for all tableInfos}
@@ -361,12 +364,13 @@ begin
 end;
 
 procedure TAsDatabaseCloner.CopyData(FromDb: TAsDbConnectionInfo; srcTablename,
-  destTablename: string);
+  destTablename: string; OnCopyRow:TAsDbClonerRowEvent);
 var
   src,dest:TAsQuery;
   I: Integer;
   lst: TStringList;
 begin
+  FOnCopyRow:=OnCopyRow;
   src := TAsQuery.Create(FromDb);
   dest := TAsQuery.Create(FDbInfo);
   try
@@ -388,6 +392,8 @@ begin
       end;
       dest.Post;
       src.Next;
+      if Assigned(FOnCopyRow) then
+      FOnCopyRow(src.RecNo,src.RecordCount);
     end;
   finally
     src.Free;

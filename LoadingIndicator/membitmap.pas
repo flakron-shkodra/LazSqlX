@@ -151,7 +151,7 @@ implementation
 uses FPWritePng, GraphType, LCLIntf, LCLType
 {$IFDEF LCLgtk2}
   {$DEFINE gtkbugfix}
-  ,gdk2,gtkDef, gtkProc
+  ,gdk2,Gtk2Def
 {$ENDIF}
 {$IFDEF LCLgtk}
   {$DEFINE gtkbugfix}

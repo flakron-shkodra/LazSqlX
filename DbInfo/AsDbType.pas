@@ -715,7 +715,6 @@ begin
   FZQuery.Connection:=FZCon;
   FZQuery.AfterPost:= @AfterPost;
   FZQuery.AfterDelete:=@AfterDelete;
-  FZQuery.ParamCheck:=False;
 
   FCon:=FDBInfo.SqlConnection;
   FQuery:=TSQLQuery.Create(Self);
@@ -723,7 +722,6 @@ begin
   FQuery.PacketRecords:=-1;
   FQuery.AfterPost:=@AfterPost;
   FQuery.AfterDelete:=@AfterDelete;
-  FQuery.ParamCheck:=False;
 
 end;
 

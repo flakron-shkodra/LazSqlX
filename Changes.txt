@@ -1,5 +1,6 @@
-v.5.1.1.1588
--Fix reserved fieldname for MsSql during metadata retrieval
+v.5.1.1.1589
+-Show another progressbar for rows when copying data (DatabaseCloner)
+-Bugfixes
 
 v.5.1.1.1586
 -New: Holding Ctrl and clicking on a word in queryeditor: if it's a tablename or a procedurename will open table deisnger or execute procedure dialog
