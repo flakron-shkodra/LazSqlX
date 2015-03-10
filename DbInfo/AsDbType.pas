@@ -1021,7 +1021,7 @@ class function TAsDbUtils.GetTopRecordsSelect(dbtyp: TAsDatabaseType;
  Schema, TableName,FieldName: string; NumberOfRecords: integer): string;
 begin
  case dbtyp of
-  dtMsSql:Result :='SELECT TOP '+IntToStr(NumberOfRecords)+' '+FieldName+' FROM '+SafeWrap(dbtyp,Schema)+'.'+SafeWrap(dbtyp,TableName)+'';
+  dtMsSql:Result :='SELECT TOP '+IntToStr(NumberOfRecords)+' '+SafeWrap(dbtyp,FieldName)+' FROM '+SafeWrap(dbtyp,Schema)+'.'+SafeWrap(dbtyp,TableName)+'';
   dtOracle:Result := 'SELECT '+SafeWrap(dbtyp,FieldName)+' FROM '+SafeWrap(dbtyp,Schema)+'.'+SafeWrap(dbtyp,TableName)+' WHERE ROWNUM <= '+IntToStr(NumberOfRecords);
   dtMySql,dtSQLite:Result:='SELECT '+SafeWrap(dbtyp,FieldName)+' FROM '+SafeWrap(dbtyp,TableName)+' LIMIT '+IntToStr(NumberOfRecords);
   dtPostgreSql: Result:='SELECT '+SafeWrap(dbtyp,FieldName)+' FROM '+SafeWrap(dbtyp,Schema)+'.'+SafeWrap(dbtyp,TableName)+' LIMIT '+IntToStr(NumberOfRecords);
@@ -1032,16 +1032,11 @@ end;
 class function TAsDbUtils.SafeWrap(dbtyp: TAsDatabaseType; TableOrField: string
  ): string;
 begin
- if AnsiContainsStr(TableOrField,' ') then
- begin
    case dbtyp of
     dtMsSql:Result:='['+TableOrField+']';
     dtMySql:Result:='`'+TableOrField+'`';
     dtOracle,dtFirebirdd,dtPostgreSql,dtSQLite:Result:='"'+TableOrField+'"';
    end;
- end else
- Result := TableOrField;
-
 end;
 
 class function TAsDbUtils.GetOracleDescriptor(server, database: string;
