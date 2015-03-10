@@ -29,7 +29,11 @@
       <MajorVersionNr Value="5"/>
       <MinorVersionNr Value="1"/>
       <RevisionNr Value="1"/>
+<<<<<<< HEAD
       <BuildNr Value="1588"/>
+=======
+      <BuildNr Value="1587"/>
+>>>>>>> origin/master
       <StringTable ProductVersion=""/>
     </VersionInfo>
     <BuildModes Count="3">
