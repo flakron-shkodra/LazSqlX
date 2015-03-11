@@ -28,8 +28,8 @@
       <AutoIncrementBuild Value="True"/>
       <MajorVersionNr Value="5"/>
       <MinorVersionNr Value="1"/>
-      <RevisionNr Value="1"/>
-      <BuildNr Value="1589"/>
+      <RevisionNr Value="2"/>
+      <BuildNr Value="1590"/>
       <StringTable ProductVersion=""/>
     </VersionInfo>
     <BuildModes Count="3">
@@ -401,6 +401,7 @@
       <Unit47>
         <Filename Value="DbInfo\DbMetadata\AsMssqlMetadata.pas"/>
         <IsPartOfProject Value="True"/>
+        <UnitName Value="AsMssqlMetadata"/>
       </Unit47>
       <Unit48>
         <Filename Value="DbInfo\DbMetadata\AsOracleMetadata.pas"/>

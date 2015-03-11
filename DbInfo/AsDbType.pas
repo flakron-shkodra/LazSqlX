@@ -183,6 +183,7 @@ type
     function GetRowsAffected: Integer;
     function GetSQL: TStrings;
     function GetState: TDataSetState;
+    function GetTheUpdateStatus: TUpdateStatus;
     procedure SetAfterDelete(AValue: TDataSetNotifyEvent);
     procedure SetAfterRefresh(AValue: TDataSetNotifyEvent);
     procedure SetAfterSave(AValue: TDataSetNotifyEvent);
@@ -240,6 +241,7 @@ type
    property PacketRecords:Integer read GetPacketRecord write SetPackedRecord;
    property RowsAffected:Integer read GetRowsAffected;
    property RecordCount:Integer read GetRecordCount;
+   property UpdateStatus:TUpdateStatus read GetTheUpdateStatus;
 
   end;
 
@@ -639,6 +641,11 @@ end;
 function TAsQuery.GetState: TDataSetState;
 begin
  Result := DataSet.State;
+end;
+
+function TAsQuery.GetTheUpdateStatus: TUpdateStatus;
+begin
+   Result := DataSet.UpdateStatus;
 end;
 
 procedure TAsQuery.SetAfterDelete(AValue: TDataSetNotifyEvent);

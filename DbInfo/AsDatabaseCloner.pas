@@ -181,9 +181,7 @@ function TAsDatabaseCloner.GetCreateScript(Info: TAsTableInfo;
 var
   sql: string;
   I: integer;
-  HasPK: boolean;
   len:Integer;
-  fname:string;
   strDefaulType,strNewType:string;
 begin
 
@@ -192,7 +190,6 @@ begin
 
   for I := 0 to info.AllFields.Count - 1 do
   begin
-    fname := info.AllFields[I].FieldName;
     if not OverrideDefaultTypes then
       sql := sql + info.AllFields[I].FieldName + ' ' + info.AllFields[I].FieldType
     else
@@ -368,28 +365,43 @@ procedure TAsDatabaseCloner.CopyData(FromDb: TAsDbConnectionInfo; srcTablename,
 var
   src,dest:TAsQuery;
   I: Integer;
-  lst: TStringList;
+  f:TField;
+  destSql : string;
 begin
   FOnCopyRow:=OnCopyRow;
   src := TAsQuery.Create(FromDb);
   dest := TAsQuery.Create(FDbInfo);
+  FDbInfo.Open;
   try
     src.DisableControls;
     dest.DisableControls;
 
     src.Open('select * from '+TAsDbUtils.SafeWrap(FromDb.DbType,srcTablename));
-    dest.Open('select * from '+TAsDbUtils.SafeWrap(FDbInfo.DbType,destTablename));
+    case FDbInfo.DbType of
+      dtSQLite:destSql := 'select * from '+TAsDbUtils.SafeWrap(FDbInfo.DbType,destTablename);
+      dtFirebirdd : destSql := 'select * from '+destTablename;
+      dtPostgreSql: destSql := 'select * from '+destTablename;
+      dtMySql:destSql := 'select * from '+FDbInfo.Database+'.'+TAsDbUtils.SafeWrap(FDbInfo.DbType,destTablename);
+      dtMsSql:destSql := 'select * from '+FDbInfo.Database+'.'+TAsDbUtils.SafeWrap(FDbInfo.DbType,destTablename);
+      dtOracle:destSql := 'select * from '+FDbInfo.Database+'.'+TAsDbUtils.SafeWrap(FDbInfo.DbType,destTablename);
+    end;
+    dest.Open(destSql);
 
+    if dest.Active then
     while not src.EOF do
     begin
       dest.Insert;
       for I:=0 to src.FieldCount-1 do
       begin
-        if (dest.Fields[I].Required) and (src.Fields[I].IsNull) then
-          dest.Fields[I].Value :='1'
+        f := dest.FieldByName(src.Fields[I].FieldName);
+        if f.ReadOnly then continue;
+
+        if (f.Required) and (src.Fields[I].IsNull) then
+          f.Value :='1'
         else
-          dest.Fields[I].Value := src.Fields[I].Value;
+          f.Value := src.Fields[I].Value;
       end;
+      if dest.UpdateStatus in [usModified] then
       dest.Post;
       src.Next;
       if Assigned(FOnCopyRow) then
@@ -425,16 +437,8 @@ end;
 procedure TAsDatabaseCloner.MakeDatabase;
 var
   sql: string;
-  wt:TAsStringWrapType;
-  dbtyp:TAsDatabaseType;
   dbname:string;
 begin
-  case FDbInfo.DbType of
-    dtMsSql, dtSQLite: wt := swtBrackets;
-    dtOracle: wt := swtQuotes;
-  else
-      wt := swtNone;
-  end;
 
   dbname:= TAsDbUtils.SafeWrap(FDbInfo.DbType, FDestDbName);
 

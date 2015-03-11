@@ -1,7 +1,7 @@
 object MainForm: TMainForm
-  Left = 324
+  Left = 337
   Height = 596
-  Top = 93
+  Top = 163
   Width = 1012
   Anchors = [akTop, akLeft, akRight, akBottom]
   Caption = 'LazSQLX'
