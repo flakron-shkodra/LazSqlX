@@ -1,4 +1,4 @@
-v.5.1.1.1590
+v.5.1.2.1590
 -MsSql: Stable dblib put back to package because the current one has problems with varbinary fields
 -DatabaseCloner: Improvements in CopyData (tested from Mssql to MySql,Firebird,Sqlite)
 -Bugfixes
