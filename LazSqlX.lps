@@ -8,7 +8,7 @@
       <Unit0>
         <Filename Value="LazSqlX.lpr"/>
         <IsPartOfProject Value="True"/>
-        <EditorIndex Value="9"/>
+        <EditorIndex Value="11"/>
         <WindowIndex Value="1"/>
         <TopLine Value="9"/>
         <CursorPos Y="51"/>
@@ -32,7 +32,7 @@
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
         <UnitName Value="EditMemoFormU"/>
-        <EditorIndex Value="12"/>
+        <EditorIndex Value="14"/>
         <WindowIndex Value="1"/>
         <CursorPos X="32" Y="3"/>
         <UsageCount Value="223"/>
@@ -45,7 +45,7 @@
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
         <UnitName Value="MainFormU"/>
-        <EditorIndex Value="3"/>
+        <EditorIndex Value="4"/>
         <WindowIndex Value="1"/>
         <TopLine Value="1813"/>
         <CursorPos X="82" Y="1817"/>
@@ -59,11 +59,14 @@
         <ComponentName Value="SqlConnBuilderForm"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <EditorIndex Value="-1"/>
+        <UnitName Value="SqlConnBuilderFormU"/>
+        <EditorIndex Value="2"/>
         <WindowIndex Value="1"/>
-        <TopLine Value="435"/>
-        <CursorPos X="31" Y="547"/>
+        <TopLine Value="385"/>
+        <CursorPos X="70" Y="403"/>
         <UsageCount Value="223"/>
+        <Loaded Value="True"/>
+        <LoadedDesigner Value="True"/>
       </Unit4>
       <Unit5>
         <Filename Value="Forms\DesignTableFormU.pas"/>
@@ -81,7 +84,7 @@
         <Filename Value="DbInfo\AsDbType.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="AsDbType"/>
-        <EditorIndex Value="5"/>
+        <EditorIndex Value="7"/>
         <WindowIndex Value="1"/>
         <TopLine Value="1019"/>
         <CursorPos X="14" Y="1041"/>
@@ -101,10 +104,11 @@
         <Filename Value="DbInfo\AsTableInfo.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="AsTableInfo"/>
-        <EditorIndex Value="4"/>
+        <IsVisibleTab Value="True"/>
+        <EditorIndex Value="5"/>
         <WindowIndex Value="1"/>
-        <TopLine Value="1353"/>
-        <CursorPos Y="1376"/>
+        <TopLine Value="1858"/>
+        <CursorPos X="31" Y="1867"/>
         <UsageCount Value="223"/>
         <Loaded Value="True"/>
       </Unit8>
@@ -119,11 +123,13 @@
       <Unit10>
         <Filename Value="DbInfo\AsSqlGenerator.pas"/>
         <IsPartOfProject Value="True"/>
-        <EditorIndex Value="-1"/>
+        <UnitName Value="AsSqlGenerator"/>
+        <EditorIndex Value="6"/>
         <WindowIndex Value="1"/>
-        <TopLine Value="454"/>
-        <CursorPos X="73" Y="466"/>
+        <TopLine Value="340"/>
+        <CursorPos X="2" Y="315"/>
         <UsageCount Value="223"/>
+        <Loaded Value="True"/>
       </Unit10>
       <Unit11>
         <Filename Value="UtilClasses\sqlexecthread.pas"/>
@@ -176,7 +182,7 @@
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
         <UnitName Value="EditColumnFormU"/>
-        <EditorIndex Value="11"/>
+        <EditorIndex Value="13"/>
         <WindowIndex Value="1"/>
         <TopLine Value="167"/>
         <CursorPos X="31" Y="199"/>
@@ -259,7 +265,7 @@
         <Filename Value="DbInfo\AsDatabaseCloner.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="AsDatabaseCloner"/>
-        <EditorIndex Value="2"/>
+        <EditorIndex Value="3"/>
         <WindowIndex Value="1"/>
         <TopLine Value="441"/>
         <CursorPos Y="476"/>
@@ -273,7 +279,6 @@
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
         <UnitName Value="DatabaseClonerFormU"/>
-        <IsVisibleTab Value="True"/>
         <EditorIndex Value="1"/>
         <WindowIndex Value="1"/>
         <TopLine Value="369"/>
@@ -325,7 +330,7 @@
         <Filename Value="LoadingIndicator\membitmap.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="MemBitmap"/>
-        <EditorIndex Value="7"/>
+        <EditorIndex Value="9"/>
         <WindowIndex Value="1"/>
         <TopLine Value="140"/>
         <CursorPos X="16" Y="154"/>
@@ -438,7 +443,7 @@
         <Filename Value="UtilClasses\fileimport.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="fileimport"/>
-        <EditorIndex Value="8"/>
+        <EditorIndex Value="10"/>
         <WindowIndex Value="1"/>
         <TopLine Value="480"/>
         <CursorPos X="78" Y="497"/>
@@ -468,7 +473,7 @@
         <Filename Value="DbInfo\DbMetadata\AsMssqlMetadata.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="AsMssqlMetadata"/>
-        <EditorIndex Value="6"/>
+        <EditorIndex Value="8"/>
         <WindowIndex Value="1"/>
         <TopLine Value="80"/>
         <CursorPos Y="102"/>
@@ -854,7 +859,7 @@
       <Unit102>
         <Filename Value="C:\development\FreePascal\fpc\packages\gtk2\src\gtk+\gdk\gdk2.pas"/>
         <UnitName Value="gdk2"/>
-        <EditorIndex Value="10"/>
+        <EditorIndex Value="12"/>
         <WindowIndex Value="1"/>
         <TopLine Value="52"/>
         <UsageCount Value="15"/>
@@ -864,123 +869,123 @@
     <JumpHistory Count="30" HistoryIndex="29">
       <Position1>
         <Filename Value="DbInfo\AsDatabaseCloner.pas"/>
-        <Caret Line="381" TopLine="357"/>
+        <Caret Line="409" TopLine="387"/>
       </Position1>
       <Position2>
         <Filename Value="DbInfo\AsDatabaseCloner.pas"/>
-        <Caret Line="385" TopLine="357"/>
+        <Caret Line="405" Column="31" TopLine="369"/>
       </Position2>
       <Position3>
-        <Filename Value="DbInfo\AsDatabaseCloner.pas"/>
-        <Caret Line="408" TopLine="387"/>
+        <Filename Value="Forms\DatabaseClonerFormU.pas"/>
+        <Caret Line="356" TopLine="323"/>
       </Position3>
       <Position4>
         <Filename Value="DbInfo\AsDatabaseCloner.pas"/>
-        <Caret Line="409" TopLine="387"/>
+        <Caret Line="381" Column="82" TopLine="369"/>
       </Position4>
       <Position5>
-        <Filename Value="DbInfo\AsDatabaseCloner.pas"/>
-        <Caret Line="405" Column="31" TopLine="369"/>
+        <Filename Value="Forms\DatabaseClonerFormU.pas"/>
+        <Caret Line="347" TopLine="326"/>
       </Position5>
       <Position6>
         <Filename Value="Forms\DatabaseClonerFormU.pas"/>
-        <Caret Line="356" TopLine="323"/>
+        <Caret Line="348" TopLine="326"/>
       </Position6>
       <Position7>
-        <Filename Value="DbInfo\AsDatabaseCloner.pas"/>
-        <Caret Line="381" Column="82" TopLine="369"/>
+        <Filename Value="Forms\DatabaseClonerFormU.pas"/>
+        <Caret Line="350" TopLine="326"/>
       </Position7>
       <Position8>
         <Filename Value="Forms\DatabaseClonerFormU.pas"/>
-        <Caret Line="347" TopLine="326"/>
+        <Caret Line="351" TopLine="326"/>
       </Position8>
       <Position9>
         <Filename Value="Forms\DatabaseClonerFormU.pas"/>
-        <Caret Line="348" TopLine="326"/>
+        <Caret Line="352" TopLine="326"/>
       </Position9>
       <Position10>
-        <Filename Value="Forms\DatabaseClonerFormU.pas"/>
-        <Caret Line="350" TopLine="326"/>
+        <Filename Value="DbInfo\AsTableInfo.pas"/>
+        <Caret Line="1375" TopLine="1353"/>
       </Position10>
       <Position11>
-        <Filename Value="Forms\DatabaseClonerFormU.pas"/>
-        <Caret Line="351" TopLine="326"/>
+        <Filename Value="DbInfo\AsTableInfo.pas"/>
+        <Caret Line="1376" TopLine="1353"/>
       </Position11>
       <Position12>
         <Filename Value="Forms\DatabaseClonerFormU.pas"/>
-        <Caret Line="352" TopLine="326"/>
+        <Caret Line="353" TopLine="326"/>
       </Position12>
       <Position13>
-        <Filename Value="DbInfo\AsTableInfo.pas"/>
-        <Caret Line="1375" TopLine="1353"/>
+        <Filename Value="Forms\DatabaseClonerFormU.pas"/>
+        <Caret Line="354" TopLine="326"/>
       </Position13>
       <Position14>
-        <Filename Value="DbInfo\AsTableInfo.pas"/>
-        <Caret Line="1376" TopLine="1353"/>
+        <Filename Value="Forms\DatabaseClonerFormU.pas"/>
+        <Caret Line="355" TopLine="326"/>
       </Position14>
       <Position15>
         <Filename Value="Forms\DatabaseClonerFormU.pas"/>
-        <Caret Line="353" TopLine="326"/>
+        <Caret Line="356" TopLine="326"/>
       </Position15>
       <Position16>
         <Filename Value="Forms\DatabaseClonerFormU.pas"/>
-        <Caret Line="354" TopLine="326"/>
+        <Caret Line="348" TopLine="326"/>
       </Position16>
       <Position17>
         <Filename Value="Forms\DatabaseClonerFormU.pas"/>
-        <Caret Line="355" TopLine="326"/>
+        <Caret Line="350" TopLine="326"/>
       </Position17>
       <Position18>
         <Filename Value="Forms\DatabaseClonerFormU.pas"/>
-        <Caret Line="356" TopLine="326"/>
+        <Caret Line="351" TopLine="326"/>
       </Position18>
       <Position19>
         <Filename Value="Forms\DatabaseClonerFormU.pas"/>
-        <Caret Line="348" TopLine="326"/>
+        <Caret Line="352" TopLine="326"/>
       </Position19>
       <Position20>
         <Filename Value="Forms\DatabaseClonerFormU.pas"/>
-        <Caret Line="350" TopLine="326"/>
+        <Caret Line="353" TopLine="326"/>
       </Position20>
       <Position21>
         <Filename Value="Forms\DatabaseClonerFormU.pas"/>
-        <Caret Line="351" TopLine="326"/>
+        <Caret Line="354" TopLine="326"/>
       </Position21>
       <Position22>
         <Filename Value="Forms\DatabaseClonerFormU.pas"/>
-        <Caret Line="352" TopLine="326"/>
+        <Caret Line="355" TopLine="326"/>
       </Position22>
       <Position23>
-        <Filename Value="Forms\DatabaseClonerFormU.pas"/>
-        <Caret Line="353" TopLine="326"/>
+        <Filename Value="DbInfo\AsDatabaseCloner.pas"/>
+        <Caret Line="400" Column="30" TopLine="290"/>
       </Position23>
       <Position24>
-        <Filename Value="Forms\DatabaseClonerFormU.pas"/>
-        <Caret Line="354" TopLine="326"/>
+        <Filename Value="DbInfo\AsDatabaseCloner.pas"/>
+        <Caret Line="442" Column="2" TopLine="437"/>
       </Position24>
       <Position25>
-        <Filename Value="Forms\DatabaseClonerFormU.pas"/>
-        <Caret Line="355" TopLine="326"/>
+        <Filename Value="DbInfo\AsDatabaseCloner.pas"/>
+        <Caret Line="447" TopLine="437"/>
       </Position25>
       <Position26>
         <Filename Value="DbInfo\AsDatabaseCloner.pas"/>
-        <Caret Line="400" Column="30" TopLine="290"/>
+        <Caret Line="448" TopLine="437"/>
       </Position26>
       <Position27>
         <Filename Value="DbInfo\AsDatabaseCloner.pas"/>
-        <Caret Line="442" Column="2" TopLine="437"/>
+        <Caret Line="476" TopLine="441"/>
       </Position27>
       <Position28>
-        <Filename Value="DbInfo\AsDatabaseCloner.pas"/>
-        <Caret Line="447" TopLine="437"/>
+        <Filename Value="Forms\SqlConnBuilderFormU.pas"/>
+        <Caret Line="547" Column="31" TopLine="434"/>
       </Position28>
       <Position29>
-        <Filename Value="DbInfo\AsDatabaseCloner.pas"/>
-        <Caret Line="448" TopLine="437"/>
+        <Filename Value="Forms\SqlConnBuilderFormU.pas"/>
+        <Caret Line="214" Column="3" TopLine="212"/>
       </Position29>
       <Position30>
-        <Filename Value="DbInfo\AsDatabaseCloner.pas"/>
-        <Caret Line="476" TopLine="441"/>
+        <Filename Value="DbInfo\AsSqlGenerator.pas"/>
+        <Caret Line="315" Column="2" TopLine="340"/>
       </Position30>
     </JumpHistory>
   </ProjectSession>

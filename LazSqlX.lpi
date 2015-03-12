@@ -29,7 +29,7 @@
       <MajorVersionNr Value="5"/>
       <MinorVersionNr Value="1"/>
       <RevisionNr Value="2"/>
-      <BuildNr Value="1590"/>
+      <BuildNr Value="1591"/>
       <StringTable ProductVersion=""/>
     </VersionInfo>
     <BuildModes Count="3">
@@ -179,6 +179,7 @@
         <ComponentName Value="SqlConnBuilderForm"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
+        <UnitName Value="SqlConnBuilderFormU"/>
       </Unit4>
       <Unit5>
         <Filename Value="Forms\DesignTableFormU.pas"/>
@@ -208,6 +209,7 @@
       <Unit10>
         <Filename Value="DbInfo\AsSqlGenerator.pas"/>
         <IsPartOfProject Value="True"/>
+        <UnitName Value="AsSqlGenerator"/>
       </Unit10>
       <Unit11>
         <Filename Value="UtilClasses\sqlexecthread.pas"/>

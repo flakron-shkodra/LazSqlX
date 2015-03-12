@@ -1858,11 +1858,13 @@ end;
 function TAsImportedKeyInfos.GetIndex(Fieldname: string): Integer;
 var
   I: Integer;
+  fn: String;
 begin
   Result := -1;
+  fn := TAsStringUtils.RemoveChars(Fieldname,['[',']','"','`']);
   for I := 0 to Count - 1 do
   begin
-    if (Items[I].ColumnName=Fieldname) and (Items[I].TableName<>Items[I].ForeignTableName) then
+    if (Items[I].ColumnName=fn) and (Items[I].TableName<>Items[I].ForeignTableName) then
     begin
       Result := I;
       Break;
