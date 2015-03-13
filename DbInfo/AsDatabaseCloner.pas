@@ -70,7 +70,7 @@ begin
              ftMemo:Result := 'text';
              ftWideMemo: Result := 'ntext';
              ftWideString: Result:='nvarchar';
-             ftBlob,ftOraBlob: Result:='blob';
+             ftBlob,ftOraBlob: Result:='image';
              ftBoolean:Result:='bit';
              ftDate,ftDateTime:Result:='datetime';
              ftInteger,ftSmallint,ftLargeint: Result:='int' ;
@@ -367,6 +367,7 @@ var
   I: Integer;
   f:TField;
   destSql : string;
+  m: TMemoryStream;
 begin
   FOnCopyRow:=OnCopyRow;
   src := TAsQuery.Create(FromDb);
@@ -399,7 +400,22 @@ begin
         if (f.Required) and (src.Fields[I].IsNull) then
           f.Value :='1'
         else
+        begin
+          if f.IsBlob then
+         begin
+          m := TMemoryStream.Create;
+          try
+            TBlobField(src.Fields[I]).SaveToStream(m);
+            m.Position:=0;
+            TBlobField(f).LoadFromStream(m);
+          finally
+            m.Free;
+          end;
+         end else
+         begin
           f.Value := src.Fields[I].Value;
+         end;
+        end;
       end;
       if dest.UpdateStatus in [usModified] then
       dest.Post;
