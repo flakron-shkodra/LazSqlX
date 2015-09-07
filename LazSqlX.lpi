@@ -163,7 +163,6 @@
         <ComponentName Value="EditMemoForm"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <UnitName Value="EditMemoFormU"/>
       </Unit2>
       <Unit3>
         <Filename Value="Forms\MainFormU.pas"/>
@@ -200,7 +199,6 @@
       <Unit8>
         <Filename Value="DbInfo\AsTableInfo.pas"/>
         <IsPartOfProject Value="True"/>
-        <UnitName Value="AsTableInfo"/>
       </Unit8>
       <Unit9>
         <Filename Value="FileTypeDetector\FtDetector.pas"/>
@@ -209,11 +207,11 @@
       <Unit10>
         <Filename Value="DbInfo\AsSqlGenerator.pas"/>
         <IsPartOfProject Value="True"/>
-        <UnitName Value="AsSqlGenerator"/>
       </Unit10>
       <Unit11>
         <Filename Value="UtilClasses\sqlexecthread.pas"/>
         <IsPartOfProject Value="True"/>
+        <UnitName Value="SqlExecThread"/>
       </Unit11>
       <Unit12>
         <Filename Value="UtilClasses\Utils.pas"/>
@@ -240,7 +238,6 @@
         <ComponentName Value="EditColumnForm"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <UnitName Value="EditColumnFormU"/>
       </Unit16>
       <Unit17>
         <Filename Value="UtilClasses\VersionSupport.pas"/>
@@ -329,7 +326,6 @@
       <Unit30>
         <Filename Value="LoadingIndicator\membitmap.pas"/>
         <IsPartOfProject Value="True"/>
-        <UnitName Value="MemBitmap"/>
       </Unit30>
       <Unit31>
         <Filename Value="LoadingIndicator\LoadingIndicator.pas"/>
@@ -390,7 +386,6 @@
       <Unit44>
         <Filename Value="UtilClasses\fileimport.pas"/>
         <IsPartOfProject Value="True"/>
-        <UnitName Value="fileimport"/>
       </Unit44>
       <Unit45>
         <Filename Value="DbInfo\AsDbFormUtils.pas"/>
@@ -403,7 +398,6 @@
       <Unit47>
         <Filename Value="DbInfo\DbMetadata\AsMssqlMetadata.pas"/>
         <IsPartOfProject Value="True"/>
-        <UnitName Value="AsMssqlMetadata"/>
       </Unit47>
       <Unit48>
         <Filename Value="DbInfo\DbMetadata\AsOracleMetadata.pas"/>
@@ -463,7 +457,7 @@
     </Linking>
   </CompilerOptions>
   <Debugging>
-    <Exceptions Count="6">
+    <Exceptions Count="7">
       <Item1>
         <Name Value="EAbort"/>
       </Item1>
@@ -482,6 +476,9 @@
       <Item6>
         <Name Value="Exception"/>
       </Item6>
+      <Item7>
+        <Name Value="EInOutError"/>
+      </Item7>
     </Exceptions>
   </Debugging>
 </CONFIG>

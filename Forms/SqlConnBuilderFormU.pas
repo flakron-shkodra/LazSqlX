@@ -60,6 +60,7 @@ type
     procedure cmbDatabaseTypeChange(Sender: TObject);
     procedure cmbDatabaseTypeDrawItem(Control: TWinControl; Index: integer;
       ARect: TRect; State: TOwnerDrawState);
+    procedure cmbDbEngineChange(Sender: TObject);
     procedure cmbDbEngineDrawItem(Control: TWinControl; Index: Integer;
      ARect: TRect; State: TOwnerDrawState);
     procedure FormCreate(Sender: TObject);
@@ -286,6 +287,7 @@ begin
       txtUserName.Text:=c.Username;
       txtPassword.Text:=c.Password;
       txtPort.Value:=c.Port;
+      cmbDbEngine.ItemIndex:=Integer(c.DbEngineType);
     except
       // ignore errors
     end;
@@ -404,6 +406,12 @@ begin
 
   if not RecentConnections.Exists(FDBInfo) then
   begin
+    dbi := TAsDbConnectionInfo.Create(False);
+    dbi.Assign(FDBInfo);
+    RecentConnections.Add(dbi);
+  end else
+  begin
+    RecentConnections.Delete(RecentConnections.IndexOf(FDBInfo));
     dbi := TAsDbConnectionInfo.Create(False);
     dbi.Assign(FDBInfo);
     RecentConnections.Add(dbi);
@@ -580,6 +588,11 @@ begin
   cmb.Canvas.Font.Color:=clWindowText;
   cmb.Canvas.Brush.Style := bsClear;
   cmb.Canvas.TextOut(ARect.Left + 30, ARect.Top + 3, cmb.Items[Index]);
+end;
+
+procedure TSqlConnBuilderForm.cmbDbEngineChange(Sender: TObject);
+begin
+
 end;
 
 procedure TSqlConnBuilderForm.cmbDbEngineDrawItem(Control: TWinControl;

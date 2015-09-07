@@ -151,6 +151,7 @@ type
     procedure SaveToFile(Filename:string);
     {compares given connection to other items in the list and returns true if found}
     function Exists(aDbInfo:TAsDbConnectionInfo):Boolean;
+    function IndexOf(const Item: T): Integer;
   end;
 
   { TAsQuery }
@@ -1633,7 +1634,7 @@ end;
 
 function TAsDbConnectionInfo.ToFullString: string;
 begin
- Result:='aDbType='+ IntToStr(Integer(FDbType))+';aServer='+Server+';aDatabase='+FDatabase+';aUsername='+FUsername+';aPassword='+FPassword+';aPort='+IntToStr(FPort)+';';
+ Result:='aDbType='+ IntToStr(Integer(FDbType))+';aServer='+Server+';aDatabase='+FDatabase+';aUsername='+FUsername+';aPassword='+FPassword+';aPort='+IntToStr(FPort)+';'+'aDbEngineType='+ IntToStr(Integer(FDbEngine))+';';
 end;
 
 procedure TAsDbConnectionInfo.Assign(Source: TPersistent);
@@ -1780,6 +1781,8 @@ begin
         s.Username:=lstLine.Values['aUsername'];
         s.Password:=lstLine.Values['aPassword'];
         s.Port:= StrToInt(lstLine.Values['aPort']);
+        if lstLine.Values['aDbEngineType']<>'' then
+          s.DbEngineType:=TAsDatabaseEngineType(StrToInt(lstLine.Values['aDbEngineType']));
         Add(s);
       except
 
@@ -1814,19 +1817,26 @@ begin
 end;
 
 function TAsDbConnectionInfos.Exists(aDbInfo: TAsDbConnectionInfo): Boolean;
+begin
+  Result:=IndexOf(aDbInfo)>-1;
+end;
+
+function TAsDbConnectionInfos.IndexOf(const Item: T): Integer;
 var
+ aDbInfo: TAsDbConnectionInfo;
  I: Integer;
 begin
-  Result:=False;
- for I:=0 to Count-1 do
- begin
-   if (aDbInfo.DbType=Items[I].DbType) and (LowerCase(aDbInfo.Server)=Lowercase(Items[I].Server)) and (LowerCase(aDbInfo.Database)=Lowercase(Items[I].Database))
-   and (LowerCase(aDbInfo.Username)=Lowercase(Items[I].Username)) and (LowerCase(aDbInfo.Password)=Lowercase(Items[I].Password)) and (LowerCase(aDbInfo.Port)=Lowercase(Items[I].Port)) then
-   begin
-     Result:=True;
-     Break;
-   end;
- end;
+  aDbInfo := TAsDbConnectionInfo(Item);
+  Result:=-1;
+  for I:=0 to Count-1 do
+  begin
+    if (aDbInfo.DbType=Items[I].DbType) and (LowerCase(aDbInfo.Server)=Lowercase(Items[I].Server)) and (LowerCase(aDbInfo.Database)=Lowercase(Items[I].Database))
+    and (LowerCase(aDbInfo.Username)=Lowercase(Items[I].Username)) and (LowerCase(aDbInfo.Password)=Lowercase(Items[I].Password)) and (LowerCase(aDbInfo.Port)=Lowercase(Items[I].Port)) then
+    begin
+      Result:=I;
+      Break;
+    end;
+  end;
 end;
 
 end.

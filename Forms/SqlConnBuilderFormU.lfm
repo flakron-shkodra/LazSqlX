@@ -15,7 +15,7 @@ object SqlConnBuilderForm: TSqlConnBuilderForm
   OnDestroy = FormDestroy
   OnShow = FormShow
   Position = poScreenCenter
-  LCLVersion = '1.4.0.2'
+  LCLVersion = '1.5'
   object pnlMain: TPanel
     Left = 208
     Height = 302
@@ -64,9 +64,9 @@ object SqlConnBuilderForm: TSqlConnBuilderForm
     end
     object chkIntegratedSecurity: TCheckBox
       Left = 12
-      Height = 19
+      Height = 17
       Top = 34
-      Width = 105
+      Width = 103
       Caption = 'SSPI (Integrated)'
       OnClick = chkIntegratedSecurityClick
       TabOrder = 0
@@ -270,9 +270,9 @@ object SqlConnBuilderForm: TSqlConnBuilderForm
     TabOrder = 4
     object chkAlternateLibLocation: TCheckBox
       Left = 15
-      Height = 19
+      Height = 17
       Top = 8
-      Width = 144
+      Width = 142
       Caption = 'Alternate Library Location'
       OnChange = chkAlternateLibLocationChange
       TabOrder = 0
@@ -343,6 +343,7 @@ object SqlConnBuilderForm: TSqlConnBuilderForm
       'SQLDB'
       'Zeos'
     )
+    OnChange = cmbDbEngineChange
     OnDrawItem = cmbDbEngineDrawItem
     ReadOnly = True
     Style = csOwnerDrawFixed
