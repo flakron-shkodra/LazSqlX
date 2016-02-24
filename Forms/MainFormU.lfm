@@ -2914,8 +2914,6 @@ object MainForm: TMainForm
     FormatSettings.DecimalSeparator = #0
     FormatSettings.CurrencyDigits = 0
     FormatSettings.FieldDelimiter = ';'
-    FormatSettings.QuoteStrings = [qsAlways]
-    FormatSettings.StringQuoteChar = '"'
     left = 520
     top = 232
   end

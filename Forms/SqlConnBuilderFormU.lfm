@@ -15,7 +15,7 @@ object SqlConnBuilderForm: TSqlConnBuilderForm
   OnDestroy = FormDestroy
   OnShow = FormShow
   Position = poScreenCenter
-  LCLVersion = '1.5'
+  LCLVersion = '1.6.0.4'
   object pnlMain: TPanel
     Left = 208
     Height = 302
@@ -64,9 +64,9 @@ object SqlConnBuilderForm: TSqlConnBuilderForm
     end
     object chkIntegratedSecurity: TCheckBox
       Left = 12
-      Height = 17
+      Height = 19
       Top = 34
-      Width = 103
+      Width = 105
       Caption = 'SSPI (Integrated)'
       OnClick = chkIntegratedSecurityClick
       TabOrder = 0
@@ -230,7 +230,10 @@ object SqlConnBuilderForm: TSqlConnBuilderForm
     OnClick = lstRecentConnectionsClick
     OnDblClick = lstRecentConnectionsDblClick
     OnDrawItem = lstRecentConnectionsDrawItem
+    OnShowHint = lstRecentConnectionsShowHint
+    ParentShowHint = False
     PopupMenu = popRecent
+    ShowHint = True
     Style = lbOwnerDrawFixed
     TabOrder = 3
   end
@@ -270,9 +273,9 @@ object SqlConnBuilderForm: TSqlConnBuilderForm
     TabOrder = 4
     object chkAlternateLibLocation: TCheckBox
       Left = 15
-      Height = 17
+      Height = 19
       Top = 8
-      Width = 142
+      Width = 144
       Caption = 'Alternate Library Location'
       OnChange = chkAlternateLibLocationChange
       TabOrder = 0

@@ -204,7 +204,8 @@ begin
     if OverrideDefaultTypes then
       strNewType:= lowercase(GetFieldTypeAs(info.AllFields[I].DataType))
     else
-      strNewType:=strDefaulType;
+      strNewType:=lowercase(strDefaulType);
+
 
     if (strNewType = 'varchar') or (strNewType = 'nvarchar') or (strNewType = 'varchar2') or
       (strNewType = 'nvarchar2') or (strNewType='character varying') then

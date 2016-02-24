@@ -76,6 +76,9 @@ type
     procedure lstRecentConnectionsDblClick(Sender: TObject);
     procedure lstRecentConnectionsDrawItem(Control: TWinControl;
      Index: Integer; ARect: TRect; State: TOwnerDrawState);
+    procedure lstRecentConnectionsMouseEnter(Sender: TObject);
+    procedure lstRecentConnectionsShowHint(Sender: TObject; HintInfo: PHintInfo
+      );
     procedure mitDeleteClick(Sender: TObject);
     procedure txtPasswordChange(Sender: TObject);
   private
@@ -349,6 +352,20 @@ begin
     Brush.Style := bsClear;
     TextOut(ARect.Left + 35, ARect.Top+5, c.Items[Index]);
   end;
+end;
+
+procedure TSqlConnBuilderForm.lstRecentConnectionsMouseEnter(Sender: TObject);
+begin
+
+end;
+
+procedure TSqlConnBuilderForm.lstRecentConnectionsShowHint(Sender: TObject;
+  HintInfo: PHintInfo);
+begin
+  if lstRecentConnections.ItemIndex>-1 then
+    lstRecentConnections.Hint:=lstRecentConnections.Items[lstRecentConnections.ItemIndex]
+  else
+    lstRecentConnections.Hint:= '';
 end;
 
 procedure TSqlConnBuilderForm.mitDeleteClick(Sender: TObject);
