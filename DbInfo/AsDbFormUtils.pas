@@ -20,7 +20,7 @@ uses
  Classes, SysUtils,Forms,Graphics,Dialogs,Controls,StdCtrls,ExtCtrls,ComCtrls, DbCtrls,DBGrids,Grids, AsTableInfo,AsDbType,
  DB, sqldb, fgl,Spin, EditBtn,Buttons,mssqlconn,{$ifndef win64}oracleconnection,{$endif} IBConnection,
  mysql55conn, mysql51conn, mysql50conn, mysql40conn, mysql41conn, sqlite3conn,ZConnection,ZDataset,LR_PGrid,
- CheckLst,LazSqlXResources;
+ CheckLst,LazSqlXResources,DBDateTimePicker,DateTimePicker;
 
 type
 
@@ -963,7 +963,7 @@ var
  edt:TDBedit;
  cmbLookup:TAsDBLookupComboBoxEdit;
  chk:TDBCheckBox;
- dt :TAsDbDateEdit;
+ dt :TDBDateTimePicker;
  sed:TAsDBSpinEdit;
  be:TAsDbBlobEdit;
  mem:TDBMemo;
@@ -1007,10 +1007,12 @@ begin
         end;
      ftDate,ftDateTime:
         begin
-         dt := TAsDbDateEdit.Create(FEditControlsBox);
+         dt := TDBDateTimePicker.Create(FEditControlsBox);
          dt.Name:= 'dt'+controlName;
          dt.DataField:= fieldName;
          dt.DataSource := FDataObject.DataSource;
+         dt.AutoSize:= False;
+         dt.Kind:=dtkDateTime;
          lastControl := dt;
         end;
      ftMemo,ftWideMemo:
@@ -1057,7 +1059,7 @@ begin
         cmbLookup.Name:='cmb'+controlName;
         cmbLookup.OnEditButtonClick:=@OnDbLookupComboEditClick;
         ik :=FTableInfo.ImportedKeys.GetByName(fieldName);
-        dao := TAsUIDataAcessObject.Create(FDbInfo,'select * from '+ik.ForeignTableName);
+        dao := TAsUIDataAcessObject.Create(FDbInfo,'select * from '+TAsDbUtils.SafeWrap(FDbInfo.DbType,ik.ForeignTableName));
         FRefDataObjects.Add(dao);
         cmbLookup.ListSource := dao.DataSource;
         cmbLookup.ListField:=ik.ForeignFirstTextField;
@@ -1223,7 +1225,7 @@ begin
  FDbInfo := aDbInfo;
 
  FTableInfo := aTableInfo;
- FSqlQuery:= 'Select * from '+FTableInfo.Tablename;
+ FSqlQuery:= 'Select * from '+TAsDbUtils.SafeWrap(FDbInfo.DbType, FTableInfo.Tablename);
 
  FDataObject := TAsUIDataAcessObject.Create(FDbInfo,FSqlQuery);
  FRefDataObjects := TAsUIDataAcessObjects.Create;

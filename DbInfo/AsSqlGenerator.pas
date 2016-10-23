@@ -1,10 +1,13 @@
 {*******************************************************************
 AUTHOR : Flakron Shkodra
 *******************************************************************
+Date Modified:  30/01/2015 (memleak fixes)
+*******************************************************************
 Date Modified:  18/06/2013 (added qtAll queryType)
 *******************************************************************
 Date Modified : 18/05/2010 14:10:31
 *******************************************************************
+
 }
 
 
@@ -391,7 +394,7 @@ begin
     if (not AsTableInfo.AllFields[I].IsIdentity) then
     begin
       tmpInsert.Add(strIdent + '    ' + SqlParamChar +
-        AsTableInfo.AllFields[I].CSharpName + seperator);
+        AsTableInfo.AllFields[I].FieldName + seperator);
       tmpSelectInsert.Add(strIdent + '    ' + fieldName + seperator);
 
       //this check will prevent some unwanted stuff like : (..set Status=@Status, where.. )
@@ -422,8 +425,8 @@ begin
 
     tmpSelectJoins.Add
     (
-      strIdent + ' INNER JOIN  ' + tmpFTablename + ' t' +
-      IntToStr(I + 1) + ' ON ' + tmpTablename + '.' +localColumn + ' = ' +
+      strIdent + ' INNER JOIN  '+ SafeWrap(tmpFTablename) + ' t' +
+      IntToStr(I + 1) + ' ON ' + SafeWrap(tmpTablename) + '.' +localColumn + ' = ' +
       't' + IntToStr(I + 1) + '.' + foreignColumn
       );
   end;
@@ -485,13 +488,13 @@ begin
       if AsTableInfo.PrimaryKeys.Count > 0 then
       begin
         r.Add(strIdent + 'WHERE ' + SafeWrap(SqlTable) + SqlDot +
-          SafeWrap(AsTableInfo.PrimaryKeys[0].FieldName) + '=' + SqlParamChar + 'p1');
+          SafeWrap(AsTableInfo.PrimaryKeys[0].FieldName) + '=' + SqlParamChar + AsTableInfo.PrimaryKeys[0].FieldName);
         if (AsTableInfo.PrimaryKeys.Count > 1) then
         begin
           for I := 1 to AsTableInfo.PrimaryKeys.Count - 1 do
             r.Add(strIdent + ' AND ' + SafeWrap(SqlTable)+SqlDot+
              SafeWrap(AsTableInfo.PrimaryKeys[I].FieldName)+
-              '=' + SqlParamChar + 'p'+IntToStr(I+1));
+              '=' + SqlParamChar + AsTableInfo.PrimaryKeys[I].FieldName);
         end;
       end;
     end;
@@ -502,13 +505,13 @@ begin
       begin
         r.Add(strIdent + 'WHERE ' + SafeWrap(SqlTable)+
           SqlDot + SafeWrap(AsTableInfo.PrimaryKeys[0].FieldName)+
-          '=' + SqlParamChar + 'p1');
+          '=' + SqlParamChar + AsTableInfo.PrimaryKeys[0].FieldName);
         if (AsTableInfo.PrimaryKeys.Count > 1) then
         begin
           for I := 1 to AsTableInfo.PrimaryKeys.Count - 1 do
             r.Add(strIdent + ' AND ' + SafeWrap(SqlTable)+
               SqlDot + SafeWrap(AsTableInfo.PrimaryKeys[I].FieldName)+
-              '=' + SqlParamChar + 'p'+IntToStr(I+1));
+              '=' + SqlParamChar + AsTableInfo.PrimaryKeys[I].FieldName);
         end;
       end;
     end;

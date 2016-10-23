@@ -1,3 +1,7 @@
+v.5.1.5.1601
+-Fixes in AsDbForms
+-Fixes in AsSqlGenerator
+
 v.5.1.2.1592
 -Some fixes in AsDatabaseCloner
 
