@@ -1,8 +1,9 @@
 object MainForm: TMainForm
   Left = 337
-  Height = 596
+  Height = 576
   Top = 163
   Width = 1012
+  ActiveControl = cmbSchema
   Anchors = [akTop, akLeft, akRight, akBottom]
   Caption = 'LazSQLX'
   ClientHeight = 576
@@ -15,7 +16,8 @@ object MainForm: TMainForm
   OnKeyDown = FormKeyDown
   OnShow = FormShow
   Position = poScreenCenter
-  LCLVersion = '1.5'
+  LCLVersion = '1.6.0.4'
+  Visible = False
   object tlbMain: TToolBar
     Left = 0
     Height = 24
@@ -159,19 +161,19 @@ object MainForm: TMainForm
   end
   object pnlMain: TPanel
     Left = 0
-    Height = 529
+    Height = 509
     Top = 24
     Width = 1012
     Align = alClient
     Anchors = [akTop, akLeft, akBottom]
-    ClientHeight = 529
+    ClientHeight = 509
     ClientWidth = 1012
     Color = clWindow
     ParentColor = False
     TabOrder = 1
     object imgLogo: TImage
       Left = 264
-      Height = 527
+      Height = 507
       Top = 1
       Width = 747
       Align = alClient
@@ -1124,29 +1126,29 @@ object MainForm: TMainForm
     end
     object pnlTables: TPanel
       Left = 1
-      Height = 527
+      Height = 507
       Top = 1
       Width = 258
       Align = alLeft
-      ClientHeight = 527
+      ClientHeight = 507
       ClientWidth = 258
       TabOrder = 0
       Visible = False
       object cmbSchema: TComboBox
         Left = 1
-        Height = 21
+        Height = 23
         Top = 1
         Width = 256
         Align = alTop
-        ItemHeight = 13
+        ItemHeight = 15
         OnChange = cmbSchemaChange
         Style = csDropDownList
         TabOrder = 0
       end
       object pgcLeft: TPageControl
         Left = 1
-        Height = 504
-        Top = 22
+        Height = 482
+        Top = 24
         Width = 256
         ActivePage = tabTables
         Align = alClient
@@ -1154,7 +1156,7 @@ object MainForm: TMainForm
         TabOrder = 1
         object tabTables: TTabSheet
           Caption = 'Tables'
-          ClientHeight = 478
+          ClientHeight = 454
           ClientWidth = 248
           object txtSearchTable: TEdit
             Left = 0
@@ -1178,11 +1180,11 @@ object MainForm: TMainForm
           end
           object trvTables: TTreeView
             Left = 0
-            Height = 454
+            Height = 430
             Top = 24
             Width = 248
             Align = alClient
-            DefaultItemHeight = 16
+            DefaultItemHeight = 18
             Images = TreeViewImages
             PopupMenu = TablesPopupMenu
             ReadOnly = True
@@ -1223,7 +1225,7 @@ object MainForm: TMainForm
             Top = 24
             Width = 248
             Align = alClient
-            DefaultItemHeight = 16
+            DefaultItemHeight = 18
             Images = TreeViewImages
             ReadOnly = True
             RowSelect = True
@@ -1235,7 +1237,7 @@ object MainForm: TMainForm
     end
     object Splitter2: TSplitter
       Left = 259
-      Height = 527
+      Height = 507
       Top = 1
       Width = 5
     end
@@ -1243,7 +1245,7 @@ object MainForm: TMainForm
   object sbMain: TStatusBar
     Left = 0
     Height = 23
-    Top = 553
+    Top = 533
     Width = 1012
     Panels = <    
       item
@@ -1277,28 +1279,13 @@ object MainForm: TMainForm
     DefaultFilter = 'SQL Files (*.sql)|*.sql'
     Enabled = False
     CommentAttri.Foreground = clGreen
-    CommentAttri.FrameEdges = sfeAround
-    DataTypeAttri.FrameEdges = sfeAround
-    DefaultPackageAttri.FrameEdges = sfeAround
-    ExceptionAttri.FrameEdges = sfeAround
-    FunctionAttri.FrameEdges = sfeAround
-    IdentifierAttri.FrameEdges = sfeAround
     KeyAttri.Foreground = clBlue
-    KeyAttri.FrameEdges = sfeAround
     NumberAttri.Foreground = 33023
-    NumberAttri.FrameEdges = sfeAround
-    PLSQLAttri.FrameEdges = sfeAround
-    SpaceAttri.FrameEdges = sfeAround
-    SQLPlusAttri.FrameEdges = sfeAround
     StringAttri.Foreground = clMaroon
-    StringAttri.FrameEdges = sfeAround
-    SymbolAttri.FrameEdges = sfeAround
     TableNameAttri.Background = clSilver
     TableNameAttri.Foreground = clBlack
     TableNameAttri.FrameColor = clBlack
-    TableNameAttri.FrameEdges = sfeAround
     VariableAttri.Foreground = clGray
-    VariableAttri.FrameEdges = sfeAround
     SQLDialect = sqlStandard
     left = 416
     top = 280
@@ -1837,6 +1824,12 @@ object MainForm: TMainForm
     end
     object mitTools: TMenuItem
       Caption = 'Tools'
+      object mitOptions: TMenuItem
+        Action = actOptions
+      end
+      object mitSep9: TMenuItem
+        Caption = '-'
+      end
       object mitQueryDesigner: TMenuItem
         Action = actQueryDesigner
         Bitmap.Data = {
@@ -2895,6 +2888,12 @@ object MainForm: TMainForm
       ImageIndex = 59
       OnExecute = actPdfHelpExecute
     end
+    object actOptions: TAction
+      Category = 'Tools'
+      Caption = 'Options'
+      ImageIndex = 2
+      OnExecute = actOptionsExecute
+    end
   end
   object OpenDialog: TOpenDialog
     DefaultExt = '.sql'
@@ -2914,6 +2913,9 @@ object MainForm: TMainForm
     FormatSettings.DecimalSeparator = #0
     FormatSettings.CurrencyDigits = 0
     FormatSettings.FieldDelimiter = ';'
+    FormatSettings.IgnoreOuterWhitespace = False
+    FormatSettings.RowDelimiter = #13#10
+    FormatSettings.QuoteChar = '"'
     left = 520
     top = 232
   end

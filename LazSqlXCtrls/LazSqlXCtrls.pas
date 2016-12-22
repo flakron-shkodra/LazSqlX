@@ -7,9 +7,9 @@ interface
 uses
   Classes, SysUtils, Controls, StdCtrls, ComCtrls, ExtCtrls, Graphics, Dialogs,
   sqldb, db, ZConnection, DbCtrls, DBGrids, SynEdit, SynCompletion,
-  SynEditTypes,SynEditMouseCmds, Grids, Menus, AsStringUtils, AsDbType, AsProcedureInfo,
-  SynHighlighterSQL, Types, strutils, LCLType, SqlExecThread, DesignTableFormU,
-  Forms;
+  SynEditTypes, SynEditMouseCmds, Grids, Menus, AsStringUtils, AsDbType,
+  AsProcedureInfo, AsParamDialog, SynHighlighterSQL, Types, strutils, LCLType,
+  SqlExecThread, DesignTableFormU, LazSqlXSettings, Forms;
 
 
 type
@@ -572,13 +572,11 @@ begin
   FTopPanel.Caption := '';
   FQueryEditor := TSynEdit.Create(Self);
   FQueryEditor.Name := 'txtSyn' + FNumbering;
+
+  FQueryEditor.Font :=Settings.QueryEditorFont;
   FQueryEditor.Font.Pitch := fpFixed;
   FQueryEditor.Font.Quality := fqDraft;
-  FQueryEditor.Font.Size:=8;
-  if Screen.Fonts.IndexOf(lucidaFont)>-1 then
-  begin
-    FQueryEditor.Font.Name:=lucidaFont;
-  end;
+
   FQueryEditor.TabWidth:=2;
   FQueryEditor.Options := FQueryEditor.Options - [eoSmartTabs, eoScrollPastEol] + [eoTabIndent];
   FQueryEditor.RightEdge := 120;
@@ -631,6 +629,7 @@ begin
   FDataGrid.Visible := True;
   FDataGrid.OnDrawColumnCell := @OnDBGridDrawColumnCell;
   FDataGrid.Parent := FBottomPanel;
+  FDataGrid.Font := Settings.QueryEditorFont;
 
   FDBNavigator := TDBNavigator.Create(FBottomPanel);
   FDBNavigator.Align := alBottom;
@@ -1429,7 +1428,7 @@ begin
             end;
           end;
         end;
-
+        if lstDel.Count>0 then
         FLastWord := lstDel[lstDel.Count - 1];
 
         //if UpperCase(LastWord) = 'FROM' then

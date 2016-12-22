@@ -29,7 +29,7 @@
       <MajorVersionNr Value="5"/>
       <MinorVersionNr Value="1"/>
       <RevisionNr Value="5"/>
-      <BuildNr Value="1601"/>
+      <BuildNr Value="1603"/>
       <StringTable ProductVersion=""/>
     </VersionInfo>
     <BuildModes Count="3">
@@ -148,7 +148,7 @@
         <PackageName Value="LCL"/>
       </Item10>
     </RequiredPackages>
-    <Units Count="54">
+    <Units Count="57">
       <Unit0>
         <Filename Value="LazSqlX.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -420,18 +420,33 @@
         <Filename Value="Resources\PostgreSqlDataTypes.dt"/>
         <IsPartOfProject Value="True"/>
       </Unit53>
+      <Unit54>
+        <Filename Value="Forms\OptionsFormU.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="OptionsForm"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Form"/>
+      </Unit54>
+      <Unit55>
+        <Filename Value="LazSqlXCtrls\LazSqlXSettings.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit55>
+      <Unit56>
+        <Filename Value="DbInfo\AsParamDialog.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit56>
     </Units>
   </ProjectOptions>
   <CompilerOptions>
     <Version Value="11"/>
     <PathDelim Value="\"/>
     <Target>
-      <Filename Value="..\build\LazSqlX"/>
+      <Filename Value="build\LazSqlX"/>
     </Target>
     <SearchPaths>
       <IncludeFiles Value="$(ProjOutDir)"/>
       <OtherUnitFiles Value="Forms;DbInfo;FileTypeDetector;Generators;UtilClasses;DbInfo\AsSqlKeywords;QueryDesigner;LoadingIndicator;LazSqlXCtrls;DefTypes;Resources;DbInfo\DbMetadata"/>
-      <UnitOutputDirectory Value="..\build\units"/>
+      <UnitOutputDirectory Value="build\units"/>
     </SearchPaths>
     <CodeGeneration>
       <Checks>

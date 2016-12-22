@@ -978,6 +978,7 @@ function TAsTableInfo.FieldByName(Fieldname: string): TAsFieldInfo;
 var
  i:Integer;
 begin
+ Result:=nil;
   for i := 0 to AllFields.Count do
   begin
       if AllFields[I].FieldName=Fieldname then

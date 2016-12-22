@@ -11,7 +11,8 @@ unit SqlExecThread;
 interface
 
 uses
-  Classes, SysUtils, DB, sqldb, mssqlconn, SQLDBLaz, AsDbType, strutils,ZDataset,syncobjs;
+  Classes, SysUtils, DB, sqldb, mssqlconn, SQLDBLaz, AsDbType, AsParamDialog,
+  strutils, ZDataset, syncobjs;
 
 type
 
@@ -42,6 +43,7 @@ type
     procedure SetMessage(AValue: string);
     procedure SetOnFinish(AValue: TOnSqlExecThreadFinish);
     procedure SetRecordCount(AValue: word);
+    procedure ShowParamDialog;
   protected
     procedure Execute; override;
     procedure SqlExecute;
@@ -138,6 +140,11 @@ begin
   FRecordCount := AValue;
 end;
 
+procedure TSqlExecThread.ShowParamDialog;
+begin
+   TAsParamDialog.ShowParamDialog(FQuery,True)
+end;
+
 procedure TSqlExecThread.Execute;
 begin
   FLastError := EmptyStr;
@@ -177,6 +184,10 @@ begin
       FQuery.SQL.Text:=FCommand;
       FQuery.PacketRecords:=-1;
       try
+
+       if FQuery.Params.Count>0 then
+         Synchronize(@ShowParamDialog);
+
        FQuery.Open;
       except on E:Exception do
        begin

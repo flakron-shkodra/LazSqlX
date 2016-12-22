@@ -1,0 +1,80 @@
+object OptionsForm: TOptionsForm
+  Left = 0
+  Height = 146
+  Top = 0
+  Width = 462
+  ActiveControl = btnQueryEditorFont
+  BorderStyle = bsSingle
+  Caption = 'OptionsForm'
+  ClientHeight = 146
+  ClientWidth = 462
+  OnShow = FormShow
+  Position = poScreenCenter
+  LCLVersion = '1.6.2.0'
+  Visible = False
+  object btnQueryEditorFont: TButton
+    Left = 421
+    Height = 25
+    Top = 30
+    Width = 25
+    Anchors = [akTop, akRight]
+    Caption = '...'
+    OnClick = btnQueryEditorFontClick
+    TabOrder = 0
+  end
+  object txtFontName: TEdit
+    Left = 16
+    Height = 23
+    Top = 32
+    Width = 400
+    Anchors = [akTop, akLeft, akRight]
+    ReadOnly = True
+    TabOrder = 1
+  end
+  object divFont: TDividerBevel
+    Left = 16
+    Height = 15
+    Top = 9
+    Width = 430
+    Caption = 'Query Editor Font'
+    Font.Style = [fsBold]
+    ParentFont = False
+  end
+  object btnOK: TBitBtn
+    Left = 285
+    Height = 25
+    Top = 108
+    Width = 75
+    Anchors = [akRight, akBottom]
+    Default = True
+    DefaultCaption = True
+    Kind = bkOK
+    ModalResult = 1
+    OnClick = btnOKClick
+    TabOrder = 2
+  end
+  object btnCancel: TBitBtn
+    Left = 371
+    Height = 25
+    Top = 108
+    Width = 75
+    Anchors = [akRight, akBottom]
+    Cancel = True
+    DefaultCaption = True
+    Kind = bkCancel
+    ModalResult = 2
+    TabOrder = 3
+  end
+  object FontDialog1: TFontDialog
+    Font.CharSet = ANSI_CHARSET
+    Font.Height = -12
+    Font.Name = '@Arial Unicode MS'
+    Font.Pitch = fpVariable
+    Font.Quality = fqDraft
+    Font.Style = [fsBold]
+    MinFontSize = 0
+    MaxFontSize = 0
+    left = 384
+    top = 70
+  end
+end

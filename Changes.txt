@@ -1,3 +1,7 @@
+v.5.1.5.1603
+-Added Tools->Options to change font 
+-Added parameter detection in queryeditor (example when executing "select * from Person where Id=:Id", a dialog appears to fill "Id")
+
 v.5.1.5.1601
 -Fixes in AsDbForms
 -Fixes in AsSqlGenerator

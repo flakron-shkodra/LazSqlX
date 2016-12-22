@@ -170,6 +170,7 @@ type
     function GetBeforeDelete: TDataSetNotifyEvent;
     function GetBeforeSave: TDataSetNotifyEvent;
     function GetDataSet: TDataSet;
+    function GetDbInfo: TAsDbConnectionInfo;
     function GetEof: Boolean;
     function GetField(Index: Integer): TField;
     function GetFieldCount: Integer;
@@ -179,6 +180,7 @@ type
     function GetIndexname: string;
     function GetIsActive: Boolean;
     function GetPacketRecord: Integer;
+    function GetParams: TParams;
     function GetRecNo: Integer;
     function GetRecordCount: Integer;
     function GetRowsAffected: Integer;
@@ -198,6 +200,7 @@ type
     procedure AfterPost(DataSet: TDataSet);
     procedure SetIndexName(AValue: string);
     procedure SetPackedRecord(AValue: Integer);
+    procedure SetParams(AValue: TParams);
     procedure SetRecNo(AValue: Integer);
     procedure SetSort(AValue: string);
   public
@@ -221,8 +224,11 @@ type
    procedure AddIndex(const AName, AFields : string; AOptions : TIndexOptions; const ADescFields: string = ''; const ACaseInsFields: string = '');
    function GetFieldNames:TStringList;
    function FieldByName(FieldName:string):TField;
+   function FindField(FieldName:string):TField;
+   function ParamByName(ParamName:string):TParam;
    property Active:Boolean read GetIsActive;
    property DataSet:TDataSet read GetDataSet;
+   property DbInfo:TAsDbConnectionInfo read GetDbInfo;
    property EOF:Boolean read GetEof;
    property Fields[Index:Integer]:TField read GetField;
    property FieldCount:Integer read GetFieldCount;
@@ -240,6 +246,7 @@ type
    property RecNo:Integer read GetRecNo write SetRecNo;
    property IndexName:string read GetIndexname write SetIndexName;
    property PacketRecords:Integer read GetPacketRecord write SetPackedRecord;
+   property Params:TParams read GetParams write SetParams;
    property RowsAffected:Integer read GetRowsAffected;
    property RecordCount:Integer read GetRecordCount;
    property UpdateStatus:TUpdateStatus read GetTheUpdateStatus;
@@ -481,6 +488,13 @@ begin
  end;
 end;
 
+procedure TAsQuery.SetParams(AValue: TParams);
+begin
+  case FDBInfo.DbEngineType of
+    deZeos: FZQuery.Params := AValue;
+    deSqlDB : FQuery.Params := AValue;
+  end;
+end;
 
 procedure TAsQuery.SetRecNo(AValue: Integer);
 begin
@@ -501,6 +515,11 @@ begin
    deZeos:Result:=FZQuery;
    deSqlDB:Result:=FQuery;
  end;
+end;
+
+function TAsQuery.GetDbInfo: TAsDbConnectionInfo;
+begin
+  Result := FDBInfo;
 end;
 
 function TAsQuery.GetAfterSave: TDataSetNotifyEvent;
@@ -605,6 +624,15 @@ begin
    deZeos:Result := FQuery.PacketRecords;
    deSqlDB:Result := -1;
  end;
+end;
+
+
+function TAsQuery.GetParams: TParams;
+begin
+  case FDBInfo.DbEngineType of
+    deZeos: Result := FZQuery.Params;
+    deSqlDB : Result := FQuery.Params;
+  end;
 end;
 
 function TAsQuery.GetRecNo: Integer;
@@ -905,6 +933,16 @@ end;
 function TAsQuery.FieldByName(FieldName: string): TField;
 begin
  Result := DataSet.FieldByName(FieldName);
+end;
+
+function TAsQuery.FindField(FieldName: string): TField;
+begin
+
+end;
+
+function TAsQuery.ParamByName(ParamName: string): TParam;
+begin
+
 end;
 
 { TAsSyntaxError }

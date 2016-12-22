@@ -15,7 +15,7 @@ uses
   EditIndexFormU, QueryDesignerFormU, ProgressFormU, DatabaseClonerFormU,
   DataImporterFormU, Utils, AsSqlGenerator, FtDetector, lazdbexport, zcomponent,
   AsTableInfo, AsDbType, SqlExecThread, QueryDesignerDialogU, QueryDesignerTablesU,
-  QueryDesignerPropertyGridU, DataImporterDialogU;
+  QueryDesignerPropertyGridU, DataImporterDialogU, OptionsFormU;
 
 
 {$R *.res}
@@ -46,6 +46,7 @@ begin
   Application.CreateForm(TDatabaseClonerForm, DatabaseClonerForm);
   Application.CreateForm(TDataImporterForm,DataImporterForm);
   Application.CreateForm(TDataImporterDialog,DataImporterDialog);
+  Application.CreateForm(TOptionsForm,OptionsForm);
 
   Application.Run;
 end.

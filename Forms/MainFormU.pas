@@ -10,14 +10,15 @@ uses
   ZSqlMetadata, SynHighlighterSQL, SynMemo, SynEdit, SynCompletion, RTTIGrids,
   LCL, LCLType, LCLIntf, Grids, EditBtn, Spin, StdActns, fpDBExport,
   fpdbfexport, fpSQLExport, sqldb, sqldblib, IBConnection, FBAdmin,
-  {$ifndef win64}oracleconnection,{$endif} SdfData, sqlite3conn, mysql55conn, mysql51conn, mysql50conn,
-  mysql40conn, mysql41conn, mssqlconn, strutils, SqlConnBuilderFormU,
-  BlobFieldFormU, Clipbrd, types, EditMemoFormU, DesignTableFormU, AsTableInfo,
-  AsDbType, AsProcedureInfo, AsSqlGenerator, FtDetector, SqlExecThread, AsSqlParser,
-  LazSqlXResources, RegExpr, Regex, versionresource,
-  UnitGetSetText, QueryDesignerFormU, LoadingIndicator,
-  SynEditMarkupSpecialLine, SynEditTypes, SynEditKeyCmds, fpsqlparser,LazSqlXCtrls,
-  fpsqltree,LR_PGrid,AsDbFormUtils, LR_Class,DOM,XMLRead,XMLWrite;
+  {$ifndef win64}oracleconnection, {$endif} SdfData, sqlite3conn, mysql55conn,
+  mysql51conn, mysql50conn, mysql40conn, mysql41conn, mssqlconn, strutils,
+  SqlConnBuilderFormU, BlobFieldFormU, Clipbrd, types, EditMemoFormU,
+  DesignTableFormU, AsTableInfo, AsDbType, AsProcedureInfo, AsSqlGenerator,
+  FtDetector, SqlExecThread, AsSqlParser, LazSqlXResources, RegExpr, Regex,
+  versionresource, UnitGetSetText, QueryDesignerFormU, LoadingIndicator,
+  SynEditMarkupSpecialLine, SynEditTypes, SynEditKeyCmds, fpsqlparser,
+  LazSqlXCtrls, LazSqlXSettings, fpsqltree, LR_PGrid, AsDbFormUtils, LR_Class,
+  DOM, XMLRead, XMLWrite;
 
 var
   AppVersion: string = '';
@@ -72,6 +73,7 @@ type
     actClearSessionHistory: TAction;
     actAbout: TAction;
     actChmHelp: TAction;
+    actOptions: TAction;
     actPdfHelp: TAction;
     actRefreshProcedures: TAction;
     actOpen: TAction;
@@ -93,6 +95,8 @@ type
     CsvExporter: TCSVExporter;
     FindDialog1: TFindDialog;
     GridPrinter: TFrPrintGrid;
+    mitOptions: TMenuItem;
+    mitSep9: TMenuItem;
     trvProcedures: TTreeView;
     TreeViewImages: TImageList;
     imgLogo: TImage;
@@ -298,6 +302,7 @@ type
     procedure actNewTableExecute(Sender: TObject);
     procedure actOpenExecute(Sender: TObject);
     procedure actOpenTableExecute(Sender: TObject);
+    procedure actOptionsExecute(Sender: TObject);
     procedure actPdfHelpExecute(Sender: TObject);
     procedure actPrintExecute(Sender: TObject);
     procedure actQueryDesignerExecute(Sender: TObject);
@@ -486,7 +491,7 @@ var
 implementation
 
 uses AboutFormU, DatabaseClonerFormU, ProgressFormU, DataImporterFormU,
-  DataImporterDialogU, Utils, AsStringUtils, AsDatabaseCloner;
+  DataImporterDialogU, OptionsFormU, Utils, AsStringUtils, AsDatabaseCloner;
 
 {$R *.lfm}
 
@@ -1866,6 +1871,19 @@ procedure TMainForm.actOpenTableExecute(Sender: TObject);
 begin
  actNewTabExecute(nil);
  ExecuteQuery(True);
+end;
+
+procedure TMainForm.actOptionsExecute(Sender: TObject);
+var
+  I: Integer;
+begin
+  if OptionsForm.ShowModal=mrOK then
+  begin
+   for I:=0 to FPageControl.PageCount - 1 do
+   begin
+     FPageControl.Pages[I].QueryEditor.Font := Settings.QueryEditorFont;
+   end;
+  end;
 end;
 
 procedure TMainForm.actPdfHelpExecute(Sender: TObject);
