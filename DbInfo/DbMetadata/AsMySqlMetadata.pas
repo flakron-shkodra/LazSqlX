@@ -57,7 +57,7 @@ begin
   Result := TStringList.Create;
 
    sql:='select t.TABLE_NAME from information_schema.tables t '+
-              ' where t.table_schema='''+schema+''' order by TABLE_NAME';
+              ' where t.table_schema='''+schema+''' AND t.TABLE_TYPE<>''VIEW'' order by TABLE_NAME';
 
    ds :=  TAsQuery.Create(FDbInfo);
    try

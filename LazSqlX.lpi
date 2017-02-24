@@ -29,7 +29,7 @@
       <MajorVersionNr Value="5"/>
       <MinorVersionNr Value="1"/>
       <RevisionNr Value="5"/>
-      <BuildNr Value="1603"/>
+      <BuildNr Value="1604"/>
       <StringTable ProductVersion=""/>
     </VersionInfo>
     <BuildModes Count="3">
@@ -469,7 +469,7 @@
     </Linking>
   </CompilerOptions>
   <Debugging>
-    <Exceptions Count="7">
+    <Exceptions Count="8">
       <Item1>
         <Name Value="EAbort"/>
       </Item1>
@@ -491,6 +491,9 @@
       <Item7>
         <Name Value="EInOutError"/>
       </Item7>
+      <Item8>
+        <Name Value="ESQLDatabaseError"/>
+      </Item8>
     </Exceptions>
   </Debugging>
 </CONFIG>

@@ -455,14 +455,22 @@ procedure TAsDatabaseCloner.MakeDatabase;
 var
   sql: string;
   dbname:string;
+  lstDestDBs:TStringList;
 begin
 
   dbname:= TAsDbUtils.SafeWrap(FDbInfo.DbType, FDestDbName);
 
   if FDbInfo.DbType in [dtMsSql,dtMySql,dtPostgreSql] then
   begin
-    sql := 'CREATE DATABASE ' + dbname;
-    TAsDbUtils.ExecuteQuery(sql,FDbInfo);
+
+    lstDestDBs := TAsDbUtils.GetCatalogNames(FDbInfo);
+    if lstDestDBs.IndexOf(FDestDbName)<0 then
+    begin
+      sql := 'CREATE DATABASE ' + dbname;
+      TAsDbUtils.ExecuteQuery(sql,FDbInfo);
+    end;
+    lstDestDBs.Free;
+
     if FDbInfo.DbType=dtPostgreSql then
     begin
       FDbInfo.Close;
