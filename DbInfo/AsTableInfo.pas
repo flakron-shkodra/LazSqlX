@@ -1534,9 +1534,9 @@ begin
       field.FieldName := c.Column_Name;
       field.FieldType := LowerCase(c.Data_Type);
       if field.FieldType='int identity' then field.FieldType:='int';
-      if FDBinfo.DbType in [dtOracle,dtMySql] then
-      field.Length := (c.Max_Length DIV 4 )
-      else
+      //if FDBinfo.DbType in [dtOracle,dtMySql] then
+      //field.Length := (c.Max_Length DIV 4 )
+      //else
       field.Length := c.Max_Length;
 
       field.Precision := c.Data_Precision;

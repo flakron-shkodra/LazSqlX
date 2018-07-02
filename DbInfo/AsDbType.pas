@@ -1196,6 +1196,7 @@ begin
       try
         ResultList:=Parser.ParseScript();
         Result:=True;
+        ResultList.Free;
       except on E:Exception do
         begin
           Error := TAsSyntaxError.Create;
@@ -1210,7 +1211,6 @@ begin
   finally
     Script.Free;
     ScriptStream.Free;
-    ResultList.Free;
   end;
 end;
 
