@@ -1,20 +1,8 @@
-{
-  *******************************************************************
-  AUTHOR : Flakron Shkodra 2011
-  *******************************************************************
- //modified last on 19.06.2013 - added PreviewType
-//modified last on 08.09.2011 - added Detect from memory stream
-}
-
-
-
-
-
 unit FtDetector;
 {$mode objfpc}{$H+}
 interface
 
-uses SysUtils,Classes,fgl,FileUtil,LazSqlXResources;
+uses SysUtils,Classes,fgl,LazFileUtils,LazSqlXResources;
 
 type
 
@@ -106,6 +94,7 @@ var
 begin
   try
     lst:=TStringList.Create;
+
     lst.Delimiter:=',';
     lst.DelimitedText:=TextLine;
     ft := TFileType.Create;
@@ -257,6 +246,8 @@ var
   ft:TFileType;
 begin
    Result := nil;
+
+
     if FileIsText(Filename) then
     begin
      ft :=  TFileType.Create;
@@ -321,6 +312,8 @@ begin
     ft.Filename := 'Memory';
     ft.DefaultExtension := '';
     Result := ft;
+
+    Stream.Position:=0;
 
 end;
 

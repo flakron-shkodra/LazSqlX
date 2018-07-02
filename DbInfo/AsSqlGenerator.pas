@@ -259,6 +259,7 @@ var
   spCreateWord:string;
 begin
   lstAll := TStringList.Create;
+
     case FDBConInfo.DbType of
      dtMsSql,dtMySql,dtFirebirdd: spCreateWord:=' CREATE ';
      dtOracle,dtPostgreSql:spCreateWord := ' CREATE OR REPLACE ';
@@ -349,11 +350,17 @@ begin
 
 
   tmpSelect := TStringList.Create;
+
   tmpInsert := TStringList.Create;
+
   tmpUpdate := TStringList.Create;
+
   tmpUpdateAll := TStringList.Create;
+
   tmpSelectJoins := TStringList.Create;
+
   tmpSelectInsert := TStringList.Create;
+
 
   for I := 0 to AsTableInfo.AllFields.Count - 1 do
   begin
@@ -962,16 +969,27 @@ begin
     raise Exception.Create('No primary keys found!');
  r := TStringList.Create;
 
+
   tmpSelect := TStringList.Create;
+
   tmpInsert := TStringList.Create;
+
   tmpUpdate := TStringList.Create;
+
   tmpUpdateAll := TStringList.Create;
+
   tmpInsertParamDeclare := TStringList.Create;
+
   tmpParamDeclare := TStringList.Create;
+
   tmpDelParamDeclare := TStringList.Create;
+
   tmpSelectItemParam := TStringList.Create;
+
   tmpSelectJoins := TStringList.Create;
+
   tmpSelectInsert := TStringList.Create;
+
 
   for I := 0 to AsTableInfo.AllFields.Count - 1 do
   begin

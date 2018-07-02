@@ -892,6 +892,7 @@ begin
   tbl := TAsStringUtils.RemoveChars(FSynComplete.CurrentString, ['"', '[', ']','`']);
 
   lstVars := TStringList.Create;
+
   GetVariables( (ActivePage as TLazSqlXTabSheet).QueryEditor.Text, lstVars);
 
   if tbl = '' then
@@ -1346,6 +1347,7 @@ begin
       try
         lstBracketWords := TStringList.Create;
         lstDel := TStringList.Create;
+
         lstDel.Delimiter := ' ';
         lstDel.StrictDelimiter := True;
         lstDel.DelimitedText := CurrentStringLine;
@@ -1489,14 +1491,20 @@ begin
   FSynComplete.EndOfTokenChr := ' ()[]:,';
 
   FlstCompletionItemType:= TStringList.Create;
+  FlstCompletionItemType.Sorted:=True;
   FlstTableAlias:= TStringList.Create;
+  FlstTableAlias.Sorted:=True;
   FlstAlias := TStringList.Create;
+  FlstAlias.Sorted:=True;
 
   FTables := TStringList.Create;
   FTables.CaseSensitive:=False;
+  FTables.Sorted:=True;
   FProcedures := TStringList.Create;
+  FProcedures.Sorted:=True;
   FProcedures.CaseSensitive:= False;
   FKeywords := TStringList.Create;
+  FKeywords.Sorted:= True;
 end;
 
 destructor TLazSqlXPageControl.Destroy;

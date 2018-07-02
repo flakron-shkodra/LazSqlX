@@ -18,7 +18,7 @@ uses
   versionresource, UnitGetSetText, QueryDesignerFormU, LoadingIndicator,
   SynEditMarkupSpecialLine, SynEditTypes, SynEditKeyCmds, fpsqlparser,
   LazSqlXCtrls, LazSqlXSettings, fpsqltree, LR_PGrid, AsDbFormUtils, LR_Class,
-  DOM, XMLRead, XMLWrite;
+  DOM, XMLRead, XMLWrite,LazFileUtils;
 
 var
   AppVersion: string = '';
@@ -745,6 +745,7 @@ var
   dsize: integer;
 begin
   RowStrings := TStringList.Create;
+
   try
     with FPageControl.ActiveTab.DataGrid do
     begin
@@ -800,6 +801,7 @@ var
   FieldValue: string;
 begin
   RowStrings := TStringList.Create;
+
   try
     with FPageControl.ActiveTab.DataGrid do
     begin
@@ -862,6 +864,7 @@ var
   blob: TBlobField;
 begin
   RowStrings := TStringList.Create;
+
   try
     with FPageControl.ActiveTab.DataGrid do
     begin
@@ -2039,6 +2042,7 @@ var
 begin
   try
     lstErrors := TStringList.Create;
+
     try
 
       ProgressForm.Show;

@@ -45,6 +45,7 @@ var
  qr:TAsQuery;
 begin
   Result := TStringList.Create;
+
   Result.Add(FDBInfo.Database);
 end;
 
@@ -81,18 +82,19 @@ var
 begin
  Result := TStringList.Create;
 
- sql:='SELECT k.column_name '+
-            ' FROM information_schema.table_constraints t '+
-            ' JOIN information_schema.key_column_usage k '+
-            ' USING(constraint_name,table_schema,table_name) '+
-            ' WHERE t.table_name='''+TableName+''' and t.table_schema='''+Schema+''''+
-            ' ORDER BY ORDINAL_POSITION ASC;';
+ //sql:='SELECT k.column_name '+
+ //           ' FROM information_schema.table_constraints t '+
+ //           ' JOIN information_schema.key_column_usage k '+
+ //           ' USING(constraint_name,table_schema,table_name) '+
+ //           ' WHERE t.table_name='''+TableName+''' and t.table_schema='''+Schema+''''+
+ //           ' ORDER BY ORDINAL_POSITION ASC;';
+ sql := 'SHOW KEYS FROM '+TableName+' WHERE Key_name = ''PRIMARY''';
     ds := TAsQuery.Create(FDbInfo);
     try
      ds.Open(sql);
      while not ds.EOF do
       begin
-        Result.Add(Trim(ds.Fields[0].AsString));
+        Result.Add(Trim(ds.FieldByName('Column_name').AsString));
         ds.Next;
       end;
     finally
@@ -278,6 +280,7 @@ begin
             ' where routine_type = ''PROCEDURE'' and routine_schema='''+Schema+'''';
 
  Result := TStringList.Create;
+
   ds := TAsQuery.Create(FDbInfo);
   try
    ds.Open(sql);
@@ -331,6 +334,7 @@ var
  dbi:TAsDbConnectionInfo;
 begin
   Result := TstringList.Create;
+
   try
     dbi := TAsDbConnectionInfo.Create;
     dbi.Assign(FDBInfo);

@@ -45,6 +45,7 @@ var
   qr: TAsQuery;
 begin
   Result := TStringList.Create;
+
     qr := TAsQuery.Create(FDBInfo);
     try
       qr.Open('SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA');
@@ -326,6 +327,7 @@ begin
            'and SPECIFIC_SCHEMA='''+Schema+''' and ROUTINE_CATALOG='''+FDBInfo.Database+'''';
 
  Result := TStringList.Create;
+
  ds := TAsQuery.Create(FDbInfo);
   try
    ds.Open(sql);
@@ -378,6 +380,7 @@ var
  dbi:TAsDbConnectionInfo;
 begin
   Result := TstringList.Create;
+
   dbi := TAsDbConnectionInfo.Create;
   dbi.Assign(FDBInfo);
   try

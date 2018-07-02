@@ -31,7 +31,7 @@ Interface
 *)
 
 Uses
-  Classes, SysUtils;
+  Classes, SysUtils,LCLPlatformDef;
 
 Function GetFileVersion: String;
 Function GetProductVersion: String;

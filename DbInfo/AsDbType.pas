@@ -442,6 +442,7 @@ begin
   if Output = nil then
     Output := TStringList.Create;
 
+
   try
     Output.Clear;
     r := TRegExpr.Create;
@@ -924,6 +925,7 @@ var
  I: Integer;
 begin
  Result := TStringList.Create;
+
  for I:=0 to FieldCount-1 do
  begin
   Result.Add(Fields[I].FieldName);
@@ -955,7 +957,9 @@ begin
 
  FMessage:=AValue;
  lst := TStringList.Create;
+
  lst2 := TStringList.Create;
+
  if AnsiContainsText(FMessage,'Error') then
  begin
  try
@@ -1231,6 +1235,7 @@ begin
   md := MakeEngine(DbInfo);
   try
     Result := md.GetSchemas;
+
   finally
     DisposeEngine(md);
   end;
@@ -1244,6 +1249,7 @@ begin
   md := MakeEngine(DbInfo);
   try
     Result := md.GetTablenames(DbInfo.Schema);
+
   finally
     DisposeEngine(md);
   end;
@@ -1265,6 +1271,7 @@ begin
         Result.Add(ds.Fields[I].FieldName);
         ds.Next;
        end;
+      Result.Sorted:=True;
      finally
         ds.Free;
      end;
@@ -1346,6 +1353,7 @@ begin
       if ds.Fields[I].DataType in [ftString,ftWideString] then
       Result.Add(ds.Fields[I].FieldName);
     end;
+    Result.Sorted:=True;
   except
   end;
  finally
@@ -1375,6 +1383,7 @@ begin
   md := MakeEngine(DbInfo);
   try
     Result := md.GetProcedureNames(DbInfo.Schema);
+    Result.Sorted:=True;
   finally
    DisposeEngine(md);
   end;
@@ -1401,6 +1410,7 @@ begin
    md := MakeEngine(aDbInfo);
    try
     Result := md.GetCatalogNames;
+    Result.Sorted:=True;
    finally
     DisposeEngine(md);
    end;
@@ -1419,6 +1429,7 @@ var
   ParserField: Boolean;
 begin
   lst := TStringList.Create;
+
   m := TMemoryStream.Create;
   lst.Text:= TAsStringUtils.RemoveChars(SqlQuery,['[',']','`','"']);
   lst.SaveToStream(m);
@@ -1842,6 +1853,7 @@ begin
 
   try
    lst := TStringList.Create;
+
    for I:=0 to Count-1 do
    begin
      s := Items[I];

@@ -41,6 +41,7 @@ end;
 function TAsSqliteMetadata.GetSchemas: TStringList;
 begin
   Result := TStringList.Create;
+
   Result.Add(ChangeFileExt(ExtractFileName(FDbInfo.Database), ''));
 end;
 
@@ -50,6 +51,7 @@ var
  ds:TAsQuery;
 begin
   Result := TStringList.Create;
+
    sql:='SELECT name from sqlite_master where type=''table'' order by name';
    ds :=  TAsQuery.Create(FDbInfo);
    try
@@ -71,13 +73,14 @@ var
   ds:TAsQuery;
 begin
  Result := TStringList.Create;
+
  sql:='PRAGMA table_info('+TableName+')';
     ds := TAsQuery.Create(FDbInfo);
     try
      ds.Open(sql);
      while not ds.EOF do
       begin
-        if ds.FieldByName('pk').AsInteger=1 then
+        if ds.FieldByName('pk').AsInteger>=1 then
         Result.Add(ds.Fields[1].AsString);
         ds.Next;
       end;
@@ -99,7 +102,9 @@ var
 begin
  Result := TAsForeignKeys.Create;
  lst := TStringList.Create;
+
  lst2 := TStringList.Create;
+
 
  ds := TAsQuery.Create(FDBInfo);
  try
@@ -154,6 +159,7 @@ begin
 
     ds := TAsQuery.Create(FDbInfo);
     lst :=TStringLIst.Create;
+
     try
      ds.Open(sql);
       while not ds.EOF do
@@ -201,6 +207,7 @@ begin
         c.Descend:= Trim(ds.FieldByName('DESCEND').AsString);
         try
           lst := TStringList.Create;
+
           TAsRegExUtils.RunRegex(c.Column_Name, '\((.*?)\)',lst);
           if lst.Count>0 then
           begin
@@ -258,6 +265,7 @@ end;
 function TAsSqliteMetadata.GetProcedureNames(Schema: string): TStringList;
 begin
  Result := TStringList.Create;
+
 end;
 
 function TAsSqliteMetadata.GetProcedureParams(ProcedureName: string
@@ -269,6 +277,7 @@ end;
 function TAsSqliteMetadata.GetCatalogNames: TStringList;
 begin
  Result := TStringList.Create;
+
 end;
 
 end.

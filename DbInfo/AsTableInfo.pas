@@ -1047,6 +1047,7 @@ begin
   end;
 
  lst := TStringList.Create;
+
  try
 
   lst.Add('--Compare Source ['+Tablename+']  with Destination ['+otherTable.Tablename+']');
@@ -1503,6 +1504,7 @@ begin
      table.TableNameAsControlName:=GetTableNameAsControl(Tablename);
 
      lstIdentity := TStringList.Create;
+
      lstPKs := TAsDbUtils.GetPrimaryKeys(FDBinfo,Tablename);
 
      if FDBinfo.DbType=dtSQLite then Schema:='';
@@ -1685,6 +1687,7 @@ begin
   tbl := Self[TableIndex];
 
   lst := TStringList.Create;
+
   try
 
    lst.Add('CREATE TABLE '+tbl.Tablename +' (');

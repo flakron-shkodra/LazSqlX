@@ -2,16 +2,16 @@
 <CONFIG>
   <ProjectSession>
     <PathDelim Value="\"/>
-    <Version Value="9"/>
+    <Version Value="10"/>
     <BuildModes Active="Win32"/>
-    <Units Count="62">
+    <Units Count="65">
       <Unit0>
         <Filename Value="LazSqlX.lpr"/>
         <IsPartOfProject Value="True"/>
-        <TopLine Value="17"/>
-        <CursorPos Y="30"/>
-        <UsageCount Value="40"/>
-        <Loaded Value="True"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="10"/>
+        <CursorPos Y="52"/>
+        <UsageCount Value="45"/>
       </Unit0>
       <Unit1>
         <Filename Value="Forms\BlobFieldFormU.pas"/>
@@ -19,7 +19,7 @@
         <ComponentName Value="BlobFieldForm"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <UsageCount Value="40"/>
+        <UsageCount Value="45"/>
       </Unit1>
       <Unit2>
         <Filename Value="Forms\EditMemoFormU.pas"/>
@@ -27,7 +27,7 @@
         <ComponentName Value="EditMemoForm"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <UsageCount Value="40"/>
+        <UsageCount Value="45"/>
       </Unit2>
       <Unit3>
         <Filename Value="Forms\MainFormU.pas"/>
@@ -35,10 +35,10 @@
         <ComponentName Value="MainForm"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <EditorIndex Value="2"/>
-        <TopLine Value="1882"/>
-        <CursorPos X="52" Y="1900"/>
-        <UsageCount Value="40"/>
+        <IsVisibleTab Value="True"/>
+        <TopLine Value="2204"/>
+        <CursorPos X="62" Y="2217"/>
+        <UsageCount Value="45"/>
         <Loaded Value="True"/>
         <LoadedDesigner Value="True"/>
       </Unit3>
@@ -48,7 +48,7 @@
         <ComponentName Value="SqlConnBuilderForm"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <UsageCount Value="40"/>
+        <UsageCount Value="45"/>
       </Unit4>
       <Unit5>
         <Filename Value="Forms\DesignTableFormU.pas"/>
@@ -56,59 +56,58 @@
         <ComponentName Value="DesignTableForm"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <UsageCount Value="40"/>
+        <UsageCount Value="45"/>
       </Unit5>
       <Unit6>
         <Filename Value="DbInfo\AsDbType.pas"/>
         <IsPartOfProject Value="True"/>
-        <EditorIndex Value="8"/>
-        <TopLine Value="761"/>
-        <CursorPos X="29" Y="776"/>
-        <UsageCount Value="40"/>
-        <Loaded Value="True"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="307"/>
+        <CursorPos X="14" Y="329"/>
+        <UsageCount Value="45"/>
       </Unit6>
       <Unit7>
         <Filename Value="DbInfo\AsProcedureInfo.pas"/>
         <IsPartOfProject Value="True"/>
-        <UsageCount Value="40"/>
+        <UsageCount Value="45"/>
       </Unit7>
       <Unit8>
         <Filename Value="DbInfo\AsTableInfo.pas"/>
         <IsPartOfProject Value="True"/>
-        <EditorIndex Value="9"/>
-        <TopLine Value="972"/>
-        <CursorPos Y="990"/>
-        <UsageCount Value="40"/>
-        <Loaded Value="True"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="1557"/>
+        <CursorPos Y="1578"/>
+        <UsageCount Value="45"/>
       </Unit8>
       <Unit9>
         <Filename Value="FileTypeDetector\FtDetector.pas"/>
         <IsPartOfProject Value="True"/>
-        <UsageCount Value="40"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="74"/>
+        <CursorPos Y="97"/>
+        <UsageCount Value="45"/>
       </Unit9>
       <Unit10>
         <Filename Value="DbInfo\AsSqlGenerator.pas"/>
         <IsPartOfProject Value="True"/>
-        <EditorIndex Value="12"/>
-        <TopLine Value="408"/>
-        <CursorPos X="51" Y="404"/>
-        <UsageCount Value="40"/>
-        <Loaded Value="True"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="959"/>
+        <CursorPos X="18" Y="992"/>
+        <UsageCount Value="45"/>
       </Unit10>
       <Unit11>
         <Filename Value="UtilClasses\sqlexecthread.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="SqlExecThread"/>
-        <EditorIndex Value="11"/>
-        <TopLine Value="167"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="164"/>
         <CursorPos X="40" Y="189"/>
-        <UsageCount Value="40"/>
-        <Loaded Value="True"/>
+        <UsageCount Value="45"/>
       </Unit11>
       <Unit12>
         <Filename Value="UtilClasses\Utils.pas"/>
         <IsPartOfProject Value="True"/>
-        <UsageCount Value="40"/>
+        <UsageCount Value="45"/>
       </Unit12>
       <Unit13>
         <Filename Value="DbInfo\AsSqlParser.pas"/>
@@ -116,12 +115,12 @@
         <EditorIndex Value="-1"/>
         <TopLine Value="114"/>
         <CursorPos X="17" Y="131"/>
-        <UsageCount Value="40"/>
+        <UsageCount Value="45"/>
       </Unit13>
       <Unit14>
         <Filename Value="DbInfo\AsStringUtils.pas"/>
         <IsPartOfProject Value="True"/>
-        <UsageCount Value="40"/>
+        <UsageCount Value="45"/>
       </Unit14>
       <Unit15>
         <Filename Value="Forms\AboutFormU.pas"/>
@@ -129,7 +128,7 @@
         <ComponentName Value="AboutForm"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <UsageCount Value="40"/>
+        <UsageCount Value="45"/>
       </Unit15>
       <Unit16>
         <Filename Value="Forms\EditColumnFormU.pas"/>
@@ -137,12 +136,14 @@
         <ComponentName Value="EditColumnForm"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <UsageCount Value="40"/>
+        <UsageCount Value="45"/>
       </Unit16>
       <Unit17>
         <Filename Value="UtilClasses\VersionSupport.pas"/>
         <IsPartOfProject Value="True"/>
-        <UsageCount Value="40"/>
+        <EditorIndex Value="-1"/>
+        <CursorPos X="35" Y="34"/>
+        <UsageCount Value="45"/>
       </Unit17>
       <Unit18>
         <Filename Value="Forms\EditConstraintsFormU.pas"/>
@@ -150,7 +151,7 @@
         <ComponentName Value="EditConstraintForm"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <UsageCount Value="40"/>
+        <UsageCount Value="45"/>
       </Unit18>
       <Unit19>
         <Filename Value="Forms\EditIndexFormU.pas"/>
@@ -158,7 +159,7 @@
         <ComponentName Value="EditIndexForm"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <UsageCount Value="40"/>
+        <UsageCount Value="45"/>
       </Unit19>
       <Unit20>
         <Filename Value="Forms\QueryDesignerFormU.pas"/>
@@ -166,7 +167,7 @@
         <ComponentName Value="QueryDesignerForm"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <UsageCount Value="40"/>
+        <UsageCount Value="45"/>
       </Unit20>
       <Unit21>
         <Filename Value="QueryDesigner\QueryDesignerDialogU.pas"/>
@@ -174,7 +175,7 @@
         <ComponentName Value="QueryDesignerDialog"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <UsageCount Value="40"/>
+        <UsageCount Value="45"/>
       </Unit21>
       <Unit22>
         <Filename Value="QueryDesigner\QueryDesignerU.pas"/>
@@ -182,7 +183,7 @@
         <ComponentName Value="QueryDesigner"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
-        <UsageCount Value="40"/>
+        <UsageCount Value="45"/>
       </Unit22>
       <Unit23>
         <Filename Value="QueryDesigner\QueryDesignerTablesU.pas"/>
@@ -190,17 +191,15 @@
         <ComponentName Value="QueryDesignerTables"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <UsageCount Value="40"/>
+        <UsageCount Value="45"/>
       </Unit23>
       <Unit24>
         <Filename Value="DbInfo\AsDatabaseCloner.pas"/>
         <IsPartOfProject Value="True"/>
-        <IsVisibleTab Value="True"/>
-        <EditorIndex Value="7"/>
+        <EditorIndex Value="-1"/>
         <TopLine Value="441"/>
         <CursorPos Y="466"/>
-        <UsageCount Value="40"/>
-        <Loaded Value="True"/>
+        <UsageCount Value="45"/>
       </Unit24>
       <Unit25>
         <Filename Value="Forms\DatabaseClonerFormU.pas"/>
@@ -208,12 +207,9 @@
         <ComponentName Value="DatabaseClonerForm"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <EditorIndex Value="4"/>
-        <TopLine Value="280"/>
-        <CursorPos Y="296"/>
-        <UsageCount Value="40"/>
-        <Loaded Value="True"/>
-        <LoadedDesigner Value="True"/>
+        <EditorIndex Value="-1"/>
+        <CursorPos X="77" Y="14"/>
+        <UsageCount Value="45"/>
       </Unit25>
       <Unit26>
         <Filename Value="Forms\ProgressFormU.pas"/>
@@ -221,7 +217,7 @@
         <ComponentName Value="ProgressForm"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <UsageCount Value="40"/>
+        <UsageCount Value="45"/>
       </Unit26>
       <Unit27>
         <Filename Value="Forms\DataImporterFormU.pas"/>
@@ -229,7 +225,7 @@
         <ComponentName Value="DataImporterForm"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <UsageCount Value="40"/>
+        <UsageCount Value="45"/>
       </Unit27>
       <Unit28>
         <Filename Value="Forms\DataImporterDialogU.pas"/>
@@ -237,36 +233,35 @@
         <ComponentName Value="DataImporterDialog"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <UsageCount Value="40"/>
+        <UsageCount Value="45"/>
       </Unit28>
       <Unit29>
         <Filename Value="LoadingIndicator\animatedgif.pas"/>
         <IsPartOfProject Value="True"/>
-        <UsageCount Value="40"/>
+        <UsageCount Value="45"/>
       </Unit29>
       <Unit30>
         <Filename Value="LoadingIndicator\membitmap.pas"/>
         <IsPartOfProject Value="True"/>
-        <UsageCount Value="40"/>
+        <UsageCount Value="45"/>
       </Unit30>
       <Unit31>
         <Filename Value="LoadingIndicator\LoadingIndicator.pas"/>
         <IsPartOfProject Value="True"/>
-        <UsageCount Value="40"/>
+        <UsageCount Value="45"/>
       </Unit31>
       <Unit32>
         <Filename Value="UtilClasses\csvdocument.pas"/>
         <IsPartOfProject Value="True"/>
-        <UsageCount Value="40"/>
+        <UsageCount Value="45"/>
       </Unit32>
       <Unit33>
         <Filename Value="LazSqlXCtrls\LazSqlXCtrls.pas"/>
         <IsPartOfProject Value="True"/>
-        <EditorIndex Value="10"/>
-        <TopLine Value="621"/>
-        <CursorPos X="79" Y="638"/>
-        <UsageCount Value="40"/>
-        <Loaded Value="True"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="1349"/>
+        <CursorPos X="38" Y="1349"/>
+        <UsageCount Value="45"/>
       </Unit33>
       <Unit34>
         <Filename Value="QueryDesigner\QueryDesignerPropertyGridU.pas"/>
@@ -274,123 +269,123 @@
         <ComponentName Value="QueryDesignerPropertyGrid"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <UsageCount Value="40"/>
+        <UsageCount Value="45"/>
       </Unit34>
       <Unit35>
         <Filename Value="Resources\LazSqlXResources.pas"/>
         <IsPartOfProject Value="True"/>
-        <UsageCount Value="40"/>
+        <UsageCount Value="45"/>
       </Unit35>
       <Unit36>
         <Filename Value="Resources\FileTypeDetector.ftd"/>
         <IsPartOfProject Value="True"/>
-        <UsageCount Value="40"/>
+        <UsageCount Value="45"/>
         <DefaultSyntaxHighlighter Value="None"/>
       </Unit36>
       <Unit37>
         <Filename Value="Resources\FirebirdDataTypes.dt"/>
         <IsPartOfProject Value="True"/>
-        <UsageCount Value="40"/>
+        <UsageCount Value="45"/>
         <DefaultSyntaxHighlighter Value="None"/>
       </Unit37>
       <Unit38>
         <Filename Value="Resources\loading.gif"/>
         <IsPartOfProject Value="True"/>
-        <UsageCount Value="40"/>
+        <UsageCount Value="45"/>
         <DefaultSyntaxHighlighter Value="None"/>
       </Unit38>
       <Unit39>
         <Filename Value="Resources\MSSqlDataTypes.dt"/>
         <IsPartOfProject Value="True"/>
-        <UsageCount Value="40"/>
+        <UsageCount Value="45"/>
         <DefaultSyntaxHighlighter Value="None"/>
       </Unit39>
       <Unit40>
         <Filename Value="Resources\MySqlDataTypes.dt"/>
         <IsPartOfProject Value="True"/>
-        <UsageCount Value="40"/>
+        <UsageCount Value="45"/>
         <DefaultSyntaxHighlighter Value="None"/>
       </Unit40>
       <Unit41>
         <Filename Value="Resources\OracleDataTypes.dt"/>
         <IsPartOfProject Value="True"/>
-        <UsageCount Value="40"/>
+        <UsageCount Value="45"/>
         <DefaultSyntaxHighlighter Value="None"/>
       </Unit41>
       <Unit42>
         <Filename Value="Resources\SqliteDataTypes.dt"/>
         <IsPartOfProject Value="True"/>
-        <UsageCount Value="40"/>
+        <UsageCount Value="45"/>
         <DefaultSyntaxHighlighter Value="None"/>
       </Unit42>
       <Unit43>
         <Filename Value="Resources\SqlReservedKeywords.dt"/>
         <IsPartOfProject Value="True"/>
-        <UsageCount Value="40"/>
+        <UsageCount Value="45"/>
         <DefaultSyntaxHighlighter Value="None"/>
       </Unit43>
       <Unit44>
         <Filename Value="UtilClasses\fileimport.pas"/>
         <IsPartOfProject Value="True"/>
-        <UsageCount Value="40"/>
+        <UsageCount Value="45"/>
       </Unit44>
       <Unit45>
         <Filename Value="DbInfo\AsDbFormUtils.pas"/>
         <IsPartOfProject Value="True"/>
-        <EditorIndex Value="1"/>
+        <EditorIndex Value="-1"/>
         <TopLine Value="1213"/>
         <CursorPos X="88" Y="1228"/>
-        <UsageCount Value="40"/>
-        <Loaded Value="True"/>
+        <UsageCount Value="45"/>
       </Unit45>
       <Unit46>
         <Filename Value="Resources\ReportTemplate.lrf"/>
         <IsPartOfProject Value="True"/>
-        <UsageCount Value="40"/>
+        <UsageCount Value="45"/>
         <DefaultSyntaxHighlighter Value="None"/>
       </Unit46>
       <Unit47>
         <Filename Value="DbInfo\DbMetadata\AsMssqlMetadata.pas"/>
         <IsPartOfProject Value="True"/>
-        <EditorIndex Value="5"/>
-        <TopLine Value="61"/>
-        <CursorPos X="98" Y="70"/>
-        <UsageCount Value="40"/>
-        <Loaded Value="True"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="361"/>
+        <CursorPos Y="383"/>
+        <UsageCount Value="45"/>
       </Unit47>
       <Unit48>
         <Filename Value="DbInfo\DbMetadata\AsOracleMetadata.pas"/>
         <IsPartOfProject Value="True"/>
-        <UsageCount Value="40"/>
+        <UsageCount Value="45"/>
       </Unit48>
       <Unit49>
         <Filename Value="DbInfo\DbMetadata\AsMySqlMetadata.pas"/>
         <IsPartOfProject Value="True"/>
-        <EditorIndex Value="6"/>
-        <TopLine Value="51"/>
-        <CursorPos X="80" Y="60"/>
-        <UsageCount Value="40"/>
-        <Loaded Value="True"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="79"/>
+        <CursorPos X="11" Y="99"/>
+        <UsageCount Value="45"/>
       </Unit49>
       <Unit50>
         <Filename Value="DbInfo\DbMetadata\AsFirebirdMetadata.pas"/>
         <IsPartOfProject Value="True"/>
-        <UsageCount Value="40"/>
+        <UsageCount Value="45"/>
       </Unit50>
       <Unit51>
         <Filename Value="DbInfo\DbMetadata\AsSqliteMetadata.pas"/>
         <IsPartOfProject Value="True"/>
-        <UsageCount Value="40"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="241"/>
+        <CursorPos Y="280"/>
+        <UsageCount Value="45"/>
       </Unit51>
       <Unit52>
         <Filename Value="DbInfo\DbMetadata\AsPostgresMetadata.pas"/>
         <IsPartOfProject Value="True"/>
-        <UsageCount Value="40"/>
+        <UsageCount Value="45"/>
       </Unit52>
       <Unit53>
         <Filename Value="Resources\PostgreSqlDataTypes.dt"/>
         <IsPartOfProject Value="True"/>
-        <UsageCount Value="40"/>
+        <UsageCount Value="45"/>
         <DefaultSyntaxHighlighter Value="None"/>
       </Unit53>
       <Unit54>
@@ -399,19 +394,17 @@
         <ComponentName Value="OptionsForm"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <EditorIndex Value="3"/>
-        <TopLine Value="32"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="27"/>
         <CursorPos X="57" Y="60"/>
-        <UsageCount Value="40"/>
-        <Loaded Value="True"/>
-        <LoadedDesigner Value="True"/>
+        <UsageCount Value="45"/>
       </Unit54>
       <Unit55>
         <Filename Value="LazSqlXCtrls\LazSqlXSettings.pas"/>
         <IsPartOfProject Value="True"/>
         <EditorIndex Value="-1"/>
         <CursorPos X="61" Y="78"/>
-        <UsageCount Value="40"/>
+        <UsageCount Value="45"/>
       </Unit55>
       <Unit56>
         <Filename Value="DbInfo\AsParamDialog.pas"/>
@@ -419,7 +412,7 @@
         <EditorIndex Value="-1"/>
         <TopLine Value="152"/>
         <CursorPos Y="192"/>
-        <UsageCount Value="39"/>
+        <UsageCount Value="44"/>
       </Unit56>
       <Unit57>
         <Filename Value="C:\lazarus\fpc\3.0.0\source\rtl\objpas\sysutils\osutilsh.inc"/>
@@ -453,128 +446,33 @@
         <TopLine Value="151"/>
         <UsageCount Value="9"/>
       </Unit61>
+      <Unit62>
+        <Filename Value="C:\lazarus\fpc\3.0.4\source\rtl\objpas\classes\classesh.inc"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="757"/>
+        <CursorPos X="14" Y="778"/>
+        <UsageCount Value="11"/>
+      </Unit62>
+      <Unit63>
+        <Filename Value="C:\lazarus\fpc\3.0.4\source\rtl\objpas\classes\stringl.inc"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="1439"/>
+        <CursorPos X="3" Y="1445"/>
+        <UsageCount Value="10"/>
+      </Unit63>
+      <Unit64>
+        <Filename Value="C:\lazarus\fpc\3.0.4\source\packages\fcl-db\src\sql\fpsqlparser.pas"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="3430"/>
+        <CursorPos X="3" Y="3432"/>
+        <UsageCount Value="10"/>
+      </Unit64>
     </Units>
-    <JumpHistory Count="30" HistoryIndex="29">
+    <JumpHistory Count="1">
       <Position1>
-        <Filename Value="DbInfo\AsDbType.pas"/>
-        <Caret Line="1223" TopLine="1207"/>
+        <Filename Value="Forms\MainFormU.pas"/>
+        <Caret Line="2045" TopLine="2023"/>
       </Position1>
-      <Position2>
-        <Filename Value="DbInfo\AsDbType.pas"/>
-        <Caret Line="1225" TopLine="1207"/>
-      </Position2>
-      <Position3>
-        <Filename Value="DbInfo\AsDatabaseCloner.pas"/>
-        <Caret Line="464" TopLine="448"/>
-      </Position3>
-      <Position4>
-        <Filename Value="DbInfo\AsDatabaseCloner.pas"/>
-        <Caret Line="465" TopLine="448"/>
-      </Position4>
-      <Position5>
-        <Filename Value="DbInfo\AsDbType.pas"/>
-        <Caret Line="1225" TopLine="1207"/>
-      </Position5>
-      <Position6>
-        <Filename Value="DbInfo\AsDatabaseCloner.pas"/>
-        <Caret Line="493" TopLine="450"/>
-      </Position6>
-      <Position7>
-        <Filename Value="DbInfo\AsDbType.pas"/>
-        <Caret Line="1218" Column="3" TopLine="1213"/>
-      </Position7>
-      <Position8>
-        <Filename Value="DbInfo\AsDatabaseCloner.pas"/>
-        <Caret Line="464" TopLine="450"/>
-      </Position8>
-      <Position9>
-        <Filename Value="DbInfo\AsDatabaseCloner.pas"/>
-        <Caret Line="466" TopLine="450"/>
-      </Position9>
-      <Position10>
-        <Filename Value="DbInfo\AsDatabaseCloner.pas"/>
-        <Caret Line="467" Column="38" TopLine="450"/>
-      </Position10>
-      <Position11>
-        <Filename Value="DbInfo\AsDatabaseCloner.pas"/>
-        <Caret Line="466" TopLine="450"/>
-      </Position11>
-      <Position12>
-        <Filename Value="DbInfo\AsDatabaseCloner.pas"/>
-        <Caret Line="467" TopLine="450"/>
-      </Position12>
-      <Position13>
-        <Filename Value="DbInfo\AsDatabaseCloner.pas"/>
-        <Caret Line="469" TopLine="450"/>
-      </Position13>
-      <Position14>
-        <Filename Value="DbInfo\AsDatabaseCloner.pas"/>
-        <Caret Line="466" TopLine="450"/>
-      </Position14>
-      <Position15>
-        <Filename Value="DbInfo\AsDatabaseCloner.pas"/>
-        <Caret Line="467" TopLine="450"/>
-      </Position15>
-      <Position16>
-        <Filename Value="DbInfo\AsDatabaseCloner.pas"/>
-        <Caret Line="469" TopLine="450"/>
-      </Position16>
-      <Position17>
-        <Filename Value="DbInfo\AsDatabaseCloner.pas"/>
-        <Caret Line="466" TopLine="450"/>
-      </Position17>
-      <Position18>
-        <Filename Value="DbInfo\AsDatabaseCloner.pas"/>
-        <Caret Line="467" TopLine="450"/>
-      </Position18>
-      <Position19>
-        <Filename Value="DbInfo\AsDatabaseCloner.pas"/>
-        <Caret Line="472" TopLine="450"/>
-      </Position19>
-      <Position20>
-        <Filename Value="DbInfo\AsDatabaseCloner.pas"/>
-        <Caret Line="474" TopLine="450"/>
-      </Position20>
-      <Position21>
-        <Filename Value="DbInfo\AsDatabaseCloner.pas"/>
-        <Caret Line="481" TopLine="456"/>
-      </Position21>
-      <Position22>
-        <Filename Value="DbInfo\AsDatabaseCloner.pas"/>
-        <Caret Line="482" TopLine="457"/>
-      </Position22>
-      <Position23>
-        <Filename Value="DbInfo\AsDatabaseCloner.pas"/>
-        <Caret Line="484" TopLine="459"/>
-      </Position23>
-      <Position24>
-        <Filename Value="DbInfo\AsDatabaseCloner.pas"/>
-        <Caret Line="501" TopLine="486"/>
-      </Position24>
-      <Position25>
-        <Filename Value="Forms\DatabaseClonerFormU.pas"/>
-        <Caret Line="295" TopLine="280"/>
-      </Position25>
-      <Position26>
-        <Filename Value="Forms\DatabaseClonerFormU.pas"/>
-        <Caret Line="296" TopLine="280"/>
-      </Position26>
-      <Position27>
-        <Filename Value="DbInfo\DbMetadata\AsMySqlMetadata.pas"/>
-        <Caret Line="60" Column="80" TopLine="51"/>
-      </Position27>
-      <Position28>
-        <Filename Value="DbInfo\AsDatabaseCloner.pas"/>
-        <Caret Line="466" TopLine="450"/>
-      </Position28>
-      <Position29>
-        <Filename Value="DbInfo\AsDatabaseCloner.pas"/>
-        <Caret Line="467" TopLine="450"/>
-      </Position29>
-      <Position30>
-        <Filename Value="DbInfo\AsDatabaseCloner.pas"/>
-        <Caret Line="472" TopLine="450"/>
-      </Position30>
     </JumpHistory>
   </ProjectSession>
 </CONFIG>

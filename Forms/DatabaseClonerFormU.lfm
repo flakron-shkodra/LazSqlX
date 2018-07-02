@@ -13,7 +13,6 @@ object DatabaseClonerForm: TDatabaseClonerForm
   OnDestroy = FormDestroy
   OnShow = FormShow
   Position = poScreenCenter
-  LCLVersion = '1.6.2.0'
   Visible = False
   object Label2: TLabel
     Left = 16
