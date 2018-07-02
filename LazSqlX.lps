@@ -36,8 +36,8 @@
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
         <IsVisibleTab Value="True"/>
-        <TopLine Value="2204"/>
-        <CursorPos X="62" Y="2217"/>
+        <TopLine Value="754"/>
+        <CursorPos Y="784"/>
         <UsageCount Value="45"/>
         <Loaded Value="True"/>
         <LoadedDesigner Value="True"/>
@@ -259,8 +259,8 @@
         <Filename Value="LazSqlXCtrls\LazSqlXCtrls.pas"/>
         <IsPartOfProject Value="True"/>
         <EditorIndex Value="-1"/>
-        <TopLine Value="1349"/>
-        <CursorPos X="38" Y="1349"/>
+        <TopLine Value="1477"/>
+        <CursorPos X="31" Y="1506"/>
         <UsageCount Value="45"/>
       </Unit33>
       <Unit34>
@@ -468,11 +468,119 @@
         <UsageCount Value="10"/>
       </Unit64>
     </Units>
-    <JumpHistory Count="1">
+    <JumpHistory Count="28" HistoryIndex="27">
       <Position1>
         <Filename Value="Forms\MainFormU.pas"/>
-        <Caret Line="2045" TopLine="2023"/>
+        <Caret Line="752" TopLine="737"/>
       </Position1>
+      <Position2>
+        <Filename Value="Forms\MainFormU.pas"/>
+        <Caret Line="753" TopLine="737"/>
+      </Position2>
+      <Position3>
+        <Filename Value="Forms\MainFormU.pas"/>
+        <Caret Line="754" TopLine="744"/>
+      </Position3>
+      <Position4>
+        <Filename Value="Forms\MainFormU.pas"/>
+        <Caret Line="756" TopLine="744"/>
+      </Position4>
+      <Position5>
+        <Filename Value="Forms\MainFormU.pas"/>
+        <Caret Line="765" TopLine="744"/>
+      </Position5>
+      <Position6>
+        <Filename Value="Forms\MainFormU.pas"/>
+        <Caret Line="767" TopLine="744"/>
+      </Position6>
+      <Position7>
+        <Filename Value="Forms\MainFormU.pas"/>
+        <Caret Line="768" TopLine="744"/>
+      </Position7>
+      <Position8>
+        <Filename Value="Forms\MainFormU.pas"/>
+        <Caret Line="769" TopLine="744"/>
+      </Position8>
+      <Position9>
+        <Filename Value="Forms\MainFormU.pas"/>
+        <Caret Line="771" TopLine="744"/>
+      </Position9>
+      <Position10>
+        <Filename Value="Forms\MainFormU.pas"/>
+        <Caret Line="778" TopLine="750"/>
+      </Position10>
+      <Position11>
+        <Filename Value="Forms\MainFormU.pas"/>
+        <Caret Line="769" TopLine="750"/>
+      </Position11>
+      <Position12>
+        <Filename Value="Forms\MainFormU.pas"/>
+        <Caret Line="771" TopLine="750"/>
+      </Position12>
+      <Position13>
+        <Filename Value="Forms\MainFormU.pas"/>
+        <Caret Line="778" TopLine="750"/>
+      </Position13>
+      <Position14>
+        <Filename Value="Forms\MainFormU.pas"/>
+        <Caret Line="769" TopLine="750"/>
+      </Position14>
+      <Position15>
+        <Filename Value="Forms\MainFormU.pas"/>
+        <Caret Line="781" TopLine="750"/>
+      </Position15>
+      <Position16>
+        <Filename Value="Forms\MainFormU.pas"/>
+        <Caret Line="765" TopLine="750"/>
+      </Position16>
+      <Position17>
+        <Filename Value="Forms\MainFormU.pas"/>
+        <Caret Line="767" TopLine="750"/>
+      </Position17>
+      <Position18>
+        <Filename Value="Forms\MainFormU.pas"/>
+        <Caret Line="768" TopLine="750"/>
+      </Position18>
+      <Position19>
+        <Filename Value="Forms\MainFormU.pas"/>
+        <Caret Line="769" TopLine="750"/>
+      </Position19>
+      <Position20>
+        <Filename Value="Forms\MainFormU.pas"/>
+        <Caret Line="771" TopLine="750"/>
+      </Position20>
+      <Position21>
+        <Filename Value="Forms\MainFormU.pas"/>
+        <Caret Line="778" TopLine="750"/>
+      </Position21>
+      <Position22>
+        <Filename Value="Forms\MainFormU.pas"/>
+        <Caret Line="784" TopLine="750"/>
+      </Position22>
+      <Position23>
+        <Filename Value="Forms\MainFormU.pas"/>
+        <Caret Line="785" TopLine="750"/>
+      </Position23>
+      <Position24>
+        <Filename Value="Forms\MainFormU.pas"/>
+        <Caret Line="788" TopLine="753"/>
+      </Position24>
+      <Position25>
+        <Filename Value="Forms\MainFormU.pas"/>
+        <Caret Line="790" TopLine="755"/>
+      </Position25>
+      <Position26>
+        <Filename Value="Forms\MainFormU.pas"/>
+        <Caret Line="792" TopLine="757"/>
+      </Position26>
+      <Position27>
+        <Filename Value="Forms\MainFormU.pas"/>
+        <Caret Line="2348" TopLine="2326"/>
+      </Position27>
+      <Position28>
+        <Filename Value="Forms\MainFormU.pas"/>
+        <Caret Line="747" TopLine="725"/>
+      </Position28>
     </JumpHistory>
   </ProjectSession>
 </CONFIG>

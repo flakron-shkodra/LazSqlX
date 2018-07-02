@@ -1026,29 +1026,33 @@ begin
 
   try
 
-    if FlstCompletionItemType[Index] = 'TABLE' then
+    if (Index<=FlstCompletionItemType.Count) then
     begin
-      ACanvas.Draw(x, y, FtableIcon);
-    end
-    else
-    if FlstCompletionItemType[Index] = 'FUNC' then
-    begin
-      ACanvas.Draw(x, y, FprocedureIcon);
-    end
-    else
-    if FlstCompletionItemType[Index] = 'FIELD' then
-    begin
-      ACanvas.Draw(x, y, FfieldIcon);
-    end
-    else
-    if FlstCompletionItemType[Index] = 'VAR' then
-    begin
-      ACanvas.Draw(x, y, FvarIcon);
-    end
-    else
-    if FlstCompletionItemType[Index] = 'PROC' then
-    begin
-      ACanvas.Draw(x, y, FfunctionIcon);
+      if FlstCompletionItemType[Index] = 'TABLE' then
+      begin
+        ACanvas.Draw(x, y, FtableIcon);
+      end
+      else
+      if FlstCompletionItemType[Index] = 'FUNC' then
+      begin
+        ACanvas.Draw(x, y, FprocedureIcon);
+      end
+      else
+      if FlstCompletionItemType[Index] = 'FIELD' then
+      begin
+        ACanvas.Draw(x, y, FfieldIcon);
+      end
+      else
+      if FlstCompletionItemType[Index] = 'VAR' then
+      begin
+        ACanvas.Draw(x, y, FvarIcon);
+      end
+      else
+      if FlstCompletionItemType[Index] = 'PROC' then
+      begin
+        ACanvas.Draw(x, y, FfunctionIcon);
+      end;
+
     end;
 
   except
@@ -1413,6 +1417,7 @@ begin
                 begin
                   strAlias := lstDel[j] + '=' + strTablename;
                   aliasIndex := FlstTableAlias.IndexOf(strTablename);
+                  FlstAlias.Sorted:=False;
 
                   if aliasIndex < 0 then
                   begin
@@ -1491,11 +1496,8 @@ begin
   FSynComplete.EndOfTokenChr := ' ()[]:,';
 
   FlstCompletionItemType:= TStringList.Create;
-  FlstCompletionItemType.Sorted:=True;
   FlstTableAlias:= TStringList.Create;
-  FlstTableAlias.Sorted:=True;
   FlstAlias := TStringList.Create;
-  FlstAlias.Sorted:=True;
 
   FTables := TStringList.Create;
   FTables.CaseSensitive:=False;
