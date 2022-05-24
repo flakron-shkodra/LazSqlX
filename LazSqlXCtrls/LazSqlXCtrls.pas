@@ -510,7 +510,7 @@ begin
     end;
   finally
     FDbInfoNew.Commit;
-    ResizeColumns;
+    FDataGrid.AutoAdjustColumns;
     FCurrentExecutor := nil;
     if Assigned(FOnExecutionFinished) then
     FOnExecutionFinished(Self,FEditMode);

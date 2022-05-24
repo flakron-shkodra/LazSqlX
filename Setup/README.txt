@@ -1,0 +1,1 @@
+* Autoadjust grid columns after query execution finished

@@ -1274,7 +1274,7 @@ begin
     begin
       EndDrag;
       SetDragImage(Ord(Accepted), 0, 0);
-      BeginDrag(Handle, X, Y);
+      BeginDrag(Application.Handle, X, Y);
     end;
   FPrevAccepted := Accepted;
   Result := inherited GetDragCursor(Accepted, X, Y);

@@ -142,7 +142,7 @@ end;
 
 procedure TSqlExecThread.ShowParamDialog;
 begin
-   TAsParamDialog.ShowParamDialog(FQuery,True)
+   TAsParamDialog.ShowParamDialog(FQuery,True);
 end;
 
 procedure TSqlExecThread.Execute;

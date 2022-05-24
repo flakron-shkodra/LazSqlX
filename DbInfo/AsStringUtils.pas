@@ -26,61 +26,61 @@ type
   TAsStringUtils = object
   public
     {Counts given word appearance at given Text var; It's matchcase wholeword only}
-    class function CountWord(Text:string; Word:string):Integer;
+    class function CountWord(Text:string; Word:string):Integer;static;
 
     {Counts given char appearance at given Text}
-    class function CountChar(Text:string; aChar:Char):Integer;
+    class function CountChar(Text:string; aChar:Char):Integer;static;
 
     {Remove given chars in Text and returns string without those chars}
-    class function RemoveChars(Text: string; Chars: array of char): string;
+    class function RemoveChars(Text: string; Chars: array of char): string;static;
 
     {Splits string into array of string based on delimiter char given}
-    class function SplitString(Text: string; Delimiter: char): TArrayOfString;
+    class function SplitString(Text: string; Delimiter: char): TArrayOfString;static;
 
     {Checks if in given input text there are Digits '0'...'9' }
-    class function ContainsDigits(Input:string):Boolean;
+    class function ContainsDigits(Input:string):Boolean;static;
 
     {Checks if in given input text there are Letters 'a'..'z' }
-    class function ContainsLetters(Input:string):Boolean;
+    class function ContainsLetters(Input:string):Boolean;static;
 
     {Checks if given string can be parsed as number}
-    class function IsNumber(Input:string):boolean;
+    class function IsNumber(Input:string):boolean;static;
 
-    class function IsLetter(Input:Char):Boolean;
+    class function IsLetter(Input:Char):Boolean;static;
 
-    class function ContainsChars(Text:string; Chars:Array of char):Boolean;
+    class function ContainsChars(Text:string; Chars:Array of char):Boolean;static;
 
-    class function ContainsChar(Text:string; aChar:Char):Boolean;
+    class function ContainsChar(Text:string; aChar:Char):Boolean;static;
 
-    class function ByteGUIDToString(field:TField):string;
+    class function ByteGUIDToString(field:TField):string;static;
 
-    class function ByteToString(field:TField):string;
+    class function ByteToString(field:TField):string;static;
 
-    class function BlobToString(field:TField):string;
+    class function BlobToString(field:TField):string;static;
 
     {surrounds a string with brackets or quotations, depending the TAsStringWrapType}
-    class function WrapString(aInput:string; typ:TAsStringWrapType):string;
+    class function WrapString(aInput:string; typ:TAsStringWrapType):string;static;
 
     {Removes vowels if any found uppercase and lowercase}
-    class function RemoveVowels(aInput:string):string;
+    class function RemoveVowels(aInput:string):string;static;
 
     {Checksi if a given char is in Uppercase}
-    class function IsUppercase(c:char):Boolean;
+    class function IsUppercase(c:char):Boolean;static;
 
     {Returns only capitalized letter from a given input string}
-    class function ExtractUppercaseLetters(aInput:string):String;
+    class function ExtractUppercaseLetters(aInput:string):String;static;
 
     {extracts numbers from a strin, ie if "asdb223nkk2k" it returns "2232"}
-    class function ExtractNumbers(aInput:string):string;
+    class function ExtractNumbers(aInput:string):string;static;
 
     {Splits the string with spaces accordinf to capitalized letters, ie 'IAmNewBee' should return 'I am new bee"}
-    class function SplitByUppercaseLetter(aInput:string):string;
+    class function SplitByUppercaseLetter(aInput:string):string;static;
 
     {returns a string excluding symbols and spaces}
-    class function GetSafeName(aInput:string):string;
+    class function GetSafeName(aInput:string):string;static;
 
 
-    class function GetFriendlyAlias(Tablename:string):string;
+    class function GetFriendlyAlias(Tablename:string):string;static;
 
   end;
 

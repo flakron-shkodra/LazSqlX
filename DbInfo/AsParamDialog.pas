@@ -15,14 +15,14 @@ type
  TAsParamDialog = object
  public
   {indicates if query has null parameters, (ie. if you should call ShowParamDialog)}
-  class function HasNullParams(aQuery:TAsQuery):Boolean;
+  class function HasNullParams(aQuery:TAsQuery):Boolean;static;
 
   {
     Creates a modal dialog based on given arguments , [ShowNonNullParams] if you want to show already filled parameters, default:hidden
     Note: If Param.Name is different than actual FieldName, the datatype won't be detected so as a result TEdit will be generated
   }
   class function ShowParamDialog(aQuery: TAsQuery; ShowNonNullParams: Boolean
-    ): TModalResult;
+    ): TModalResult;static;
  end;
 
 implementation

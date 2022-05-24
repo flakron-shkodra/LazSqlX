@@ -151,7 +151,7 @@ type
     procedure SaveToFile(Filename:string);
     {compares given connection to other items in the list and returns true if found}
     function Exists(aDbInfo:TAsDbConnectionInfo):Boolean;
-    function IndexOf(const Item: T): Integer;
+    function IndexOf(const Item: TAsDbConnectionInfo): Integer;
   end;
 
   { TAsQuery }
@@ -345,79 +345,79 @@ type
     class procedure DisposeEngine(a:TAsDbMetadata);
   public
     {this was supposed to 'know' the difference between GUID percieved as BLOB and a real BLOB}
-    class function IsBlobGUID(var aField: TField): boolean;experimental;
+    class function IsBlobGUID(var aField: TField): boolean;static;experimental;
 
     {Returns an sql query limiting number of records depending dbtype}
-    class function GetTopRecordsSelect(dbtyp:TAsDatabaseType; Schema,TableName:string;NumberOfRecords:integer):string;overload;
+    class function GetTopRecordsSelect(dbtyp:TAsDatabaseType; Schema,TableName:string;NumberOfRecords:integer):string;static;overload;
 
     {Returns an sql query for a single column limiting number of records depending dbtype}
-    class function GetTopRecordsSelect(dbtyp:TAsDatabaseType; Schema,TableName,FieldName:string;NumberOfRecords:integer):string;overload;
+    class function GetTopRecordsSelect(dbtyp:TAsDatabaseType; Schema,TableName,FieldName:string;NumberOfRecords:integer):string;static;overload;
 
     {Surrounds given expression with relevant symbols ie [],"",or '' according to db}
-    class function SafeWrap(dbtyp:TAsDatabaseType; TableOrField:string):string;
+    class function SafeWrap(dbtyp:TAsDatabaseType; TableOrField:string):string;static;
 
-    class function GetOracleDescriptor(server, database: string; port: integer): string;overload;
+    class function GetOracleDescriptor(server, database: string; port: integer): string;static;overload;
 
     {Gets OracleDescriptor as in TNS file }
-    class function GetOracleDescriptor(dbInfo:TAsDbConnectionInfo): string;overload;
+    class function GetOracleDescriptor(dbInfo:TAsDbConnectionInfo): string;static;overload;
 
     {Converts TAsDatabaseType to relevant SqlConnector.ConnectorType }
-    class function DatabaseTypeAsConnectorType(DbType:TAsDatabaseType):string;
+    class function DatabaseTypeAsConnectorType(DbType:TAsDatabaseType):string;static;
 
     {Converts TAsDatabaseType to relevant zeos protocol in string format}
-    class function DatabaseTypeAsString(DbType:TAsDatabaseType;ALowerCase:Boolean):string;
+    class function DatabaseTypeAsString(DbType:TAsDatabaseType;ALowerCase:Boolean):string;static;
 
     {Converts zeos protocol to  TAsDatabaseType }
-    class function DatabaseTypeFromString(DbTypeString:string):TAsDatabaseType;
+    class function DatabaseTypeFromString(DbTypeString:string):TAsDatabaseType;static;
 
     {Converts zeos protocol to  sqldb connectorType}
-    class function ZeosProtocolToSqlDbConnectorType(ZeosProtocol:string):string;
+    class function ZeosProtocolToSqlDbConnectorType(ZeosProtocol:string):string;static;
 
     {Checks syntax using TSQLParser}
-    class function CheckSqlSyntax(SqlCommand:string; out Error:TAsSyntaxError):Boolean;
+    class function CheckSqlSyntax(SqlCommand:string; out Error:TAsSyntaxError):Boolean;static;
 
 
     {Executes SQL Command using SQLDB or ZEOS Engine and given DBConnectionInfo}
-    class procedure ExecuteQuery(SqlQuery:string; DbInfo:TAsDbConnectionInfo);
+    class procedure ExecuteQuery(SqlQuery:string; DbInfo:TAsDbConnectionInfo);static;
 
     {Gets db schemas using Zeos}
-    class function GetSchemas(DBInfo:TAsDbConnectionInfo):TStringList;
+    class function GetSchemas(DBInfo:TAsDbConnectionInfo):TStringList;static;
 
     {Gets db Tables for given scheme}
-    class function GetTablenames(DbInfo:TAsDbConnectionInfo):TStringList;
+    class function GetTablenames(DbInfo:TAsDbConnectionInfo):TStringList;static;
 
     {Gets column names from db}
-    class function GetColumnNames(DbInfo: TAsDbConnectionInfo; TableName: string): TStringList;
+    class function GetColumnNames(DbInfo: TAsDbConnectionInfo; TableName: string): TStringList;static;
 
     {Gets primary keys of the given table}
-    class function GetPrimaryKeys(DbInfo:TAsDbConnectionInfo; TableName: string):TStringList;
+    class function GetPrimaryKeys(DbInfo:TAsDbConnectionInfo; TableName: string):TStringList;static;
 
     {Gets Foreign Keys of the giben table }
-    class function GetForeignKeys(DbInfo:TAsDbConnectionInfo; TableName: string):TAsForeignKeys;
+    class function GetForeignKeys(DbInfo:TAsDbConnectionInfo; TableName: string):TAsForeignKeys;static;
 
     {Gets basic column info for the given table}
-    class function GetColumns(DbInfo:TAsDbConnectionInfo; TableName:string):TAsColumns;
+    class function GetColumns(DbInfo:TAsDbConnectionInfo; TableName:string):TAsColumns;static;
 
     {Gets info about indexes of the given table}
-    class function GetIndexes(DbInfo:TAsDbConnectionInfo; TableName:string):TAsIndexes;
+    class function GetIndexes(DbInfo:TAsDbConnectionInfo; TableName:string):TAsIndexes;static;
 
     {Gets all string/text columns from the given table}
-    class function GetTextFields(DbInfo: TAsDbConnectionInfo; TableName: string): TStringList;
+    class function GetTextFields(DbInfo: TAsDbConnectionInfo; TableName: string): TStringList;static;
 
     {Gets basic trigger information about the given table}
-    class function GetTriggers(DbInfo:TAsDbConnectionInfo; TableName:string):TAsTriggers;
+    class function GetTriggers(DbInfo:TAsDbConnectionInfo; TableName:string):TAsTriggers;static;
 
     {Gets procedure names from the given dbInfo}
-    class function GetProcedureNames(DbInfo:TAsDbConnectionInfo):TStringList;
+    class function GetProcedureNames(DbInfo:TAsDbConnectionInfo):TStringList;static;
 
     {Gets paramteres a given procedure}
-    class function GetProcedureParams(DbInfo:TAsDbConnectionInfo; ProcedureName:string):TAsProcedureParams;
+    class function GetProcedureParams(DbInfo:TAsDbConnectionInfo; ProcedureName:string):TAsProcedureParams;static;
 
     {gets database list from the server}
-    class function GetCatalogNames(aDbInfo:TAsDbConnectionInfo):TStringList;
+    class function GetCatalogNames(aDbInfo:TAsDbConnectionInfo):TStringList;static;
 
     {returns formated sqlquery}
-    class function FormatQuery(SqlQuery:string):String;
+    class function FormatQuery(SqlQuery:string):String;static;
 
   end;
 
@@ -1871,7 +1871,7 @@ begin
   Result:=IndexOf(aDbInfo)>-1;
 end;
 
-function TAsDbConnectionInfos.IndexOf(const Item: T): Integer;
+function TAsDbConnectionInfos.IndexOf(const Item: TAsDbConnectionInfo): Integer;
 var
  aDbInfo: TAsDbConnectionInfo;
  I: Integer;
