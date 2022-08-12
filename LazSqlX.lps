@@ -8,7 +8,7 @@
       <Unit0>
         <Filename Value="LazSqlX.lpr"/>
         <IsPartOfProject Value="True"/>
-        <EditorIndex Value="12"/>
+        <EditorIndex Value="13"/>
         <TopLine Value="10"/>
         <CursorPos X="133" Y="26"/>
         <UsageCount Value="50"/>
@@ -36,8 +36,8 @@
         <ComponentName Value="MainForm"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <TopLine Value="1618"/>
-        <CursorPos X="2" Y="1624"/>
+        <TopLine Value="2017"/>
+        <CursorPos X="3" Y="2019"/>
         <UsageCount Value="50"/>
         <Loaded Value="True"/>
         <LoadedDesigner Value="True"/>
@@ -48,7 +48,7 @@
         <ComponentName Value="SqlConnBuilderForm"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <EditorIndex Value="9"/>
+        <EditorIndex Value="10"/>
         <TopLine Value="653"/>
         <CursorPos Y="674"/>
         <UsageCount Value="50"/>
@@ -60,14 +60,19 @@
         <ComponentName Value="DesignTableForm"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
+        <IsVisibleTab Value="True"/>
+        <EditorIndex Value="1"/>
+        <TopLine Value="870"/>
+        <CursorPos Y="891"/>
         <UsageCount Value="50"/>
+        <Loaded Value="True"/>
       </Unit5>
       <Unit6>
         <Filename Value="DbInfo\AsDbType.pas"/>
         <IsPartOfProject Value="True"/>
-        <EditorIndex Value="3"/>
-        <TopLine Value="387"/>
-        <CursorPos X="63" Y="420"/>
+        <EditorIndex Value="4"/>
+        <TopLine Value="85"/>
+        <CursorPos X="15" Y="106"/>
         <UsageCount Value="50"/>
         <Loaded Value="True"/>
       </Unit6>
@@ -79,7 +84,7 @@
       <Unit8>
         <Filename Value="DbInfo\AsTableInfo.pas"/>
         <IsPartOfProject Value="True"/>
-        <EditorIndex Value="11"/>
+        <EditorIndex Value="12"/>
         <TopLine Value="1527"/>
         <CursorPos X="7" Y="1539"/>
         <UsageCount Value="50"/>
@@ -105,8 +110,7 @@
         <Filename Value="UtilClasses\sqlexecthread.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="SqlExecThread"/>
-        <IsVisibleTab Value="True"/>
-        <EditorIndex Value="4"/>
+        <EditorIndex Value="5"/>
         <TopLine Value="14"/>
         <CursorPos X="15" Y="48"/>
         <UsageCount Value="50"/>
@@ -128,7 +132,7 @@
       <Unit14>
         <Filename Value="DbInfo\AsStringUtils.pas"/>
         <IsPartOfProject Value="True"/>
-        <EditorIndex Value="8"/>
+        <EditorIndex Value="9"/>
         <TopLine Value="51"/>
         <CursorPos X="69" Y="83"/>
         <UsageCount Value="50"/>
@@ -195,7 +199,7 @@
         <ComponentName Value="QueryDesigner"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
-        <EditorIndex Value="6"/>
+        <EditorIndex Value="7"/>
         <TopLine Value="1255"/>
         <CursorPos X="35" Y="1277"/>
         <UsageCount Value="50"/>
@@ -212,7 +216,7 @@
       <Unit24>
         <Filename Value="DbInfo\AsDatabaseCloner.pas"/>
         <IsPartOfProject Value="True"/>
-        <EditorIndex Value="2"/>
+        <EditorIndex Value="3"/>
         <TopLine Value="30"/>
         <CursorPos Y="51"/>
         <UsageCount Value="50"/>
@@ -275,7 +279,7 @@
       <Unit33>
         <Filename Value="LazSqlXCtrls\LazSqlXCtrls.pas"/>
         <IsPartOfProject Value="True"/>
-        <EditorIndex Value="10"/>
+        <EditorIndex Value="11"/>
         <TopLine Value="771"/>
         <CursorPos X="62" Y="797"/>
         <UsageCount Value="50"/>
@@ -390,7 +394,7 @@
       <Unit51>
         <Filename Value="DbInfo\DbMetadata\AsSqliteMetadata.pas"/>
         <IsPartOfProject Value="True"/>
-        <EditorIndex Value="7"/>
+        <EditorIndex Value="8"/>
         <TopLine Value="106"/>
         <CursorPos X="94" Y="127"/>
         <UsageCount Value="50"/>
@@ -428,7 +432,7 @@
       <Unit56>
         <Filename Value="DbInfo\AsParamDialog.pas"/>
         <IsPartOfProject Value="True"/>
-        <EditorIndex Value="5"/>
+        <EditorIndex Value="6"/>
         <CursorPos X="64" Y="18"/>
         <UsageCount Value="49"/>
         <Loaded Value="True"/>
@@ -497,134 +501,130 @@
       <Unit66>
         <Filename Value="C:\lazarus\fpc\3.2.2\source\packages\fcl-db\src\export\fpdbexport.pp"/>
         <UnitName Value="fpDBExport"/>
-        <EditorIndex Value="1"/>
+        <EditorIndex Value="2"/>
         <TopLine Value="92"/>
         <CursorPos X="3" Y="114"/>
         <UsageCount Value="10"/>
         <Loaded Value="True"/>
       </Unit66>
     </Units>
-    <JumpHistory Count="30" HistoryIndex="29">
+    <JumpHistory Count="29" HistoryIndex="28">
       <Position1>
-        <Filename Value="Forms\MainFormU.pas"/>
-        <Caret Line="2456" TopLine="2454"/>
+        <Filename Value="LazSqlXCtrls\LazSqlXCtrls.pas"/>
+        <Caret Line="632" Column="46" TopLine="610"/>
       </Position1>
       <Position2>
-        <Filename Value="Forms\MainFormU.pas"/>
-        <Caret Line="2370" Column="32" TopLine="2350"/>
+        <Filename Value="LazSqlXCtrls\LazSqlXCtrls.pas"/>
+        <Caret Line="91" Column="21" TopLine="57"/>
       </Position2>
       <Position3>
-        <Filename Value="Forms\MainFormU.pas"/>
-        <Caret Line="436" Column="29" TopLine="416"/>
+        <Filename Value="LazSqlXCtrls\LazSqlXCtrls.pas"/>
+        <Caret Line="800" Column="54" TopLine="774"/>
       </Position3>
       <Position4>
-        <Filename Value="Forms\MainFormU.pas"/>
-        <Caret Line="822" Column="50" TopLine="801"/>
+        <Filename Value="LazSqlXCtrls\LazSqlXCtrls.pas"/>
+        <Caret Line="75" Column="15" TopLine="55"/>
       </Position4>
       <Position5>
         <Filename Value="Forms\MainFormU.pas"/>
-        <Caret Line="2147" Column="3" TopLine="2144"/>
+        <Caret Line="2435" Column="38" TopLine="2426"/>
       </Position5>
       <Position6>
         <Filename Value="Forms\MainFormU.pas"/>
-        <Caret Line="405" Column="15" TopLine="385"/>
+        <Caret Line="1952" Column="3" TopLine="1950"/>
       </Position6>
       <Position7>
         <Filename Value="Forms\MainFormU.pas"/>
-        <Caret Line="1423" Column="74" TopLine="1357"/>
+        <Caret Line="426" Column="15" TopLine="406"/>
       </Position7>
       <Position8>
         <Filename Value="Forms\MainFormU.pas"/>
-        <Caret Line="2164" TopLine="2136"/>
+        <Caret Line="1624" Column="2" TopLine="1618"/>
       </Position8>
       <Position9>
-        <Filename Value="Forms\MainFormU.pas"/>
-        <Caret Line="2429" Column="78" TopLine="2426"/>
-      </Position9>
-      <Position10>
-        <Filename Value="Forms\MainFormU.pas"/>
-        <Caret Line="2435" Column="38" TopLine="2426"/>
-      </Position10>
-      <Position11>
-        <Filename Value="DbInfo\AsDbType.pas"/>
-        <Caret Line="154" Column="53" TopLine="133"/>
-      </Position11>
-      <Position12>
-        <Filename Value="DbInfo\DbMetadata\AsSqliteMetadata.pas"/>
-        <Caret Line="127" Column="94" TopLine="106"/>
-      </Position12>
-      <Position13>
-        <Filename Value="DbInfo\AsStringUtils.pas"/>
-        <Caret Line="83" Column="69" TopLine="51"/>
-      </Position13>
-      <Position14>
-        <Filename Value="DbInfo\AsDbType.pas"/>
-        <Caret Line="1477" Column="72" TopLine="1455"/>
-      </Position14>
-      <Position15>
-        <Filename Value="DbInfo\AsDbType.pas"/>
-        <Caret Line="420" Column="63" TopLine="387"/>
-      </Position15>
-      <Position16>
-        <Filename Value="UtilClasses\sqlexecthread.pas"/>
-        <Caret Line="146" TopLine="124"/>
-      </Position16>
-      <Position17>
-        <Filename Value="UtilClasses\sqlexecthread.pas"/>
-        <Caret Line="145" Column="47" TopLine="123"/>
-      </Position17>
-      <Position18>
-        <Filename Value="DbInfo\AsParamDialog.pas"/>
-        <Caret Line="18" Column="64"/>
-      </Position18>
-      <Position19>
-        <Filename Value="LazSqlXCtrls\LazSqlXCtrls.pas"/>
-        <Caret Line="632" Column="46" TopLine="610"/>
-      </Position19>
-      <Position20>
-        <Filename Value="LazSqlXCtrls\LazSqlXCtrls.pas"/>
-        <Caret Line="91" Column="21" TopLine="57"/>
-      </Position20>
-      <Position21>
-        <Filename Value="LazSqlXCtrls\LazSqlXCtrls.pas"/>
-        <Caret Line="800" Column="54" TopLine="774"/>
-      </Position21>
-      <Position22>
-        <Filename Value="LazSqlXCtrls\LazSqlXCtrls.pas"/>
-        <Caret Line="75" Column="15" TopLine="55"/>
-      </Position22>
-      <Position23>
-        <Filename Value="Forms\MainFormU.pas"/>
-        <Caret Line="2435" Column="38" TopLine="2426"/>
-      </Position23>
-      <Position24>
-        <Filename Value="Forms\MainFormU.pas"/>
-        <Caret Line="1952" Column="3" TopLine="1950"/>
-      </Position24>
-      <Position25>
-        <Filename Value="Forms\MainFormU.pas"/>
-        <Caret Line="426" Column="15" TopLine="406"/>
-      </Position25>
-      <Position26>
-        <Filename Value="Forms\MainFormU.pas"/>
-        <Caret Line="1624" Column="2" TopLine="1618"/>
-      </Position26>
-      <Position27>
         <Filename Value="LazSqlXCtrls\LazSqlXCtrls.pas"/>
         <Caret Line="91" Column="15" TopLine="69"/>
-      </Position27>
-      <Position28>
+      </Position9>
+      <Position10>
         <Filename Value="LazSqlXCtrls\LazSqlXCtrls.pas"/>
         <Caret Line="797" Column="62" TopLine="771"/>
-      </Position28>
-      <Position29>
+      </Position10>
+      <Position11>
         <Filename Value="UtilClasses\sqlexecthread.pas"/>
         <Caret Line="48" Column="22" TopLine="33"/>
-      </Position29>
-      <Position30>
+      </Position11>
+      <Position12>
         <Filename Value="UtilClasses\sqlexecthread.pas"/>
         <Caret Line="150" Column="3" TopLine="147"/>
-      </Position30>
+      </Position12>
+      <Position13>
+        <Filename Value="Forms\MainFormU.pas"/>
+        <Caret Line="1624" Column="2" TopLine="1618"/>
+      </Position13>
+      <Position14>
+        <Filename Value="Forms\MainFormU.pas"/>
+        <Caret Line="2019" Column="3" TopLine="2017"/>
+      </Position14>
+      <Position15>
+        <Filename Value="Forms\DesignTableFormU.pas"/>
+        <Caret Line="93" Column="18" TopLine="73"/>
+      </Position15>
+      <Position16>
+        <Filename Value="Forms\DesignTableFormU.pas"/>
+        <Caret Line="892" TopLine="884"/>
+      </Position16>
+      <Position17>
+        <Filename Value="Forms\DesignTableFormU.pas"/>
+        <Caret Line="893" TopLine="884"/>
+      </Position17>
+      <Position18>
+        <Filename Value="Forms\DesignTableFormU.pas"/>
+        <Caret Line="895" TopLine="884"/>
+      </Position18>
+      <Position19>
+        <Filename Value="Forms\DesignTableFormU.pas"/>
+        <Caret Line="910" TopLine="884"/>
+      </Position19>
+      <Position20>
+        <Filename Value="Forms\DesignTableFormU.pas"/>
+        <Caret Line="911" TopLine="884"/>
+      </Position20>
+      <Position21>
+        <Filename Value="Forms\DesignTableFormU.pas"/>
+        <Caret Line="914" TopLine="884"/>
+      </Position21>
+      <Position22>
+        <Filename Value="Forms\DesignTableFormU.pas"/>
+        <Caret Line="915" TopLine="884"/>
+      </Position22>
+      <Position23>
+        <Filename Value="Forms\DesignTableFormU.pas"/>
+        <Caret Line="917" TopLine="884"/>
+      </Position23>
+      <Position24>
+        <Filename Value="Forms\DesignTableFormU.pas"/>
+        <Caret Line="918" TopLine="884"/>
+      </Position24>
+      <Position25>
+        <Filename Value="Forms\DesignTableFormU.pas"/>
+        <Caret Line="764" TopLine="743"/>
+      </Position25>
+      <Position26>
+        <Filename Value="Forms\DesignTableFormU.pas"/>
+        <Caret Line="766" TopLine="743"/>
+      </Position26>
+      <Position27>
+        <Filename Value="Forms\DesignTableFormU.pas"/>
+        <Caret Line="767" Column="11" TopLine="743"/>
+      </Position27>
+      <Position28>
+        <Filename Value="Forms\DesignTableFormU.pas"/>
+        <Caret Line="765" Column="14" TopLine="743"/>
+      </Position28>
+      <Position29>
+        <Filename Value="Forms\DesignTableFormU.pas"/>
+        <Caret Line="891" TopLine="870"/>
+      </Position29>
     </JumpHistory>
     <RunParams>
       <FormatVersion Value="2"/>

@@ -763,8 +763,7 @@ var
   lst: TStringList;
 begin
   //refreshed
-  FDbInfo.Close;
-  FDbInfo.Open;
+  if not FDbInfo.Connected then FDbInfo.Open;
 
     if not FCreateNew then
     begin
