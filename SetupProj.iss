@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "LazSqlX"
-#define MyAppVersion "5.2.2.1621"
+#define MyAppVersion "5.2.3"
 #define MyAppPublisher "Flakron Shkodra"
 #define MyAppExeName "LazSqlX.exe"
 

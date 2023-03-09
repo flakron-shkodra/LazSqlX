@@ -217,6 +217,7 @@ type
    FSchema:string;//used only when AsDbLookupComboEdit (table reference field is clicked for edit '..')
    FSqlQuery:string;
    FEditRowCount:Integer;
+   FControlColumns:Integer;
    FQuickSearchToolbar:TToolbar;
    FQuickSearchFieldsCmb:TComboBox;//created from MakeQuickSearchToolbar (populated from OpenData)
    FQuickSearchEdit:TEdit;//created from MakeQuickSearchToolbar (used in OnQuickSearchChange)
@@ -240,8 +241,10 @@ type
    procedure OnPrintGridButtonClick(Sender:TObject);
    procedure OnGridColumsListClick(Sender: TObject; Index: integer);
    procedure OnGridColumnListExit(Sender: TObject);
+   procedure OnFormResize(Sender:TObject);
    procedure ShowColumnsButtonClick(Sender:TObject);
    procedure MakeEditControls;
+   procedure RepositionEditControls;
    procedure ClearEditControls;
    function MakeQuickSearchToolbar(aOwner:TComponent):TToolbar;
    procedure SetSqlQuery(AValue: string);
@@ -766,6 +769,11 @@ begin
  FColumnsList.Visible:=False;
 end;
 
+procedure TAsDbForm.OnFormResize(Sender: TObject);
+begin
+  RepositionEditControls;
+end;
+
 procedure TAsDbForm.AfterEdit(DataSet: TDataSet);
 begin
  FEditControlsBox.Enabled:=True;
@@ -1110,6 +1118,104 @@ begin
 
 end;
 
+procedure TAsDbForm.RepositionEditControls;
+var
+ X, Y, HorCount, I,FHeight : Integer;
+ dao:TAsUIDataAcessObject;
+ fieldName: String;
+ lbl:TLabel;
+ edt:TDBedit;
+ cmbLookup:TAsDBLookupComboBoxEdit;
+ chk:TDBCheckBox;
+ dt :TDBDateTimePicker;
+ be:TAsDbBlobEdit;
+ sed:TAsDBSpinEdit;
+ mem:TDBMemo;
+ LastControlHeight: Integer;
+ ik: TAsImportedKeyInfo;
+ lastControl:TControl;
+ controlName:string;
+ howMany, K:integer;
+ refSql, csharpName: String;
+ refObj: TAsTableInfo=nil;
+ ft: TFieldType;
+begin
+
+  X := 5;
+  Y := 5;
+  HorCount:= 1;
+  FControlColumns :=Width div (FControlWidth +  FControlSpace);
+
+  //Reposition edit controls
+  for I:=0 to FTableInfo.AllFields.Count-1 do
+  begin
+
+    fieldName:= FTableInfo.AllFields[I].FieldName;
+    controlName:= EmptyStr;
+    csharpName := FTableInfo.AllFields[I].CSharpName;
+    lastControl := nil;
+    lbl := FEditControlsBox.FindChildControl('lbl'+csharpName) as TLabel;
+
+    if lbl=nil then
+    continue;
+
+    lbl.Parent := FEditControlsBox;
+    lbl.Left:= X;
+    lbl.Top := Y;
+    lbl.Width:=FControlWidth;
+
+    if not FTableInfo.AllFields[I].IsReference then
+    begin
+      ft := FTableInfo.AllFields[I].DataType;
+      case FTableInfo.AllFields[I].DataType of
+        ftBoolean: controlName := 'chk'+csharpName;
+        ftDate,ftDateTime: controlName := 'dt'+csharpName;
+        ftMemo,ftWideMemo: controlName := 'mem'+csharpName;
+        ftBlob,ftOraBlob:  controlName := 'be'+csharpName;
+        ftInteger,ftWord, ftLargeint,ftSmallint,ftFloat,ftCurrency,ftBCD: controlName := 'se'+csharpName;
+        else controlName := 'edt'+csharpName;
+      end;//end case
+    end else
+    begin
+      if FTableInfo.ImportedKeys.ContainsColumn(fieldName) then
+        controlName := 'cmb'+csharpName;
+    end;
+
+    lastControl := FEditControlsBox.FindChildControl(controlName);
+
+    if lastControl<>nil then
+    begin
+
+    lastControl.Top:=lbl.Top + lbl.Height + 2;
+    lastControl.Left:= lbl.Left;
+    lastControl.Width:= FControlWidth;
+
+     //Max number of DBControls horizontally
+     if HorCount = FControlColumns then
+     begin
+       HorCount:=0;
+       X := 5;
+       Y := Y + lastControl.Height +lbl.Height + 10;
+       Inc(FEditRowCount,1);
+     end else
+     begin
+       X := X + FControlWidth + FControlSpace;
+     end;
+     Inc(HorCount,1);
+
+
+      Inc(FEditRowCount,1);
+      FEditControlsBox.Height:=lastControl.Top+lastControl.Height + 20;
+
+      if FEditControlsBox.Height >= 340 then
+      FEditControlsBox.Height := 340;
+
+    end;
+
+  end;
+
+end;
+
 procedure TAsDbForm.ClearEditControls;
 begin
  while FEditControlsBox.ControlCount>0 do
@@ -1210,8 +1316,9 @@ begin
  FControlWidth:= 150;
  FControlSpace:= 5;
  FEditRowCount:=1;
- BorderStyle:= bsSingle;
+ BorderStyle:= bsSizeable;
  Caption:=aTableInfo.Tablename;
+ OnResize:=@OnFormResize;
 
  Position := poScreenCenter;
  Height:= 550;
@@ -1261,10 +1368,12 @@ begin
  FDataGrid := TDBGrid.Create(FGridNavGroup);
  FDataGrid.Parent := FGridNavGroup;
  FDataGrid.Align:=alClient;
+ FDataGrid.Font.Size:=10;
  FDataGrid.DataSource := FDataObject.DataSource;
  FDataGrid.Options:=FDataGrid.Options+[dgRowSelect];
  FDataGrid.TitleStyle:=tsNative;
  FDataGrid.OnDrawColumnCell:=@OnDBGridDrawColumnCell;
+
 
  FFRPrintGrid := TfrPrintGrid.Create(Self);
  FFRPrintGrid.DBGrid := FDataGrid;
@@ -1307,10 +1416,7 @@ begin
   begin
     FDataObject.SqlQuery:=FSqlQuery;
     FDataObject.Query.Open;
-    for I:=0 to FDataGrid.Columns.Count-1 do
-    begin
-      FDataGrid.Columns[I].Width:=FControlWidth;
-    end;
+    FDataGrid.AutoAdjustColumns;
 
     if FQuickSearchFieldsCmb <> nil then
     begin

@@ -28,8 +28,8 @@
       <AutoIncrementBuild Value="True"/>
       <MajorVersionNr Value="5"/>
       <MinorVersionNr Value="2"/>
-      <RevisionNr Value="2"/>
-      <BuildNr Value="1622"/>
+      <RevisionNr Value="3"/>
+      <BuildNr Value="1624"/>
       <StringTable ProductVersion="5.1.5.1604"/>
     </VersionInfo>
     <BuildModes Count="3">
@@ -451,6 +451,8 @@
       <Checks>
         <StackChecks Value="True"/>
       </Checks>
+      <TargetCPU Value="i386"/>
+      <TargetOS Value="win32"/>
       <Optimizations>
         <OptimizationLevel Value="0"/>
       </Optimizations>
