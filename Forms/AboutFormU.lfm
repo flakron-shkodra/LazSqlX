@@ -9,7 +9,7 @@ object AboutForm: TAboutForm
   ClientWidth = 320
   OnShow = FormShow
   Position = poScreenCenter
-  LCLVersion = '1.2.6.0'
+  LCLVersion = '2.2.6.0'
   object pnlMain: TPanel
     Left = 8
     Height = 192
@@ -303,17 +303,17 @@ object AboutForm: TAboutForm
     end
     object lblOwner: TLabel
       Left = 107
-      Height = 15
-      Top = 61
-      Width = 113
-      Caption = 'LazSqlX ©  2013-2015'
+      Height = 30
+      Top = 55
+      Width = 116
+      Caption = 'LazSqlX ©  2013-2023 '#13#10'Flakron Shkodra'
       ParentColor = False
     end
     object lblVersion: TLabel
       Left = 107
       Height = 15
       Top = 37
-      Width = 52
+      Width = 51
       Caption = 'lblVersion'
       ParentColor = False
     end

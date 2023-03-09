@@ -8,7 +8,7 @@
       <Unit0>
         <Filename Value="LazSqlX.lpr"/>
         <IsPartOfProject Value="True"/>
-        <EditorIndex Value="16"/>
+        <EditorIndex Value="17"/>
         <TopLine Value="10"/>
         <CursorPos X="133" Y="26"/>
         <UsageCount Value="50"/>
@@ -48,7 +48,7 @@
         <ComponentName Value="SqlConnBuilderForm"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <EditorIndex Value="13"/>
+        <EditorIndex Value="14"/>
         <TopLine Value="653"/>
         <CursorPos Y="674"/>
         <UsageCount Value="50"/>
@@ -60,7 +60,7 @@
         <ComponentName Value="DesignTableForm"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <EditorIndex Value="4"/>
+        <EditorIndex Value="5"/>
         <TopLine Value="870"/>
         <CursorPos Y="891"/>
         <UsageCount Value="50"/>
@@ -70,7 +70,7 @@
       <Unit6>
         <Filename Value="DbInfo\AsDbType.pas"/>
         <IsPartOfProject Value="True"/>
-        <EditorIndex Value="7"/>
+        <EditorIndex Value="8"/>
         <TopLine Value="85"/>
         <CursorPos X="15" Y="106"/>
         <UsageCount Value="50"/>
@@ -84,7 +84,7 @@
       <Unit8>
         <Filename Value="DbInfo\AsTableInfo.pas"/>
         <IsPartOfProject Value="True"/>
-        <EditorIndex Value="15"/>
+        <EditorIndex Value="16"/>
         <TopLine Value="1527"/>
         <CursorPos X="7" Y="1539"/>
         <UsageCount Value="50"/>
@@ -110,7 +110,7 @@
         <Filename Value="UtilClasses\sqlexecthread.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="SqlExecThread"/>
-        <EditorIndex Value="8"/>
+        <EditorIndex Value="9"/>
         <TopLine Value="14"/>
         <CursorPos X="15" Y="48"/>
         <UsageCount Value="50"/>
@@ -132,7 +132,7 @@
       <Unit14>
         <Filename Value="DbInfo\AsStringUtils.pas"/>
         <IsPartOfProject Value="True"/>
-        <EditorIndex Value="12"/>
+        <EditorIndex Value="13"/>
         <TopLine Value="51"/>
         <CursorPos X="69" Y="83"/>
         <UsageCount Value="50"/>
@@ -144,7 +144,11 @@
         <ComponentName Value="AboutForm"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
+        <IsVisibleTab Value="True"/>
+        <EditorIndex Value="2"/>
         <UsageCount Value="50"/>
+        <Loaded Value="True"/>
+        <LoadedDesigner Value="True"/>
       </Unit15>
       <Unit16>
         <Filename Value="Forms\EditColumnFormU.pas"/>
@@ -199,7 +203,7 @@
         <ComponentName Value="QueryDesigner"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Frame"/>
-        <EditorIndex Value="10"/>
+        <EditorIndex Value="11"/>
         <TopLine Value="1255"/>
         <CursorPos X="35" Y="1277"/>
         <UsageCount Value="50"/>
@@ -216,7 +220,7 @@
       <Unit24>
         <Filename Value="DbInfo\AsDatabaseCloner.pas"/>
         <IsPartOfProject Value="True"/>
-        <EditorIndex Value="6"/>
+        <EditorIndex Value="7"/>
         <TopLine Value="30"/>
         <CursorPos Y="51"/>
         <UsageCount Value="50"/>
@@ -279,7 +283,7 @@
       <Unit33>
         <Filename Value="LazSqlXCtrls\LazSqlXCtrls.pas"/>
         <IsPartOfProject Value="True"/>
-        <EditorIndex Value="14"/>
+        <EditorIndex Value="15"/>
         <TopLine Value="771"/>
         <CursorPos X="62" Y="797"/>
         <UsageCount Value="50"/>
@@ -354,7 +358,6 @@
       <Unit45>
         <Filename Value="DbInfo\AsDbFormUtils.pas"/>
         <IsPartOfProject Value="True"/>
-        <IsVisibleTab Value="True"/>
         <EditorIndex Value="1"/>
         <TopLine Value="1410"/>
         <CursorPos X="32" Y="1419"/>
@@ -396,7 +399,7 @@
       <Unit51>
         <Filename Value="DbInfo\DbMetadata\AsSqliteMetadata.pas"/>
         <IsPartOfProject Value="True"/>
-        <EditorIndex Value="11"/>
+        <EditorIndex Value="12"/>
         <TopLine Value="106"/>
         <CursorPos X="94" Y="127"/>
         <UsageCount Value="50"/>
@@ -434,7 +437,7 @@
       <Unit56>
         <Filename Value="DbInfo\AsParamDialog.pas"/>
         <IsPartOfProject Value="True"/>
-        <EditorIndex Value="9"/>
+        <EditorIndex Value="10"/>
         <CursorPos X="64" Y="18"/>
         <UsageCount Value="49"/>
         <Loaded Value="True"/>
@@ -503,7 +506,7 @@
       <Unit66>
         <Filename Value="C:\lazarus\fpc\3.2.2\source\packages\fcl-db\src\export\fpdbexport.pp"/>
         <UnitName Value="fpDBExport"/>
-        <EditorIndex Value="5"/>
+        <EditorIndex Value="6"/>
         <TopLine Value="92"/>
         <CursorPos X="3" Y="114"/>
         <UsageCount Value="10"/>
@@ -512,7 +515,7 @@
       <Unit67>
         <Filename Value="C:\lazarus\lcl\forms.pp"/>
         <UnitName Value="Forms"/>
-        <EditorIndex Value="2"/>
+        <EditorIndex Value="3"/>
         <TopLine Value="684"/>
         <CursorPos X="14" Y="704"/>
         <UsageCount Value="10"/>
@@ -521,7 +524,7 @@
       <Unit68>
         <Filename Value="C:\lazarus\lcl\controls.pp"/>
         <UnitName Value="Controls"/>
-        <EditorIndex Value="3"/>
+        <EditorIndex Value="4"/>
         <TopLine Value="163"/>
         <CursorPos X="51" Y="183"/>
         <UsageCount Value="10"/>

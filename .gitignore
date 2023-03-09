@@ -39,3 +39,5 @@ Icon
 *.ppu
 *.bak
 build/*
+backup/*
+Forms/backup/*
